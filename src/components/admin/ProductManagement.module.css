@@ -1,0 +1,195 @@
+/* Mobile responsive styles for ProductManagement */
+.mobileCards {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .desktopTable {
+    display: none;
+  }
+  
+  .mobileCards {
+    display: block;
+  }
+  
+  .mobileCard {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+  }
+  
+  .mobileCardHeader {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  
+  .mobileCardImage {
+    width: 60px;
+    height: 60px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #f3f4f6;
+    flex-shrink: 0;
+  }
+  
+  .mobileCardImage img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .mobileCardInfo {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .mobileCardTitle {
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1.4;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  
+  .mobileCardDescription {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .mobileCardMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  
+  .mobileCardBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .mobileCardActions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+  }
+  
+  .mobileActionButtons {
+    display: flex;
+    gap: 4px;
+  }
+  
+  .mobileActionButton {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    background: white;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .mobileActionButton:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+  }
+  
+  .mobileActionButton:active {
+    background: #f3f4f6;
+  }
+  
+  .mobilePrice {
+    font-weight: 700;
+    font-size: 16px;
+    color: #111827;
+  }
+  
+  .swipeActions {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .swipeActionsInner {
+    transform: translateX(0);
+    transition: transform 0.3s ease;
+  }
+  
+  .swipeActionsRevealed .swipeActionsInner {
+    transform: translateX(-80px);
+  }
+  
+  .swipeActionsButtons {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    display: flex;
+    background: #ef4444;
+  }
+  
+  .swipeDeleteButton {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ef4444;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+}
+
+/* Search and filter optimizations for mobile */
+@media (max-width: 640px) {
+  .mobileFiltersStack > * {
+    width: 100%;
+  }
+  
+  .smartFiltersWrap {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .smartFiltersWrap button {
+    flex: 1;
+    min-width: calc(50% - 4px);
+    justify-content: center;
+  }
+  
+  .paginationMobile {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+  
+  .paginationMobile .paginationNumbers {
+    justify-content: center;
+  }
+}

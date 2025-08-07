@@ -89,6 +89,13 @@ export async function fetchProductsWithImages(options?: {
   limit?: number;
   offset?: number;
   status?: 'active' | 'draft' | 'archived';
+  search?: string;
+  filters?: {
+    lowStock?: boolean;
+    noImages?: boolean;
+    inactive?: boolean;
+    recentlyUpdated?: boolean;
+  };
 }) {
   try {
     let query = supabase
@@ -97,7 +104,7 @@ export async function fetchProductsWithImages(options?: {
         *,
         images:product_images(*),
         variants:product_variants(*)
-      `)
+      `, { count: 'exact' })
       .order('created_at', { ascending: false });
 
     // Apply filters
@@ -107,14 +114,28 @@ export async function fetchProductsWithImages(options?: {
     if (options?.status) {
       query = query.eq('status', options.status);
     }
-    if (options?.limit) {
-      query = query.limit(options.limit);
-    }
-    if (options?.offset) {
-      query = query.range(options.offset, options.offset + (options.limit || 10) - 1);
+    if (options?.search) {
+      query = query.or(`name.ilike.%${options.search}%,description.ilike.%${options.search}%,category.ilike.%${options.search}%`);
     }
 
-    const { data, error } = await query;
+    // Apply smart filters
+    if (options?.filters?.inactive) {
+      query = query.eq('status', 'inactive');
+    }
+    if (options?.filters?.recentlyUpdated) {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      query = query.gte('updated_at', sevenDaysAgo.toISOString());
+    }
+
+    // Apply pagination
+    if (options?.limit && options?.offset !== undefined) {
+      query = query.range(options.offset, options.offset + options.limit - 1);
+    } else if (options?.limit) {
+      query = query.limit(options.limit);
+    }
+
+    const { data, error, count } = await query;
 
     if (error) {
       console.error('Error fetching products:', error);
@@ -122,18 +143,38 @@ export async function fetchProductsWithImages(options?: {
     }
 
     // Ensure images are sorted by position (database column name)
-    const productsWithSortedImages = data?.map(product => ({
-      ...product,
-      images: Array.isArray(product.images) 
-        ? product.images.sort((a: ProductImage, b: ProductImage) => (a.position || 0) - (b.position || 0))
-        : []
-    })) || [];
+    let productsWithSortedImages = data?.map(product => {
+      // Calculate total inventory from variants
+      const totalInventory = product.variants?.reduce(
+        (sum: number, variant: any) => sum + (variant.inventory_quantity || 0), 
+        0
+      ) || 0;
 
-    console.log(`✅ Fetched ${productsWithSortedImages.length} products with images`);
+      return {
+        ...product,
+        images: Array.isArray(product.images) 
+          ? product.images.sort((a: ProductImage, b: ProductImage) => (a.position || 0) - (b.position || 0))
+          : [],
+        total_inventory: totalInventory
+      };
+    }) || [];
+
+    // Apply client-side filters that require calculated data
+    if (options?.filters) {
+      if (options.filters.lowStock) {
+        productsWithSortedImages = productsWithSortedImages.filter(p => p.total_inventory < 5);
+      }
+      if (options.filters.noImages) {
+        productsWithSortedImages = productsWithSortedImages.filter(p => !p.images || p.images.length === 0);
+      }
+    }
+
+    console.log(`✅ Fetched ${productsWithSortedImages.length} products with images (total: ${count})`);
 
     return {
       success: true,
       data: productsWithSortedImages,
+      totalCount: count || 0,
       error: null
     };
   } catch (error) {
@@ -141,6 +182,7 @@ export async function fetchProductsWithImages(options?: {
     return {
       success: false,
       data: [],
+      totalCount: 0,
       error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
@@ -799,6 +841,152 @@ export async function uploadProductImageFiles(files: File[], productId?: string)
     return {
       success: false,
       urls: [],
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Quick toggle product status
+ */
+export async function toggleProductStatus(productId: string) {
+  try {
+    // First get current status
+    const { data: currentProduct, error: fetchError } = await supabase
+      .from('products')
+      .select('status')
+      .eq('id', productId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Toggle status
+    const newStatus = currentProduct.status === 'active' ? 'draft' : 'active';
+
+    const { data, error } = await supabase
+      .from('products')
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .eq('id', productId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      data,
+      error: null
+    };
+  } catch (error) {
+    console.error('toggleProductStatus error:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Quick duplicate product
+ */
+export async function duplicateProduct(productId: string) {
+  try {
+    // Get the original product with images
+    const { data: originalProduct, error: fetchError } = await supabase
+      .from('products')
+      .select(`
+        *,
+        images:product_images(*),
+        variants:product_variants(*)
+      `)
+      .eq('id', productId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Create new product data
+    const { id, created_at, updated_at, ...productData } = originalProduct;
+    const newProductData = {
+      ...productData,
+      name: `${productData.name} (Copy)`,
+      slug: `${productData.slug}-copy-${Date.now()}`,
+      sku: `${productData.sku}-COPY-${Date.now().toString().slice(-6)}`,
+      status: 'draft' as const
+    };
+
+    // Create the new product
+    const { data: newProduct, error: createError } = await supabase
+      .from('products')
+      .insert([newProductData])
+      .select()
+      .single();
+
+    if (createError) throw createError;
+
+    // Duplicate images if any
+    if (originalProduct.images && originalProduct.images.length > 0) {
+      const imageInserts = originalProduct.images.map((img: any) => ({
+        product_id: newProduct.id,
+        image_url: img.image_url,
+        position: img.position,
+        alt_text: img.alt_text || '',
+        image_type: img.image_type
+      }));
+
+      const { error: imagesError } = await supabase
+        .from('product_images')
+        .insert(imageInserts);
+
+      if (imagesError) {
+        console.warn('Failed to duplicate images:', imagesError);
+      }
+    }
+
+    return {
+      success: true,
+      data: newProduct,
+      error: null
+    };
+  } catch (error) {
+    console.error('duplicateProduct error:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Get recently updated products for admin
+ */
+export async function getRecentlyUpdatedProducts(limit: number = 5) {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select(`
+        id,
+        name,
+        status,
+        updated_at,
+        images:product_images!inner(image_url)
+      `)
+      .order('updated_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      data: data || [],
+      error: null
+    };
+  } catch (error) {
+    console.error('getRecentlyUpdatedProducts error:', error);
+    return {
+      success: false,
+      data: [],
       error: error instanceof Error ? error.message : 'Unknown error'
     };
   }

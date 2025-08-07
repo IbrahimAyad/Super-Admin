@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,13 +35,30 @@ import {
   Globe,
   Tag,
   X,
-  GripVertical
+  GripVertical,
+  Grid,
+  List,
+  ChevronLeft,
+  ChevronRight,
+  EyeOff,
+  Clock,
+  ImageOff
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { fetchProductsWithImages, getProductImageUrl, createProductWithImages, updateProductWithImages, Product } from '@/lib/services';
+import { 
+  fetchProductsWithImages, 
+  getProductImageUrl, 
+  createProductWithImages, 
+  updateProductWithImages, 
+  toggleProductStatus,
+  duplicateProduct,
+  getRecentlyUpdatedProducts,
+  Product 
+} from '@/lib/services';
 import { DraggableImageGallery } from './DraggableImageGallery';
 import { supabase } from '@/lib/supabase-client';
 import { testStorageBucket } from '@/lib/storage';
+import styles from './ProductManagement.module.css';
 
 interface ProductFormData {
   // Basic Info
@@ -140,13 +157,34 @@ const commonFeatures = [
 export const ProductManagement = () => {
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [pageSize] = useState(25);
+  
+  // View state
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>(() => 
+    localStorage.getItem('productViewMode') as 'table' | 'grid' || 'table'
+  );
+  
+  // Smart filters
+  const [smartFilters, setSmartFilters] = useState({
+    lowStock: false,
+    noImages: false,
+    inactive: false,
+    recentlyUpdated: false
+  });
+  
+  // Recent products
+  const [recentProducts, setRecentProducts] = useState<any[]>([]);
+  const [loadingRecent, setLoadingRecent] = useState(false);
   const [formData, setFormData] = useState<ProductFormData>({
     sku: '',
     name: '',
@@ -172,6 +210,7 @@ export const ProductManagement = () => {
 
   useEffect(() => {
     loadProducts();
+    loadRecentProducts();
     
     // Test storage bucket on component mount
     testStorageBucket().then(result => {
@@ -191,57 +230,61 @@ export const ProductManagement = () => {
   }, []);
 
   useEffect(() => {
-    filterProducts();
-  }, [products, searchTerm, categoryFilter]);
+    loadProducts();
+  }, [currentPage, searchTerm, categoryFilter, smartFilters]);
+
+  useEffect(() => {
+    localStorage.setItem('productViewMode', viewMode);
+  }, [viewMode]);
 
   const loadProducts = async () => {
     try {
       setLoading(true);
-      console.log('🔍 Loading products...');
+      console.log('🔍 Loading products with pagination...');
       
-      // Use shared service for fetching products - don't pass status to fetch all products in admin
-      const result = await fetchProductsWithImages();
-      const { data, error } = result.success 
-        ? { data: result.data, error: null } 
-        : { data: null, error: new Error(result.error || 'Failed to fetch products') };
+      const offset = (currentPage - 1) * pageSize;
+      
+      // Build filter options
+      const hasActiveSmartFilters = Object.values(smartFilters).some(Boolean);
+      const filterOptions = hasActiveSmartFilters ? { filters: smartFilters } : undefined;
+      
+      // Use shared service for fetching products with pagination
+      const result = await fetchProductsWithImages({
+        limit: pageSize,
+        offset,
+        category: categoryFilter === 'all' ? undefined : categoryFilter,
+        search: searchTerm || undefined,
+        ...filterOptions
+      });
 
-      console.log('📊 Products query result:', { data, error });
-
-      if (error) {
-        console.error('❌ Products table error:', error);
+      if (!result.success) {
+        console.error('❌ Products fetch error:', result.error);
         setProducts([]);
+        setTotalCount(0);
         toast({
-          title: "Database Setup Required",
-          description: `Error: ${error.message}`,
+          title: "Database Error",
+          description: `Error: ${result.error}`,
           variant: "destructive"
         });
         return;
       }
       
-      console.log('✅ Products loaded successfully:', data?.length || 0, 'items');
+      console.log('✅ Products loaded successfully:', result.data?.length || 0, 'items (total:', result.totalCount, ')');
       
-      // Debug: Log first product structure to see available fields
-      if (data && data.length > 0) {
-        console.log('🔍 First product structure:', {
-          id: data[0].id,
-          name: data[0].name,
-          images: data[0].images,
-          imageUrl: getProductImageUrl(data[0])
-        });
-      }
+      setProducts(result.data || []);
+      setTotalCount(result.totalCount || 0);
       
-      setProducts(data || []);
-      
-      if (!data || data.length === 0) {
+      if (result.totalCount === 0) {
         toast({
           title: "No Products Found",
-          description: "Products table is empty. Add some products to get started!",
+          description: searchTerm || hasActiveSmartFilters ? "No products match your filters" : "Products table is empty. Add some products to get started!",
         });
       }
       
     } catch (error) {
       console.error('💥 Error loading products:', error);
       setProducts([]);
+      setTotalCount(0);
       toast({
         title: "Error",
         description: "Failed to load products",
@@ -252,23 +295,107 @@ export const ProductManagement = () => {
     }
   };
 
-  const filterProducts = () => {
-    let filtered = products;
-
-    if (searchTerm) {
-      filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+  const loadRecentProducts = async () => {
+    try {
+      setLoadingRecent(true);
+      const result = await getRecentlyUpdatedProducts(5);
+      if (result.success) {
+        setRecentProducts(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading recent products:', error);
+    } finally {
+      setLoadingRecent(false);
     }
-
-    if (categoryFilter !== 'all') {
-      filtered = filtered.filter(product => product.category === categoryFilter);
-    }
-
-    setFilteredProducts(filtered);
   };
+
+  // Quick action handlers
+  const handleQuickToggle = async (productId: string) => {
+    try {
+      const result = await toggleProductStatus(productId);
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: `Product status updated to ${result.data.status}`,
+        });
+        await loadProducts(); // Reload to show changes
+      } else {
+        throw new Error(result.error || 'Failed to toggle status');
+      }
+    } catch (error) {
+      console.error('Quick toggle error:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to toggle product status',
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleQuickDuplicate = async (productId: string) => {
+    try {
+      const result = await duplicateProduct(productId);
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: `Product duplicated: ${result.data.name}`,
+        });
+        await loadProducts(); // Reload to show the new product
+        setCurrentPage(1); // Go to first page to see the new product
+      } else {
+        throw new Error(result.error || 'Failed to duplicate product');
+      }
+    } catch (error) {
+      console.error('Quick duplicate error:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to duplicate product',
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Pagination handlers
+  const totalPages = Math.ceil(totalCount / pageSize);
+  
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Smart filter handlers
+  const handleSmartFilterToggle = (filterKey: keyof typeof smartFilters) => {
+    setSmartFilters(prev => ({
+      ...prev,
+      [filterKey]: !prev[filterKey]
+    }));
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  // Calculate smart filter counts (for display)
+  const smartFilterCounts = useMemo(() => {
+    return {
+      lowStock: products.filter(p => (p as any).total_inventory < 5).length,
+      noImages: products.filter(p => !p.images || p.images.length === 0).length,
+      inactive: products.filter(p => p.status !== 'active').length,
+      recentlyUpdated: products.filter(p => {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        return new Date(p.updated_at) > sevenDaysAgo;
+      }).length
+    };
+  }, [products]);
 
   const handleSelectProduct = (productId: string) => {
     setSelectedProducts(prev =>
@@ -279,10 +406,10 @@ export const ProductManagement = () => {
   };
 
   const handleSelectAll = () => {
-    if (selectedProducts.length === filteredProducts.length) {
+    if (selectedProducts.length === products.length) {
       setSelectedProducts([]);
     } else {
-      setSelectedProducts(filteredProducts.map(p => p.id));
+      setSelectedProducts(products.map(p => p.id));
     }
   };
 
@@ -1445,13 +1572,376 @@ export const ProductManagement = () => {
     );
   }
 
+  // Component definitions
+  const PaginationControls = () => (
+    <div className="flex items-center justify-between px-2">
+      <div className="text-sm text-muted-foreground">
+        Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} products
+      </div>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handlePrevPage}
+          disabled={currentPage <= 1}
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Previous
+        </Button>
+        <div className="flex items-center gap-1">
+          {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+            const pageNum = Math.max(1, currentPage - 2) + i;
+            if (pageNum > totalPages) return null;
+            return (
+              <Button
+                key={pageNum}
+                variant={pageNum === currentPage ? "default" : "outline"}
+                size="sm"
+                onClick={() => handlePageChange(pageNum)}
+              >
+                {pageNum}
+              </Button>
+            );
+          })}
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleNextPage}
+          disabled={currentPage >= totalPages}
+        >
+          Next
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+
+  const SmartFiltersBar = () => (
+    <div className="flex flex-wrap gap-2">
+      <Button
+        variant={smartFilters.lowStock ? "default" : "outline"}
+        size="sm"
+        onClick={() => handleSmartFilterToggle('lowStock')}
+      >
+        <AlertTriangle className="h-4 w-4 mr-1" />
+        Low Stock ({smartFilterCounts.lowStock})
+      </Button>
+      <Button
+        variant={smartFilters.noImages ? "default" : "outline"}
+        size="sm"
+        onClick={() => handleSmartFilterToggle('noImages')}
+      >
+        <ImageOff className="h-4 w-4 mr-1" />
+        No Images ({smartFilterCounts.noImages})
+      </Button>
+      <Button
+        variant={smartFilters.inactive ? "default" : "outline"}
+        size="sm"
+        onClick={() => handleSmartFilterToggle('inactive')}
+      >
+        <EyeOff className="h-4 w-4 mr-1" />
+        Inactive ({smartFilterCounts.inactive})
+      </Button>
+      <Button
+        variant={smartFilters.recentlyUpdated ? "default" : "outline"}
+        size="sm"
+        onClick={() => handleSmartFilterToggle('recentlyUpdated')}
+      >
+        <Clock className="h-4 w-4 mr-1" />
+        Recent ({smartFilterCounts.recentlyUpdated})
+      </Button>
+    </div>
+  );
+
+  const RecentProductsSection = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Recently Updated Products</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {loadingRecent ? (
+          <div className="space-y-3">
+            {Array.from({ length: 3 }, (_, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <Skeleton className="h-10 w-10 rounded" />
+                <div className="space-y-1 flex-1">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {recentProducts.map((product) => (
+              <div key={product.id} className="flex items-center gap-3 p-2 rounded hover:bg-muted/50 cursor-pointer"
+                   onClick={() => openEditDialog(product)}>
+                <div className="w-10 h-10 rounded overflow-hidden bg-muted">
+                  <img
+                    src={product.images?.[0]?.image_url || '/placeholder.svg'}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm">{product.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(product.updated_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <Badge variant={product.status === 'active' ? 'default' : 'secondary'}>
+                  {product.status}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  const ProductTableView = () => (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-12">
+              <Checkbox
+                checked={selectedProducts.length === products.length && products.length > 0}
+                onCheckedChange={handleSelectAll}
+              />
+            </TableHead>
+            <TableHead className="w-20">Image</TableHead>
+            <TableHead>Product</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Price</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Stock</TableHead>
+            <TableHead className="w-32">Quick Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {products.map((product) => (
+            <TableRow key={product.id}>
+              <TableCell>
+                <Checkbox
+                  checked={selectedProducts.includes(product.id)}
+                  onCheckedChange={() => handleSelectProduct(product.id)}
+                />
+              </TableCell>
+              <TableCell>
+                <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-100">
+                  <img
+                    src={getProductImageUrl(product)}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder.svg';
+                    }}
+                  />
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="space-y-1">
+                  <p className="font-medium">{product.name}</p>
+                  <p className="text-sm text-muted-foreground">{product.description?.slice(0, 60)}...</p>
+                </div>
+              </TableCell>
+              <TableCell>{product.category}</TableCell>
+              <TableCell>${product.base_price}</TableCell>
+              <TableCell>
+                <Badge variant={product.status === 'active' ? "default" : "secondary"}>
+                  {product.status}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline">
+                  {(product as any).total_inventory || 0}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleQuickToggle(product.id)}
+                    title={product.status === 'active' ? 'Deactivate' : 'Activate'}
+                  >
+                    {product.status === 'active' ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleQuickDuplicate(product.id)}
+                    title="Duplicate"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openEditDialog(product)}
+                    title="Edit"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
+  const ProductGridView = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {products.map((product) => (
+        <Card key={product.id} className="group hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="relative">
+              <div className="aspect-square rounded-md overflow-hidden bg-gray-100 mb-3">
+                <img
+                  src={getProductImageUrl(product)}
+                  alt={product.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  loading="lazy"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/placeholder.svg';
+                  }}
+                />
+              </div>
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Checkbox
+                  checked={selectedProducts.includes(product.id)}
+                  onCheckedChange={() => handleSelectProduct(product.id)}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-medium text-sm line-clamp-2">{product.name}</h3>
+              <div className="flex items-center justify-between">
+                <p className="text-lg font-bold">${product.base_price}</p>
+                <Badge variant={product.status === 'active' ? "default" : "secondary"} className="text-xs">
+                  {product.status}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">{product.category}</p>
+              <div className="flex justify-between items-center pt-2">
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleQuickToggle(product.id)}
+                  >
+                    {product.status === 'active' ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleQuickDuplicate(product.id)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openEditDialog(product)}
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  Stock: {(product as any).total_inventory || 0}
+                </Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
+  const MobileCardsView = () => (
+    <div className={styles.mobileCards}>
+      {products.map((product) => (
+        <div key={product.id} className={styles.mobileCard}>
+          <div className={styles.mobileCardHeader}>
+            <Checkbox
+              checked={selectedProducts.includes(product.id)}
+              onCheckedChange={() => handleSelectProduct(product.id)}
+            />
+            <div className={styles.mobileCardImage}>
+              <img
+                src={getProductImageUrl(product)}
+                alt={product.name}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/placeholder.svg';
+                }}
+              />
+            </div>
+            <div className={styles.mobileCardInfo}>
+              <h3 className={styles.mobileCardTitle}>{product.name}</h3>
+              <p className={styles.mobileCardDescription}>
+                {product.description?.slice(0, 50)}...
+              </p>
+              <div className={styles.mobileCardMeta}>
+                <span className={`${styles.mobileCardBadge} text-xs px-2 py-1 rounded ${product.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                  {product.status}
+                </span>
+                <span className={`${styles.mobileCardBadge} text-xs px-2 py-1 rounded bg-blue-100 text-blue-800`}>
+                  {product.category}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className={styles.mobileCardActions}>
+            <div className={styles.mobilePrice}>${product.base_price}</div>
+            <div className={styles.mobileActionButtons}>
+              <button
+                className={styles.mobileActionButton}
+                onClick={() => handleQuickToggle(product.id)}
+                title={product.status === 'active' ? 'Deactivate' : 'Activate'}
+              >
+                {product.status === 'active' ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+              <button
+                className={styles.mobileActionButton}
+                onClick={() => handleQuickDuplicate(product.id)}
+                title="Duplicate"
+              >
+                <Copy size={16} />
+              </button>
+              <button
+                className={styles.mobileActionButton}
+                onClick={() => openEditDialog(product)}
+                title="Edit"
+              >
+                <Edit2 size={16} />
+              </button>
+            </div>
+          </div>
+          <div className="text-xs text-gray-500 mt-2 flex justify-between">
+            <span>Stock: {(product as any).total_inventory || 0}</span>
+            <span>Updated: {new Date(product.updated_at).toLocaleDateString()}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Product Management</h2>
-          <p className="text-muted-foreground">Manage your product catalog and inventory</p>
+          <p className="text-muted-foreground">Manage your product catalog and inventory ({totalCount} products)</p>
         </div>
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
           <DialogTrigger asChild>
@@ -1469,13 +1959,18 @@ export const ProductManagement = () => {
         </Dialog>
       </div>
 
+      {/* Recent Products Section - Only show on desktop */}
+      <div className="hidden lg:block">
+        <RecentProductsSection />
+      </div>
 
-      {/* Filters and Search */}
+      {/* Main Products Section */}
       <Card>
         <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1">
-              <div className="relative flex-1 sm:max-w-sm">
+          <div className="space-y-4">
+            {/* Search and Filters */}
+            <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+              <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search products..."
@@ -1484,164 +1979,100 @@ export const ProductManagement = () => {
                   className="pl-9"
                 />
               </div>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map(category => (
-                    <SelectItem key={category} value={category}>{category}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Bulk Actions */}
-          {selectedProducts.length > 0 && (
-            <div className="flex items-center gap-2 mb-4 p-3 bg-muted/50 rounded-lg">
-              <span className="text-sm font-medium">{selectedProducts.length} selected</span>
-              <div className="flex gap-2 ml-auto">
-                <Button size="sm" variant="outline" onClick={() => handleBulkAction('activate')}>
-                  Activate
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => handleBulkAction('deactivate')}>
-                  Deactivate
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => handleBulkAction('feature')}>
-                  Feature
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => handleBulkAction('unfeature')}>
-                  Unfeature
-                </Button>
-                <Button size="sm" variant="destructive" onClick={() => handleBulkAction('delete')}>
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Delete
-                </Button>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map(category => (
+                      <SelectItem key={category} value={category}>{category}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={viewMode === 'table' ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode('table')}
+                    className="hidden sm:flex"
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'grid' ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode('grid')}
+                    className="hidden sm:flex"
+                  >
+                    <Grid className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
-          )}
 
-          {/* Products Table */}
-          <div className="overflow-x-auto">
-            <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">
-                  <Checkbox
-                    checked={selectedProducts.length === filteredProducts.length && filteredProducts.length > 0}
-                    onCheckedChange={handleSelectAll}
-                  />
-                </TableHead>
-                <TableHead className="w-20">Image</TableHead>
-                <TableHead>Product</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Stock</TableHead>
-                <TableHead className="w-24">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredProducts.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedProducts.includes(product.id)}
-                      onCheckedChange={() => handleSelectProduct(product.id)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-100">
-                      <img
-                        src={getProductImageUrl(product)}
-                        alt={product.name}
-                        className="w-full h-full object-cover transition-opacity duration-300"
-                        loading="lazy"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          console.warn(`Image failed to load for ${product.name}, using placeholder`);
-                          target.src = '/placeholder.svg';
-                        }}
-                        onLoad={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.opacity = '1';
-                        }}
-                        style={{ opacity: '0' }}
-                      />
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <p className="font-medium">{product.name}</p>
-                      <p className="text-sm text-muted-foreground">{product.description?.slice(0, 60)}...</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>{product.category}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{product.product_type}</Badge>
-                  </TableCell>
-                  <TableCell>${product.base_price}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Badge variant={product.status === 'active' ? "default" : "secondary"}>
-                        {product.status}
-                      </Badge>
-                      {product.is_bundleable && (
-                        <Badge variant="outline">Bundleable</Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">
-                      {(product as any).total_inventory || 0}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openEditDialog(product)}>
-                          <Edit2 className="h-4 w-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Copy className="h-4 w-4 mr-2" />
-                          Duplicate
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => handleDeleteProduct(product.id)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          </div>
-
-          {filteredProducts.length === 0 && (
-            <div className="text-center py-12">
-              <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium">No products found</h3>
-              <p className="text-muted-foreground">Try adjusting your search or filters</p>
+            {/* Smart Filters */}
+            <div className={`${styles.smartFiltersWrap || ''}`}>
+              <SmartFiltersBar />
             </div>
-          )}
+
+            {/* Bulk Actions */}
+            {selectedProducts.length > 0 && (
+              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                <span className="text-sm font-medium">{selectedProducts.length} selected</span>
+                <div className="flex gap-2 ml-auto">
+                  <Button size="sm" variant="outline" onClick={() => handleBulkAction('activate')}>
+                    Activate
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleBulkAction('deactivate')}>
+                    Deactivate
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => handleBulkAction('delete')}>
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Products Display */}
+            {loading ? (
+              <div className="space-y-4">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <Skeleton className="h-16 w-16 rounded" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-48" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : products.length === 0 ? (
+              <div className="text-center py-12">
+                <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium">No products found</h3>
+                <p className="text-muted-foreground">Try adjusting your search or filters</p>
+              </div>
+            ) : (
+              <>
+                {/* Desktop/Tablet Views */}
+                <div className="hidden sm:block">
+                  {viewMode === 'table' ? <ProductTableView /> : <ProductGridView />}
+                </div>
+                
+                {/* Mobile View - Always use cards */}
+                <div className="sm:hidden">
+                  <MobileCardsView />
+                </div>
+                
+                <div className={`pt-4 ${styles.paginationMobile || ''}`}>
+                  <PaginationControls />
+                </div>
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -1652,7 +2083,7 @@ export const ProductManagement = () => {
             <CardTitle className="text-sm font-medium">Total Products</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{products.length}</div>
+            <div className="text-2xl font-bold">{totalCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -1665,19 +2096,21 @@ export const ProductManagement = () => {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Bundleable Products</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{products.filter(p => p.is_bundleable).length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-destructive">
-              {products.filter(p => (p as any).total_inventory < 5).length}
+              {smartFilterCounts.lowStock}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">No Images</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">
+              {smartFilterCounts.noImages}
             </div>
           </CardContent>
         </Card>
