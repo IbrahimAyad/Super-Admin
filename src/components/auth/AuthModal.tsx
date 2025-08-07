@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
+import { TwoFactorLogin } from './TwoFactorLogin';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 
@@ -16,9 +18,10 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ open, onOpenChange, defaultTab = 'signin' }: AuthModalProps) {
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { signIn, signUp, signInWithGoogle, twoFactorRequired, clearTwoFactorState } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -39,9 +42,17 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'signin' }: AuthMod
     setLoading(true);
 
     try {
-      await signIn(formData.email, formData.password);
-      onOpenChange(false);
-      toast.success('Welcome back!');
+      const result = await signIn(formData.email, formData.password, rememberMe);
+      
+      if (result.requiresTwoFactor) {
+        toast.success('Please enter your 2FA code');
+        // Stay in modal, 2FA component will be shown
+      } else if (result.success) {
+        onOpenChange(false);
+        toast.success('Welcome back!');
+      } else {
+        toast.error(result.error || 'Failed to sign in');
+      }
     } catch (error: any) {
       toast.error(error.message || 'Failed to sign in');
     } finally {
@@ -87,15 +98,39 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'signin' }: AuthMod
     }
   };
 
+  const handleTwoFactorSuccess = () => {
+    onOpenChange(false);
+    toast.success('Welcome back!');
+  };
+
+  const handleTwoFactorBack = () => {
+    clearTwoFactorState();
+    // Reset form for fresh login
+    setFormData({
+      email: '',
+      password: '',
+      confirmPassword: '',
+      firstName: '',
+      lastName: ''
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px]">
-        <DialogHeader>
-          <DialogTitle>Welcome to KCT Menswear</DialogTitle>
-          <DialogDescription>
-            Sign in to your account or create a new one to access your cart, wishlist, and order history.
-          </DialogDescription>
-        </DialogHeader>
+        {twoFactorRequired ? (
+          <TwoFactorLogin
+            onSuccess={handleTwoFactorSuccess}
+            onBack={handleTwoFactorBack}
+          />
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>Welcome to KCT Menswear</DialogTitle>
+              <DialogDescription>
+                Sign in to your account or create a new one to access your cart, wishlist, and order history.
+              </DialogDescription>
+            </DialogHeader>
 
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
@@ -146,6 +181,17 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'signin' }: AuthMod
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="remember-me"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                />
+                <Label htmlFor="remember-me" className="text-sm font-normal">
+                  Remember me for 30 days
+                </Label>
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
@@ -325,6 +371,8 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'signin' }: AuthMod
             </Button>
           </TabsContent>
         </Tabs>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

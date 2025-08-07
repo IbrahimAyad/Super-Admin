@@ -2,18 +2,28 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, signUp, signIn, signInWithGoogle, signOut, getProfile, updateProfile, onAuthStateChange } from '@/lib/services';
 import type { UserProfile } from '@/lib/services';
+import { verifyTwoFactorLogin, getAdminSecurityStatus, handleFailedLogin, resetFailedLoginAttempts } from '@/lib/services/twoFactor';
+import { createAdminSession, endAdminSession, getCurrentAdminSession, initializeSessionManager } from '@/lib/services/sessionManager';
+import type { AdminSession } from '@/lib/services/sessionManager';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
+  adminSession: AdminSession | null;
   loading: boolean;
+  twoFactorRequired: boolean;
+  pendingUserId: string | null;
   signUp: (email: string, password: string, userData?: Partial<UserProfile>) => Promise<any>;
-  signIn: (email: string, password: string) => Promise<any>;
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<any>;
   signInWithGoogle: () => Promise<any>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   refreshProfile: () => Promise<void>;
+  verifyTwoFactor: (token: string) => Promise<{ success: boolean; error?: string }>;
+  clearTwoFactorState: () => void;
+  refreshAdminSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,17 +32,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [adminSession, setAdminSession] = useState<AdminSession | null>(null);
   const [loading, setLoading] = useState(true);
+  const [twoFactorRequired, setTwoFactorRequired] = useState(false);
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+  const [rememberMe, setRememberMe] = useState(false);
 
   useEffect(() => {
     console.log('AuthContext: Initializing auth state check');
+    
+    // Initialize session management
+    initializeSessionManager();
+    
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       console.log('AuthContext: Initial session check', { session: !!session, user: session?.user?.email });
       setSession(session);
       setUser(session?.user ?? null);
+      
       if (session?.user) {
-        loadProfile(session.user.id);
+        await loadProfile(session.user.id);
+        await loadAdminSession();
       } else {
         setLoading(false);
       }
@@ -48,8 +68,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (session?.user) {
         await loadProfile(session.user.id);
+        if (event === 'SIGNED_IN') {
+          await loadAdminSession();
+        }
       } else {
         setProfile(null);
+        setAdminSession(null);
+        setTwoFactorRequired(false);
+        setPendingUserId(null);
         setLoading(false);
       }
     });
@@ -85,14 +111,82 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loadAdminSession = async () => {
+    try {
+      const result = await getCurrentAdminSession();
+      if (result.success && result.session) {
+        setAdminSession(result.session);
+      } else {
+        setAdminSession(null);
+      }
+    } catch (error) {
+      console.error('Error loading admin session:', error);
+      setAdminSession(null);
+    }
+  };
+
+  const refreshAdminSession = async () => {
+    await loadAdminSession();
+  };
+
   const handleSignUp = async (email: string, password: string, userData?: Partial<UserProfile>) => {
     const result = await signUp(email, password, userData);
     return result.success ? result.data : result;
   };
 
-  const handleSignIn = async (email: string, password: string) => {
-    const result = await signIn(email, password);
-    return result.success ? result.data : result;
+  const handleSignIn = async (email: string, password: string, rememberMeOption: boolean = false) => {
+    setRememberMe(rememberMeOption);
+    setLoading(true);
+    
+    try {
+      const result = await signIn(email, password);
+      
+      if (!result.success) {
+        // Handle failed login attempt
+        if (result.data?.user?.id) {
+          await handleFailedLogin(result.data.user.id);
+        }
+        return result;
+      }
+
+      const userId = result.data?.user?.id;
+      if (!userId) {
+        return { success: false, error: 'Invalid user data' };
+      }
+
+      // Check if user needs 2FA
+      const securityStatus = await getAdminSecurityStatus(userId);
+      if (securityStatus.success && securityStatus.data?.two_factor_enabled) {
+        // Store pending user ID and require 2FA
+        setPendingUserId(userId);
+        setTwoFactorRequired(true);
+        
+        // Sign out from Supabase auth temporarily
+        await supabase.auth.signOut();
+        
+        return {
+          success: true,
+          requiresTwoFactor: true,
+          message: 'Two-factor authentication required'
+        };
+      }
+
+      // No 2FA required, create admin session directly
+      await createAdminSessionForUser(userId);
+      
+      // Reset failed login attempts on successful login
+      await resetFailedLoginAttempts(userId);
+      
+      return result;
+    } catch (error) {
+      console.error('Error during sign in:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Sign in failed'
+      };
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSignInWithGoogle = async () => {
@@ -101,8 +195,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    setProfile(null);
+    try {
+      // End admin session first
+      if (adminSession) {
+        await endAdminSession(adminSession.session_token);
+      }
+      
+      // Then sign out from Supabase
+      await signOut();
+      
+      // Clear all state
+      setProfile(null);
+      setAdminSession(null);
+      setTwoFactorRequired(false);
+      setPendingUserId(null);
+      
+      toast.success('Signed out successfully');
+    } catch (error) {
+      console.error('Error during sign out:', error);
+      toast.error('Sign out failed');
+    }
   };
 
   const handleUpdateProfile = async (updates: Partial<UserProfile>) => {
@@ -118,17 +230,110 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await loadProfile(user.id);
   };
 
+  const verifyTwoFactor = async (token: string): Promise<{ success: boolean; error?: string }> => {
+    if (!pendingUserId) {
+      return { success: false, error: 'No pending authentication' };
+    }
+
+    try {
+      setLoading(true);
+      
+      // Verify 2FA token
+      const result = await verifyTwoFactorLogin(pendingUserId, token);
+      
+      if (!result.success) {
+        // Handle failed 2FA attempt
+        await handleFailedLogin(pendingUserId);
+        return result;
+      }
+
+      // 2FA verified, now complete the login process
+      // Re-authenticate with Supabase
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        // If no valid Supabase session, we need to re-authenticate
+        return {
+          success: false,
+          error: 'Session expired, please login again'
+        };
+      }
+
+      // Create admin session
+      await createAdminSessionForUser(pendingUserId);
+      
+      // Reset failed login attempts
+      await resetFailedLoginAttempts(pendingUserId);
+      
+      // Clear 2FA state
+      setTwoFactorRequired(false);
+      setPendingUserId(null);
+      
+      toast.success('Two-factor authentication successful');
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error verifying 2FA:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Verification failed'
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearTwoFactorState = () => {
+    setTwoFactorRequired(false);
+    setPendingUserId(null);
+  };
+
+  const createAdminSessionForUser = async (userId: string) => {
+    try {
+      // Get admin user data
+      const { data: adminUser, error } = await supabase
+        .from('admin_users')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .single();
+
+      if (error || !adminUser) {
+        throw new Error('Admin user not found');
+      }
+
+      // Create admin session
+      const sessionResult = await createAdminSession(
+        userId,
+        adminUser.id,
+        rememberMe
+      );
+
+      if (sessionResult.success && sessionResult.session) {
+        setAdminSession(sessionResult.session);
+      }
+    } catch (error) {
+      console.error('Error creating admin session:', error);
+      toast.error('Failed to create secure session');
+    }
+  };
+
   const value = {
     user,
     session,
     profile,
+    adminSession,
     loading,
+    twoFactorRequired,
+    pendingUserId,
     signUp: handleSignUp,
     signIn: handleSignIn,
     signInWithGoogle: handleSignInWithGoogle,
     signOut: handleSignOut,
     updateProfile: handleUpdateProfile,
     refreshProfile,
+    verifyTwoFactor,
+    clearTwoFactorState,
+    refreshAdminSession,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
