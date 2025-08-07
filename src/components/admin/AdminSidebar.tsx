@@ -55,6 +55,7 @@ const navigationItems = [
       { title: "Collections", url: "/admin/collections", icon: Layers, badge: "New" },
       { title: "Orders", url: "/admin/orders", icon: ShoppingCart, badge: "12" },
       { title: "Stripe Orders", url: "/admin/stripe-orders", icon: CreditCard, badge: "New" },
+      { title: "Financial Management", url: "/admin/financial", icon: DollarSign, badge: "New" },
       { title: "Data Management", url: "/admin/data", icon: Database, badge: "Real Data" },
       { title: "Customers", url: "/admin/customers", icon: Users, badge: null },
       { title: "Inventory", url: "/admin/inventory", icon: Database, badge: null },

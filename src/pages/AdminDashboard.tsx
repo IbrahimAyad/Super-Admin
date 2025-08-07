@@ -62,6 +62,7 @@ import { CustomerLifetimeValue } from '@/components/admin/CustomerLifetimeValue'
 import { ABTestingTools } from '@/components/admin/ABTestingTools';
 import { InventoryForecasting } from '@/components/admin/InventoryForecasting';
 import { RecommendationEngine } from '@/components/ai/RecommendationEngine';
+import { FinancialManagement } from '@/components/admin/FinancialManagement';
 import AdminOrderManagement from './AdminOrderManagement';
 
 const AdminDashboard = () => {
@@ -139,6 +140,8 @@ const AdminDashboard = () => {
         return <AdminOrderManagement />;
       case '/admin/stripe-orders':
         return <StripeOrderManagement />;
+      case '/admin/financial':
+        return <FinancialManagement />;
       case '/admin/data':
         return <DataImportExport />;
       case '/admin/data-management':
