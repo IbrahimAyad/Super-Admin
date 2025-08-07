@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { KCTMenswearAPI, CartItemDB } from '@/lib/supabase';
+import { CartItemDB, getCart, addToCart, updateCartItem, removeFromCart, clearCart as clearCartService, transferGuestCart } from '@/lib/shared/supabase-service';
 import { useAuth } from './AuthContext';
 import { toast } from 'sonner';
 
@@ -45,8 +45,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const loadCart = async () => {
     setLoading(true);
     try {
-      const cartItems = await KCTMenswearAPI.getCart(user?.id, sessionId);
-      setItems(cartItems);
+      const result = await getCart(user?.id, sessionId);
+      if (result.success) {
+        setItems(result.data);
+      } else {
+        throw new Error(result.error || 'Failed to load cart');
+      }
     } catch (error) {
       console.error('Error loading cart:', error);
       toast.error('Failed to load cart');
@@ -57,7 +61,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const transferGuestCart = async () => {
     try {
-      await KCTMenswearAPI.transferGuestCart(sessionId, user!.id);
+      const result = await transferGuestCart(sessionId, user!.id);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to transfer cart');
+      }
       await loadCart(); // Reload cart after transfer
     } catch (error) {
       console.error('Error transferring guest cart:', error);
@@ -82,7 +89,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         await updateItem(existingItem.id, existingItem.quantity + quantity, customizations);
       } else {
         // Add new item
-        await KCTMenswearAPI.addToCart({
+        const result = await addToCart({
           product_id: productId,
           variant_id: variantId,
           quantity,
@@ -90,6 +97,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           user_id: user?.id,
           session_id: user?.id ? undefined : sessionId
         });
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to add item');
+        }
         await loadCart();
         toast.success('Item added to cart');
       }
@@ -106,7 +116,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      await KCTMenswearAPI.updateCartItem(itemId, { quantity, customizations });
+      const result = await updateCartItem(itemId, { quantity, customizations });
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update item');
+      }
       await loadCart();
     } catch (error) {
       console.error('Error updating cart item:', error);
@@ -116,7 +129,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const removeItem = async (itemId: string) => {
     try {
-      await KCTMenswearAPI.removeFromCart(itemId);
+      const result = await removeFromCart(itemId);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to remove item');
+      }
       await loadCart();
       toast.success('Item removed from cart');
     } catch (error) {
@@ -127,7 +143,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = async () => {
     try {
-      await KCTMenswearAPI.clearCart(user?.id, sessionId);
+      const result = await clearCartService(user?.id, sessionId);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to clear cart');
+      }
       setItems([]);
       toast.success('Cart cleared');
     } catch (error) {

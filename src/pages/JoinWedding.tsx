@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '@/components/auth/AuthModal';
-import { KCTMenswearAPI, type Wedding } from '@/lib/supabase';
+import { getWeddingByCode, addWeddingMember, type Wedding } from '@/lib/shared/supabase-service';
 import { useToast } from '@/hooks/use-toast';
 import { Heart, Users, Calendar, MapPin, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
@@ -59,7 +59,11 @@ const JoinWedding = () => {
     if (!code) return;
     
     try {
-      const weddingData = await KCTMenswearAPI.getWeddingByCode(code);
+      const result = await getWeddingByCode(code);
+      if (!result.success) {
+        throw new Error(result.error || 'Wedding not found');
+      }
+      const weddingData = result.data;
       setWedding(weddingData);
     } catch (error: any) {
       toast({
@@ -92,12 +96,16 @@ const JoinWedding = () => {
 
     setSubmitting(true);
     try {
-      await KCTMenswearAPI.addWeddingMember(wedding.id, {
+      const result = await addWeddingMember(wedding.id, {
         role: formData.role,
         name: formData.name,
         email: formData.email,
         phone: formData.phone
       });
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to join wedding');
+      }
 
       toast({
         title: "Successfully Joined!",

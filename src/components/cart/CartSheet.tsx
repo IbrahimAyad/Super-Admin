@@ -15,7 +15,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { CartItemCard } from './CartItemCard';
 import { ShoppingBag, Trash2 } from 'lucide-react';
-import { KCTMenswearAPI } from '@/lib/supabase';
+import { createCheckout } from '@/lib/shared/supabase-service';
 import { toast } from 'sonner';
 
 interface CartSheetProps {
@@ -38,14 +38,18 @@ export function CartSheet({ children }: CartSheetProps) {
         customization: item.customizations
       }));
 
-      const checkoutData = await KCTMenswearAPI.createCheckout(cartItems, {
+      const result = await createCheckout(cartItems, {
         success_url: `${window.location.origin}/order/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${window.location.origin}`,
         customer_email: user?.email
       });
 
-      if (checkoutData.url) {
-        window.location.href = checkoutData.url;
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create checkout');
+      }
+
+      if (result.data.url) {
+        window.location.href = result.data.url;
       }
     } catch (error) {
       console.error('Checkout error:', error);

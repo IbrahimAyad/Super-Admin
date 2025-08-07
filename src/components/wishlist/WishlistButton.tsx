@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { KCTMenswearAPI } from '@/lib/supabase';
+import { addToWishlist, removeFromWishlist } from '@/lib/shared/supabase-service';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -41,7 +41,10 @@ export function WishlistButton({
     setLoading(true);
     try {
       if (inWishlist) {
-        await KCTMenswearAPI.removeFromWishlist(user.id, productId, variantId);
+        const result = await removeFromWishlist(user.id, productId, variantId);
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to remove from wishlist');
+        }
         setInWishlist(false);
         onWishlistChange?.(false);
         toast({
@@ -49,7 +52,10 @@ export function WishlistButton({
           description: "Item removed from your wishlist.",
         });
       } else {
-        await KCTMenswearAPI.addToWishlist(user.id, productId, variantId);
+        const result = await addToWishlist(user.id, productId, variantId);
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to add to wishlist');
+        }
         setInWishlist(true);
         onWishlistChange?.(true);
         toast({

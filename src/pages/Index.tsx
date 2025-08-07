@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ShoppingBag, Shirt, Package, Zap, Heart, Crown, BarChart3 } from 'lucide-react';
-import { KCTMenswearAPI, type Product } from '@/lib/supabase';
+import { syncStripeProducts, type Product } from '@/lib/shared/supabase-service';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -46,11 +46,15 @@ const Index = () => {
         description: "Syncing products from Stripe...",
       });
 
-      const result = await KCTMenswearAPI.syncStripeProducts();
+      const result = await syncStripeProducts();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to sync products');
+      }
       
       toast({
         title: "Sync Complete",
-        description: `Synced ${result.synced_products} products from Stripe.`,
+        description: `Synced ${result.data?.synced_products || 0} products from Stripe.`,
       });
     } catch (error: any) {
       toast({

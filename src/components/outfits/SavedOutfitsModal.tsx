@@ -24,7 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trash2, Plus, Package, Edit3, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
-import { KCTMenswearAPI, type SavedOutfit } from '@/lib/supabase';
+import { getSavedOutfits, saveOutfit, deleteOutfit, type SavedOutfit } from '@/lib/shared/supabase-service';
 import { useToast } from '@/hooks/use-toast';
 
 interface SavedOutfitsModalProps {
@@ -55,8 +55,12 @@ export function SavedOutfitsModal({ children }: SavedOutfitsModalProps) {
     
     setLoading(true);
     try {
-      const userOutfits = await KCTMenswearAPI.getSavedOutfits(user.id);
-      setOutfits(userOutfits);
+      const result = await getSavedOutfits(user.id);
+      if (result.success) {
+        setOutfits(result.data);
+      } else {
+        throw new Error(result.error || 'Failed to load outfits');
+      }
     } catch (error) {
       console.error('Error loading outfits:', error);
       toast({
@@ -86,12 +90,16 @@ export function SavedOutfitsModal({ children }: SavedOutfitsModalProps) {
         quantity: item.quantity,
       }));
 
-      await KCTMenswearAPI.saveOutfit(user.id, {
+      const result = await saveOutfit(user.id, {
         name: formData.name.trim(),
         items: outfitItems,
         occasion: formData.occasion || undefined,
         is_public: formData.is_public,
       });
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to save outfit');
+      }
 
       await loadOutfits();
       setShowCreateForm(false);
@@ -113,7 +121,10 @@ export function SavedOutfitsModal({ children }: SavedOutfitsModalProps) {
 
   const handleDeleteOutfit = async (outfitId: string) => {
     try {
-      await KCTMenswearAPI.deleteOutfit(outfitId);
+      const result = await deleteOutfit(outfitId);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to delete outfit');
+      }
       setOutfits(prev => prev.filter(o => o.id !== outfitId));
       
       toast({

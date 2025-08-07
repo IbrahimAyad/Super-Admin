@@ -22,7 +22,7 @@ import {
   Download,
   Bell
 } from 'lucide-react';
-import { KCTMenswearAPI } from '@/lib/supabase';
+// API imports handled by individual components
 import { useToast } from '@/hooks/use-toast';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';

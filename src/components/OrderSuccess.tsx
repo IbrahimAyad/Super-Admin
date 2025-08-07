@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle } from 'lucide-react';
-import { KCTMenswearAPI, type Order } from '@/lib/supabase';
+import { getOrder, type Order } from '@/lib/shared/supabase-service';
 import { useToast } from '@/hooks/use-toast';
 
 export function OrderSuccess() {
@@ -26,8 +26,12 @@ export function OrderSuccess() {
 
     try {
       setLoading(true);
-      const orderData = await KCTMenswearAPI.getOrder({ session_id: sessionId });
-      setOrder(orderData);
+      const result = await getOrder({ session_id: sessionId });
+      if (result.success) {
+        setOrder(result.data);
+      } else {
+        throw new Error(result.error || 'Failed to load order');
+      }
     } catch (error: any) {
       console.error('Error loading order:', error);
       toast({

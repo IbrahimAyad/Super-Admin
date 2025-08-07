@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { KCTMenswearAPI, type CartItem } from '@/lib/supabase';
+import { createCheckout, type CartItem } from '@/lib/shared/supabase-service';
 import { useToast } from '@/hooks/use-toast';
 
 interface CheckoutButtonProps {
@@ -32,15 +32,19 @@ export function CheckoutButton({
     try {
       setLoading(true);
       
-      const response = await KCTMenswearAPI.createCheckout(items, {
+      const result = await createCheckout(items, {
         customer_email: customerEmail,
         success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${window.location.origin}/cart`,
       });
 
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create checkout');
+      }
+
       // Open Stripe checkout in a new tab
-      if (response.url) {
-        window.open(response.url, '_blank');
+      if (result.data.url) {
+        window.open(result.data.url, '_blank');
       }
     } catch (error: any) {
       console.error('Checkout error:', error);

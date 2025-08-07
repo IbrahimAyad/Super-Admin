@@ -11,7 +11,7 @@ import { CartSheet } from '@/components/cart/CartSheet';
 import { WishlistSheet } from '@/components/wishlist/WishlistSheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { KCTMenswearAPI, type Wedding } from '@/lib/supabase';
+import { getUserWeddings, getAllWeddings, getWeddingStatistics, getWeddingByCode, type Wedding } from '@/lib/shared/supabase-service';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, Users, MapPin, Plus, Crown, Heart, Shield, BarChart, CheckCircle, ShoppingBag } from 'lucide-react';
 import { format } from 'date-fns';
@@ -54,7 +54,11 @@ const WeddingsPage = () => {
   const loadUserWeddings = async () => {
     try {
       if (user?.email) {
-        const userWeddings = await KCTMenswearAPI.getUserWeddings(user.email);
+        const result = await getUserWeddings(user.email);
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to load user weddings');
+        }
+        const userWeddings = result.data;
         setWeddings(userWeddings || []);
       }
     } catch (error: any) {
@@ -70,7 +74,11 @@ const WeddingsPage = () => {
 
   const loadAllWeddings = async () => {
     try {
-      const allWeddingsData = await KCTMenswearAPI.getAllWeddings();
+      const result = await getAllWeddings();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to load weddings');
+      }
+      const allWeddingsData = result.data;
       setAllWeddings(allWeddingsData || []);
     } catch (error: any) {
       toast({
@@ -83,7 +91,11 @@ const WeddingsPage = () => {
 
   const loadStatistics = async () => {
     try {
-      const stats = await KCTMenswearAPI.getWeddingStatistics();
+      const result = await getWeddingStatistics();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to load statistics');
+      }
+      const stats = result.data;
       setStatistics(stats);
     } catch (error: any) {
       toast({
@@ -106,7 +118,11 @@ const WeddingsPage = () => {
 
     setJoinLoading(true);
     try {
-      const wedding = await KCTMenswearAPI.getWeddingByCode(joinCode.toUpperCase());
+      const result = await getWeddingByCode(joinCode.toUpperCase());
+      if (!result.success) {
+        throw new Error(result.error || 'Wedding not found');
+      }
+      const wedding = result.data;
       if (wedding) {
         // Redirect to join page
         window.location.href = `/weddings/${joinCode.toUpperCase()}/join`;

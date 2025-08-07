@@ -14,7 +14,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Crown, Users, MapPin, Palette } from 'lucide-react';
 import { format } from 'date-fns';
-import { KCTMenswearAPI } from '@/lib/supabase';
+import { createWedding } from '@/lib/shared/supabase-service';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -52,7 +52,7 @@ export function CreateWeddingModal({ children }: CreateWeddingModalProps) {
 
     setLoading(true);
     try {
-      const wedding = await KCTMenswearAPI.createWedding({
+      const result = await createWedding({
         couple_names: formData.couple_names,
         event_date: formData.event_date.toISOString().split('T')[0],
         venue_name: formData.venue_name || undefined,
@@ -62,11 +62,15 @@ export function CreateWeddingModal({ children }: CreateWeddingModalProps) {
         coordinator_phone: formData.coordinator_phone || undefined,
       });
 
-      setWeddingCode(wedding.wedding_code);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create wedding');
+      }
+
+      setWeddingCode(result.data.wedding_code);
       
       toast({
         title: "Wedding Created!",
-        description: `Your wedding code is ${wedding.wedding_code}. Share this with your party members.`,
+        description: `Your wedding code is ${result.data.wedding_code}. Share this with your party members.`,
       });
     } catch (error: any) {
       console.error('Error creating wedding:', error);

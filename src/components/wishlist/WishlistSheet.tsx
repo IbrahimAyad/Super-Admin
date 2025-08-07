@@ -12,7 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { KCTMenswearAPI, type WishlistItem } from '@/lib/supabase';
+import { getWishlist, removeFromWishlist as removeFromWishlistService, type WishlistItem } from '@/lib/shared/supabase-service';
 import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/contexts/CartContext';
 import { getProductImageUrl } from '@/lib/shared/supabase-products';
@@ -39,8 +39,12 @@ export function WishlistSheet({ children }: WishlistSheetProps) {
     
     setLoading(true);
     try {
-      const items = await KCTMenswearAPI.getWishlist(user.id);
-      setWishlistItems(items);
+      const result = await getWishlist(user.id);
+      if (result.success) {
+        setWishlistItems(result.data);
+      } else {
+        throw new Error(result.error || 'Failed to load wishlist');
+      }
     } catch (error) {
       console.error('Error loading wishlist:', error);
       toast({
@@ -57,7 +61,10 @@ export function WishlistSheet({ children }: WishlistSheetProps) {
     if (!user) return;
 
     try {
-      await KCTMenswearAPI.removeFromWishlist(user.id, item.product_id, item.variant_id);
+      const result = await removeFromWishlistService(user.id, item.product_id, item.variant_id);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to remove from wishlist');
+      }
       setWishlistItems(prev => prev.filter(i => i.id !== item.id));
       toast({
         title: "Removed from wishlist",

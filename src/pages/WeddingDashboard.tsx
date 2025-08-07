@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
-import { KCTMenswearAPI, type Wedding, type WeddingMember } from '@/lib/supabase';
+import { getWeddingByCode, getWeddingMembers, type Wedding, type WeddingMember } from '@/lib/shared/supabase-service';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Calendar, 
@@ -44,10 +44,18 @@ const WeddingDashboard = () => {
     if (!code) return;
     
     try {
-      const weddingData = await KCTMenswearAPI.getWeddingByCode(code);
+      const result = await getWeddingByCode(code);
+      if (!result.success) {
+        throw new Error(result.error || 'Wedding not found');
+      }
+      const weddingData = result.data;
       if (weddingData) {
         setWedding(weddingData);
-        const membersData = await KCTMenswearAPI.getWeddingMembers(weddingData.id);
+        const membersResult = await getWeddingMembers(weddingData.id);
+        if (!membersResult.success) {
+          throw new Error(membersResult.error || 'Failed to load wedding members');
+        }
+        const membersData = membersResult.data;
         setMembers(membersData);
       }
     } catch (error: any) {
