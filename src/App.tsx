@@ -20,6 +20,7 @@ import TestProductImages from "./pages/TestProductImages";
 import SmartSizingManager from "./components/admin/SmartSizingManager";
 import { autoDebugIfNeeded } from "@/utils/deploymentDebug";
 import AdminDashboardDirect from "./pages/AdminDashboardDirect";
+import EmergencyAdmin from "./pages/EmergencyAdmin";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,8 @@ const App = () => (
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/admin-direct" element={<AdminDashboardDirect />} />
+              <Route path="/emergency" element={<EmergencyAdmin />} />
+              <Route path="/emergency/*" element={<EmergencyAdmin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
