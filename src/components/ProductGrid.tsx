@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { KCTMenswearAPI, type Product } from '@/lib/supabase';
+import { fetchProductsWithImages, getProductImageUrl, type Product } from '@/lib/shared/supabase-products';
 import { useToast } from '@/hooks/use-toast';
 import { WishlistButton } from '@/components/wishlist/WishlistButton';
 import { getProductImageUrl } from '@/lib/shared/supabase-products';
@@ -31,7 +31,7 @@ export function ProductGrid({ category, productType = 'all', onAddToCart }: Prod
   const loadProducts = async (offset = 0) => {
     try {
       setLoading(true);
-      const response = await KCTMenswearAPI.getProducts({
+      const result = await fetchProductsWithImages({
         category,
         product_type: productType,
         limit: 20,
