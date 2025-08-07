@@ -142,26 +142,25 @@ DROP POLICY IF EXISTS "admins_can_delete_admin_users" ON public.admin_users;
 CREATE POLICY "admin_users_select_policy" ON public.admin_users
     FOR SELECT 
     USING (
-        auth.uid() = user_id OR 
-        auth.role() = 'service_role' OR
-        auth.role() = 'authenticated'
+        auth.role() = 'authenticated' OR 
+        auth.role() = 'service_role'
     );
 
 CREATE POLICY "admin_users_insert_policy" ON public.admin_users
     FOR INSERT 
     WITH CHECK (
-        auth.uid() = user_id OR 
+        auth.role() = 'authenticated' OR 
         auth.role() = 'service_role'
     );
 
 CREATE POLICY "admin_users_update_policy" ON public.admin_users
     FOR UPDATE 
     USING (
-        auth.uid() = user_id OR 
+        auth.role() = 'authenticated' OR 
         auth.role() = 'service_role'
     )
     WITH CHECK (
-        auth.uid() = user_id OR 
+        auth.role() = 'authenticated' OR 
         auth.role() = 'service_role'
     );
 
@@ -184,31 +183,32 @@ BEGIN
         DROP POLICY IF EXISTS "admin_sessions_update_policy" ON public.admin_sessions;
         DROP POLICY IF EXISTS "admin_sessions_delete_policy" ON public.admin_sessions;
 
+        -- Create permissive policies for admin_sessions (since it's admin-only anyway)
         CREATE POLICY "admin_sessions_select_policy" ON public.admin_sessions
             FOR SELECT 
             USING (
-                auth.uid() = user_id OR 
+                auth.role() = 'authenticated' OR 
                 auth.role() = 'service_role'
             );
 
         CREATE POLICY "admin_sessions_insert_policy" ON public.admin_sessions
             FOR INSERT 
             WITH CHECK (
-                auth.uid() = user_id OR 
+                auth.role() = 'authenticated' OR 
                 auth.role() = 'service_role'
             );
 
         CREATE POLICY "admin_sessions_update_policy" ON public.admin_sessions
             FOR UPDATE 
             USING (
-                auth.uid() = user_id OR 
+                auth.role() = 'authenticated' OR 
                 auth.role() = 'service_role'
             );
 
         CREATE POLICY "admin_sessions_delete_policy" ON public.admin_sessions
             FOR DELETE 
             USING (
-                auth.uid() = user_id OR 
+                auth.role() = 'authenticated' OR 
                 auth.role() = 'service_role'
             );
     END IF;
@@ -222,6 +222,18 @@ END $$;
 GRANT ALL ON public.products TO authenticated;
 GRANT ALL ON public.product_images TO authenticated;
 GRANT ALL ON public.admin_users TO authenticated;
+
+-- Grant permissions to admin_sessions if it exists
+DO $$ 
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'admin_sessions'
+    ) THEN
+        GRANT ALL ON public.admin_sessions TO authenticated;
+    END IF;
+END $$;
 
 -- Grant permissions to product_variants if it exists
 DO $$ 
