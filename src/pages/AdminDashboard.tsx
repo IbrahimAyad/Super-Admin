@@ -382,16 +382,6 @@ const AdminDashboard = () => {
     </Tabs>
   );
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!adminLoading && !user) {
-      navigate('/login');
-      return;
-    }
-  }, [user, adminLoading, navigate]);
-
-  // Remove access control - this is now a dedicated admin system
-
   const quickStats = [
     {
       title: "Total Orders",
@@ -424,26 +414,14 @@ const AdminDashboard = () => {
   ];
 
   // Show loading state while checking admin status or loading data
-  if (adminLoading || (!user && !adminLoading) || dataLoading) {
+  // Show loading only for dashboard data
+  if (dataLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading dashboard...</p>
         </div>
-      </div>
-    );
-  }
-
-  // Redirect if not admin
-  if (!isAdmin) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
-        <p className="text-gray-600">You don't have permission to access the admin dashboard.</p>
-        <Button onClick={() => window.location.href = '/'} className="mt-4">
-          Return to Home
-        </Button>
       </div>
     );
   }

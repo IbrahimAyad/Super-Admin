@@ -27,12 +27,15 @@ export default function Login() {
 
       if (error) throw error;
 
-      toast({
-        title: "Login successful",
-        description: "Welcome back!",
-      });
+      // Wait a moment for auth state to update before navigating
+      setTimeout(() => {
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
+        });
 
-      navigate("/admin");
+        navigate("/admin");
+      }, 100);
     } catch (error: any) {
       toast({
         title: "Login failed",

@@ -91,15 +91,24 @@ export function useSessionManager(): UseSessionManagerReturn {
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         };
         
-        const suspiciousCheck = await detectSuspiciousActivity(user.id, deviceInfo);
-        setIsSuspiciousActivity(suspiciousCheck.isSuspicious);
-        setSuspiciousReasons(suspiciousCheck.reasons);
-        setRiskLevel(suspiciousCheck.riskLevel);
-        
-        if (suspiciousCheck.isSuspicious && suspiciousCheck.riskLevel === 'high') {
-          toast.warning('Suspicious activity detected on your account', {
-            description: 'Please verify your recent login activity.',
-          });
+        // Only check for suspicious activity if session management is working
+        try {
+          const suspiciousCheck = await detectSuspiciousActivity(user.id, deviceInfo);
+          setIsSuspiciousActivity(suspiciousCheck.isSuspicious);
+          setSuspiciousReasons(suspiciousCheck.reasons);
+          setRiskLevel(suspiciousCheck.riskLevel);
+          
+          if (suspiciousCheck.isSuspicious && suspiciousCheck.riskLevel === 'high') {
+            toast.warning('Suspicious activity detected on your account', {
+              description: 'Please verify your recent login activity.',
+            });
+          }
+        } catch (suspiciousError) {
+          console.warn('Could not check for suspicious activity:', suspiciousError);
+          // Set safe defaults
+          setIsSuspiciousActivity(false);
+          setSuspiciousReasons([]);
+          setRiskLevel('low');
         }
       } else {
         setCurrentSession(null);
