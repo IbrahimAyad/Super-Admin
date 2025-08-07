@@ -39,7 +39,6 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { fetchProductsWithImages, getProductImageUrl, createProductWithImages, updateProductWithImages, Product } from '@/lib/services';
 import { supabase } from '@/lib/supabase-client';
-import { ImageDebugger } from './ImageDebugger';
 
 interface ProductFormData {
   // Basic Info
@@ -1306,8 +1305,6 @@ export const ProductManagement = () => {
         </Dialog>
       </div>
 
-      {/* Debug Panel - REMOVE AFTER IMAGES ARE FIXED */}
-      <ImageDebugger />
 
       {/* Filters and Search */}
       <Card>

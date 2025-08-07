@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { testSupabaseConnection, fetchProductsWithImages } from '@/lib/services';
+import { fetchProductsWithImages } from '@/lib/services';
+import { supabase } from '@/lib/supabase-client';
 
 export default function SupabaseConnectionTest() {
   const [connectionStatus, setConnectionStatus] = useState<any>(null);
@@ -7,6 +8,30 @@ export default function SupabaseConnectionTest() {
   const [productsError, setProductsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const testSupabaseConnection = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('count')
+        .limit(1);
+
+      if (error) throw error;
+
+      return {
+        success: true,
+        message: 'Supabase connection successful',
+        error: null
+      };
+    } catch (error) {
+      console.error('Supabase connection test failed:', error);
+      return {
+        success: false,
+        message: 'Supabase connection failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  };
 
   useEffect(() => {
     async function runTest() {
