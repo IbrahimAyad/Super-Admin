@@ -48,7 +48,7 @@ export function useAdminAuth() {
         
         // Redirect non-admin users
         toast.error('Unauthorized: Admin access required');
-        navigate('/');
+        navigate('/login');
       } else {
         console.log('Admin user verified:', adminData);
         setIsAdmin(true);

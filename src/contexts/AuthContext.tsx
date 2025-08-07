@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase, KCTMenswearAPI, UserProfile } from '@/lib/supabase';
+import { supabase } from '@/lib/shared/supabase-products';
+import * as AuthService from '@/lib/shared/supabase-auth';
+import type { UserProfile } from '@/lib/shared/supabase-auth';
 
 interface AuthContextType {
   user: User | null;
@@ -59,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loadProfile = async (userId: string) => {
     try {
       console.log('Loading profile for user:', userId);
-      const profileData = await KCTMenswearAPI.getProfile(userId);
+      const profileData = await AuthService.getProfile(userId);
       console.log('Profile loaded:', profileData);
       setProfile(profileData);
     } catch (error) {
@@ -67,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // If profile doesn't exist, create one
       try {
         console.log('Creating new profile for user:', userId);
-        const newProfile = await KCTMenswearAPI.updateProfile(userId, {
+        const newProfile = await AuthService.updateProfile(userId, {
           onboarding_completed: false,
           measurements: {},
           style_preferences: {}
@@ -83,28 +85,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, userData?: Partial<UserProfile>) => {
-    const result = await KCTMenswearAPI.signUp(email, password, userData);
-    return result;
+    const result = await AuthService.signUp(email, password, userData);
+    return result.success ? result.data : result;
   };
 
   const signIn = async (email: string, password: string) => {
-    const result = await KCTMenswearAPI.signIn(email, password);
-    return result;
+    const result = await AuthService.signIn(email, password);
+    return result.success ? result.data : result;
   };
 
   const signInWithGoogle = async () => {
-    const result = await KCTMenswearAPI.signInWithGoogle();
-    return result;
+    const result = await AuthService.signInWithGoogle();
+    return result.success ? result.data : result;
   };
 
   const signOut = async () => {
-    await KCTMenswearAPI.signOut();
+    await AuthService.signOut();
     setProfile(null);
   };
 
   const updateProfile = async (updates: Partial<UserProfile>) => {
     if (!user) throw new Error('No user logged in');
-    const updatedProfile = await KCTMenswearAPI.updateProfile(user.id, updates);
+    const updatedProfile = await AuthService.updateProfile(user.id, updates);
     setProfile(updatedProfile);
   };
 

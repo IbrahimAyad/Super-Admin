@@ -1,0 +1,195 @@
+/**
+ * SHARED SUPABASE AUTH SERVICE
+ * This file handles authentication and user profile management
+ * Last updated: 2024-08-05
+ */
+
+import { supabase } from './supabase-products';
+
+export interface UserProfile {
+  id: string;
+  username?: string;
+  display_name?: string;
+  avatar_url?: string;
+  onboarding_completed: boolean;
+  measurements: Record<string, any>;
+  style_preferences: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Authentication Methods
+ */
+export async function signUp(email: string, password: string, userData?: Partial<UserProfile>) {
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: userData || {}
+      }
+    });
+
+    if (error) throw error;
+    return {
+      success: true,
+      data,
+      error: null
+    };
+  } catch (error) {
+    console.error('signUp error:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+export async function signIn(email: string, password: string) {
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) throw error;
+    return {
+      success: true,
+      data,
+      error: null
+    };
+  } catch (error) {
+    console.error('signIn error:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+export async function signInWithGoogle() {
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    });
+
+    if (error) throw error;
+    return {
+      success: true,
+      data,
+      error: null
+    };
+  } catch (error) {
+    console.error('signInWithGoogle error:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+export async function signOut() {
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    
+    return {
+      success: true,
+      error: null
+    };
+  } catch (error) {
+    console.error('signOut error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+export async function resetPassword(email: string) {
+  try {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`
+    });
+
+    if (error) throw error;
+    return {
+      success: true,
+      data,
+      error: null
+    };
+  } catch (error) {
+    console.error('resetPassword error:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * User Profile Methods
+ */
+export async function getProfile(userId: string): Promise<UserProfile> {
+  try {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('getProfile error:', error);
+    throw error;
+  }
+}
+
+export async function updateProfile(userId: string, updates: Partial<UserProfile>): Promise<UserProfile> {
+  try {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .upsert({
+        id: userId,
+        ...updates,
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('updateProfile error:', error);
+    throw error;
+  }
+}
+
+export async function updateMeasurements(userId: string, measurements: Record<string, any>): Promise<UserProfile> {
+  try {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .update({ 
+        measurements,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('updateMeasurements error:', error);
+    throw error;
+  }
+}
