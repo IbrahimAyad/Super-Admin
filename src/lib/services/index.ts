@@ -8,6 +8,9 @@
 export * from './auth';
 export * from './products';
 export * from './business';
+export * from './settings';
+export * from './settingsSync';
+export * from './settingsSecurity';
 
 // Export the unified Supabase client
 export { supabase, getSupabaseClient } from '../supabase-client';
