@@ -41,6 +41,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { fetchProductsWithImages, getProductImageUrl, createProductWithImages, updateProductWithImages, Product } from '@/lib/services';
 import { DraggableImageGallery } from './DraggableImageGallery';
 import { supabase } from '@/lib/supabase-client';
+import { testStorageBucket } from '@/lib/storage';
 
 interface ProductFormData {
   // Basic Info
@@ -171,6 +172,22 @@ export const ProductManagement = () => {
 
   useEffect(() => {
     loadProducts();
+    
+    // Test storage bucket on component mount
+    testStorageBucket().then(result => {
+      if (!result.success) {
+        console.error('🚨 Storage bucket test failed:', result.error);
+        toast({
+          title: "Storage Configuration Issue",
+          description: `Storage test failed: ${result.error}`,
+          variant: "destructive"
+        });
+      } else {
+        console.log('✅ Storage bucket test passed:', result.message);
+      }
+    }).catch(error => {
+      console.error('Storage test error:', error);
+    });
   }, []);
 
   useEffect(() => {

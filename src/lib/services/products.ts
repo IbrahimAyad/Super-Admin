@@ -308,10 +308,9 @@ export async function getProductsViaFunction(filters?: {
  * Get product image URL with fallback and proper Supabase Storage handling
  */
 export function getProductImageUrl(product: any, variant?: string): string {
-  const SUPABASE_URL = 'https://gvcswimqaxvylgxbklbz.supabase.co';
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://gvcswimqaxvylgxbklbz.supabase.co';
   const STORAGE_PATH = '/storage/v1/object/public/product-images/';
   
-
   // Helper function to process URL
   const processUrl = (url: string): string => {
     if (!url) {
@@ -323,8 +322,19 @@ export function getProductImageUrl(product: any, variant?: string): string {
       return url;
     }
 
-    // If it's a relative path, prepend Supabase storage URL
-    const fullUrl = `${SUPABASE_URL}${STORAGE_PATH}${url.startsWith('/') ? url.substring(1) : url}`;
+    // If it's a relative path that starts with a slash, remove it
+    const cleanUrl = url.startsWith('/') ? url.substring(1) : url;
+    
+    // If it's just a filename (no path), it might be a legacy reference
+    // Check if it needs to be treated as a direct filename in the bucket root
+    if (!cleanUrl.includes('/')) {
+      // For files like "powder-blue-suspender-set.jpg", try the root first
+      const rootUrl = `${SUPABASE_URL}${STORAGE_PATH}${cleanUrl}`;
+      return rootUrl;
+    }
+    
+    // For files with paths, construct the full URL
+    const fullUrl = `${SUPABASE_URL}${STORAGE_PATH}${cleanUrl}`;
     return fullUrl;
   };
 
@@ -375,6 +385,54 @@ export function getProductImageUrl(product: any, variant?: string): string {
 
   // Return placeholder
   return '/placeholder.svg';
+}
+
+/**
+ * Debug function to test image URL generation
+ * Call from console: window.debugImageUrl('powder-blue-suspender-set.jpg')
+ */
+export function debugImageUrl(filename: string) {
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://gvcswimqaxvylgxbklbz.supabase.co';
+  const STORAGE_PATH = '/storage/v1/object/public/product-images/';
+  
+  console.group('🔍 Image URL Debug');
+  console.log('Input filename:', filename);
+  console.log('Supabase URL:', SUPABASE_URL);
+  console.log('Storage path:', STORAGE_PATH);
+  
+  // Test different URL constructions
+  const directUrl = `${SUPABASE_URL}${STORAGE_PATH}${filename}`;
+  const withoutSlash = filename.startsWith('/') ? filename.substring(1) : filename;
+  const constructedUrl = `${SUPABASE_URL}${STORAGE_PATH}${withoutSlash}`;
+  
+  console.log('Direct URL:', directUrl);
+  console.log('Constructed URL:', constructedUrl);
+  
+  // Test with mock product data
+  const mockProduct = {
+    images: [{
+      image_url: filename,
+      position: 0,
+      image_type: 'primary'
+    }]
+  };
+  
+  const generatedUrl = getProductImageUrl(mockProduct);
+  console.log('Generated via getProductImageUrl:', generatedUrl);
+  
+  console.groupEnd();
+  
+  return {
+    directUrl,
+    constructedUrl, 
+    generatedUrl
+  };
+}
+
+// Make debug function available globally in development
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
+  (window as any).debugImageUrl = debugImageUrl;
+  console.log('🛠️ Debug function available: window.debugImageUrl("filename.jpg")');
 }
 
 /**
@@ -628,9 +686,32 @@ export async function createProductWithImages(productData: Partial<Product> & { 
 
     if (productError) throw productError;
 
+    // Handle file uploads if provided
+    let uploadedImageUrls: string[] = [];
+    if (imageFiles && imageFiles.length > 0) {
+      const uploadResult = await uploadProductImageFiles(imageFiles, product.id);
+      if (!uploadResult.success) {
+        console.warn('Failed to upload some images:', uploadResult.error);
+        // Don't fail the entire operation for image upload errors
+      } else {
+        uploadedImageUrls = uploadResult.urls;
+      }
+    }
+
+    // Combine provided images with newly uploaded ones
+    const allImages = [...(images || [])];
+    uploadedImageUrls.forEach((url, index) => {
+      allImages.push({
+        url,
+        position: (images?.length || 0) + index,
+        alt_text: '',
+        image_type: (images?.length || 0) + index === 0 ? 'primary' : 'gallery'
+      });
+    });
+
     // If there are images, insert them into product_images table
-    if (images && images.length > 0 && product) {
-      const imageInserts = images.map(img => ({
+    if (allImages.length > 0 && product) {
+      const imageInserts = allImages.map(img => ({
         product_id: product.id,
         image_url: img.url,
         position: img.position,
@@ -664,10 +745,79 @@ export async function createProductWithImages(productData: Partial<Product> & { 
 }
 
 /**
+ * Upload image files and return their Supabase Storage URLs
+ */
+export async function uploadProductImageFiles(files: File[], productId?: string): Promise<{ success: boolean; urls: string[]; error?: string }> {
+  try {
+    const uploadedUrls: string[] = [];
+    
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        throw new Error(`${file.name} is not a valid image file`);
+      }
+      
+      // Generate unique filename
+      const fileExt = file.name.split('.').pop();
+      const timestamp = Date.now();
+      const randomId = Math.random().toString(36).substring(2);
+      
+      let fileName: string;
+      if (productId) {
+        fileName = `${productId}/${timestamp}-${randomId}.${fileExt}`;
+      } else {
+        fileName = `temp/${timestamp}-${randomId}.${fileExt}`;
+      }
+      
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('product-images')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (error) {
+        console.error('Upload error for file:', file.name, error);
+        throw new Error(`Failed to upload ${file.name}: ${error.message}`);
+      }
+      
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(data.path);
+      
+      uploadedUrls.push(publicUrl);
+    }
+    
+    return {
+      success: true,
+      urls: uploadedUrls
+    };
+  } catch (error) {
+    console.error('uploadProductImageFiles error:', error);
+    return {
+      success: false,
+      urls: [],
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
  * Update an existing product with images
  */
 export async function updateProductWithImages(productId: string, productData: Partial<Product> & { images?: Array<{ url: string; position: number; alt_text?: string; image_type?: string }> }, imageFiles?: File[]) {
   try {
+    // First, handle any file uploads
+    let uploadedImageUrls: string[] = [];
+    if (imageFiles && imageFiles.length > 0) {
+      const uploadResult = await uploadProductImageFiles(imageFiles, productId);
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.error || 'Failed to upload images');
+      }
+      uploadedImageUrls = uploadResult.urls;
+    }
+    
     // Separate product data from images
     const { images, ...productInfo } = productData;
     
@@ -694,9 +844,20 @@ export async function updateProductWithImages(productId: string, productData: Pa
         console.warn('Failed to delete existing images:', deleteError);
       }
 
-      // Then insert new images
-      if (images.length > 0) {
-        const imageInserts = images.map(img => ({
+      // Combine provided images with newly uploaded ones
+      const allImages = [...images];
+      uploadedImageUrls.forEach((url, index) => {
+        allImages.push({
+          url,
+          position: images.length + index,
+          alt_text: '',
+          image_type: images.length + index === 0 ? 'primary' : 'gallery'
+        });
+      });
+
+      // Then insert all images
+      if (allImages.length > 0) {
+        const imageInserts = allImages.map(img => ({
           product_id: productId,
           image_url: img.url,
           position: img.position,

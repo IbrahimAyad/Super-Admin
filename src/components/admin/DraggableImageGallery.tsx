@@ -397,6 +397,7 @@ export const DraggableImageGallery: React.FC<DraggableImageGalleryProps> = ({
     }
 
     setIsUploading(true);
+    let currentImages = [...images];
 
     try {
       const newImages: ProductImage[] = [];
@@ -415,7 +416,7 @@ export const DraggableImageGallery: React.FC<DraggableImageGalleryProps> = ({
 
         // Create preview URL
         const previewUrl = URL.createObjectURL(file);
-        const position = images.length + newImages.length;
+        const position = currentImages.length + newImages.length;
         
         // Add loading image to UI
         const loadingImage: ProductImage = {
@@ -430,7 +431,8 @@ export const DraggableImageGallery: React.FC<DraggableImageGalleryProps> = ({
       }
 
       // Update UI with loading images
-      onImagesChange([...images, ...newImages]);
+      currentImages = [...currentImages, ...newImages];
+      onImagesChange(currentImages);
 
       // If we have a productId, upload to Supabase Storage
       if (productId) {
@@ -470,34 +472,30 @@ export const DraggableImageGallery: React.FC<DraggableImageGalleryProps> = ({
             if (insertError) throw insertError;
 
             // Update the loading image with final data
-            const updatedImages = [...images];
             const loadingImageIndex = images.length + i;
-            
-            if (updatedImages[loadingImageIndex]) {
-              updatedImages[loadingImageIndex] = {
-                ...updatedImages[loadingImageIndex],
+            if (currentImages[loadingImageIndex]) {
+              currentImages[loadingImageIndex] = {
+                ...currentImages[loadingImageIndex],
                 id: imageData.id,
                 url: publicUrl,
                 loading: false,
                 error: false,
               };
-              onImagesChange(updatedImages);
+              onImagesChange([...currentImages]);
             }
 
           } catch (error) {
             console.error('Upload error for file:', file.name, error);
             
             // Mark image as error
-            const updatedImages = [...images];
             const errorImageIndex = images.length + i;
-            
-            if (updatedImages[errorImageIndex]) {
-              updatedImages[errorImageIndex] = {
-                ...updatedImages[errorImageIndex],
+            if (currentImages[errorImageIndex]) {
+              currentImages[errorImageIndex] = {
+                ...currentImages[errorImageIndex],
                 loading: false,
                 error: true,
               };
-              onImagesChange(updatedImages);
+              onImagesChange([...currentImages]);
             }
 
             toast({
