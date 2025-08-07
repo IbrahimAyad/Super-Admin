@@ -20,7 +20,8 @@ import {
   Star,
   Database,
   Download,
-  Bell
+  Bell,
+  CreditCard
 } from 'lucide-react';
 // API imports handled by individual components
 import { useToast } from '@/hooks/use-toast';
@@ -63,6 +64,7 @@ import { ABTestingTools } from '@/components/admin/ABTestingTools';
 import { InventoryForecasting } from '@/components/admin/InventoryForecasting';
 import { RecommendationEngine } from '@/components/ai/RecommendationEngine';
 import { FinancialManagement } from '@/components/admin/FinancialManagement';
+import { StripeSyncManager } from '@/components/admin/StripeSyncManager';
 import AdminOrderManagement from './AdminOrderManagement';
 
 const AdminDashboard = () => {
@@ -100,6 +102,8 @@ const AdminDashboard = () => {
         return { title: 'Reviews', icon: Star };
       case '/admin/inventory':
         return { title: 'Inventory', icon: Database };
+      case '/admin/stripe-sync':
+        return { title: 'Stripe Sync', icon: CreditCard };
       case '/admin/settings':
         return { title: 'Settings', icon: Settings };
       default:
@@ -165,6 +169,8 @@ const AdminDashboard = () => {
         return <CustomOrdersManagement />;
       case '/admin/integrations':
         return <IntegrationsManagement />;
+      case '/admin/stripe-sync':
+        return <StripeSyncManager />;
       case '/admin/settings':
         return <div className="p-6"><h2 className="text-2xl font-bold">Settings</h2><p className="text-muted-foreground">Settings panel coming soon...</p></div>;
       default:

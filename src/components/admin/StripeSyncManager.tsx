@@ -28,6 +28,9 @@ export function StripeSyncManager() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [syncProgress, setSyncProgress] = useState(0);
   const [validationResult, setValidationResult] = useState<any>(null);
+  const [categoryProgress, setCategoryProgress] = useState<Record<string, { synced: number; total: number; }>>({});
+  const [isProgressiveSync, setIsProgressiveSync] = useState(false);
+  const [syncPhases, setSyncPhases] = useState<any[]>([]);
   const { toast } = useToast();
 
   // Product categories
@@ -50,8 +53,13 @@ export function StripeSyncManager() {
 
   const loadSyncStatus = async () => {
     try {
-      const status = await stripeSyncService.getSyncStatus();
+      const [status, progress] = await Promise.all([
+        stripeSyncService.getSyncStatus(),
+        stripeSyncService.getSyncProgress()
+      ]);
+      
       setSyncStatus(status);
+      setCategoryProgress(progress.categoryProgress);
       
       if (status.syncedProducts > 0 && status.totalProducts > 0) {
         setSyncProgress((status.syncedProducts / status.totalProducts) * 100);
@@ -72,27 +80,46 @@ export function StripeSyncManager() {
 
   const handleSync = async () => {
     setIsSyncing(true);
+    setSyncPhases([]);
     
     try {
-      const result = await stripeSyncService.syncProducts({
-        dryRun: isDryRun,
-        batchSize: 5,
-        categories: selectedCategories.length > 0 ? selectedCategories : undefined,
-        skipExisting: true
-      });
-
-      if (result.success) {
+      let result;
+      
+      if (isProgressiveSync) {
+        result = await stripeSyncService.executeProgressiveSync({
+          dryRun: isDryRun,
+          batchSize: 5,
+          skipExisting: true
+        });
+        
+        setSyncPhases(result.phases);
+        
         toast({
-          title: isDryRun ? "Dry Run Complete" : "Sync Complete",
-          description: `Processed ${result.productsProcessed} products with ${result.errors.length} errors`,
-          variant: result.errors.length > 0 ? "destructive" : "default"
+          title: isDryRun ? "Progressive Dry Run Complete" : "Progressive Sync Complete",
+          description: `Completed ${result.phases.length} phases. Overall success: ${result.overallSuccess ? 'Yes' : 'No'}`,
+          variant: result.overallSuccess ? "default" : "destructive"
         });
       } else {
-        toast({
-          title: "Sync Failed",
-          description: `Encountered ${result.errors.length} errors during sync`,
-          variant: "destructive"
+        const syncResult = await stripeSyncService.syncProducts({
+          dryRun: isDryRun,
+          batchSize: 5,
+          categories: selectedCategories.length > 0 ? selectedCategories : undefined,
+          skipExisting: true
         });
+
+        if (syncResult.success) {
+          toast({
+            title: isDryRun ? "Dry Run Complete" : "Sync Complete",
+            description: `Processed ${syncResult.productsProcessed} products with ${syncResult.errors.length} errors`,
+            variant: syncResult.errors.length > 0 ? "destructive" : "default"
+          });
+        } else {
+          toast({
+            title: "Sync Failed",
+            description: `Encountered ${syncResult.errors.length} errors during sync`,
+            variant: "destructive"
+          });
+        }
       }
 
       // Reload status
@@ -259,29 +286,90 @@ export function StripeSyncManager() {
               </label>
             </div>
 
-            {/* Category Selection */}
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Select Categories to Sync</p>
-              <div className="grid grid-cols-2 gap-2">
-                {categories.map(category => (
-                  <label key={category} className="flex items-center gap-2 p-2 border rounded hover:bg-accent cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedCategories.includes(category)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedCategories([...selectedCategories, category]);
-                        } else {
-                          setSelectedCategories(selectedCategories.filter(c => c !== category));
-                        }
-                      }}
-                      className="rounded border-gray-300"
-                    />
-                    <span className="text-sm">{category}</span>
-                  </label>
-                ))}
+            {/* Progressive Sync Mode */}
+            <div className="flex items-center gap-4 p-4 border rounded-lg">
+              <Play className="h-5 w-5 text-muted-foreground" />
+              <div className="flex-1">
+                <p className="font-medium">Progressive Sync</p>
+                <p className="text-sm text-muted-foreground">
+                  Sync categories progressively from smallest to largest (recommended for first sync)
+                </p>
               </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={isProgressiveSync}
+                  onChange={(e) => setIsProgressiveSync(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              </label>
             </div>
+
+            {/* Category Selection - Hidden for Progressive Sync */}
+            {!isProgressiveSync && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Select Categories to Sync</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {categories.map(category => {
+                    const progress = categoryProgress[category];
+                    return (
+                      <label key={category} className="flex items-center gap-2 p-2 border rounded hover:bg-accent cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedCategories.includes(category)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedCategories([...selectedCategories, category]);
+                            } else {
+                              setSelectedCategories(selectedCategories.filter(c => c !== category));
+                            }
+                          }}
+                          className="rounded border-gray-300"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm">{category}</span>
+                          {progress && (
+                            <div className="text-xs text-muted-foreground">
+                              {progress.synced}/{progress.total} synced
+                            </div>
+                          )}
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Progressive Sync Phases Display */}
+            {isProgressiveSync && syncPhases.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-sm font-medium">Sync Phases Progress</p>
+                <div className="space-y-2">
+                  {syncPhases.map((phase, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">Phase {phase.phase}: {phase.category}</span>
+                          {phase.result.success ? (
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-500" />
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {phase.productCount} products • {phase.result.productsProcessed} processed • {phase.result.errors.length} errors
+                        </div>
+                      </div>
+                      <Badge variant={phase.result.success ? "default" : "destructive"}>
+                        {phase.result.success ? "Complete" : "Failed"}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Sync Button */}
             <div className="flex gap-2">
@@ -298,7 +386,10 @@ export function StripeSyncManager() {
                 ) : (
                   <>
                     <Play className="h-4 w-4 mr-2" />
-                    {isDryRun ? 'Start Dry Run' : 'Start Sync'}
+                    {isProgressiveSync 
+                      ? (isDryRun ? 'Start Progressive Dry Run' : 'Start Progressive Sync')
+                      : (isDryRun ? 'Start Dry Run' : 'Start Sync')
+                    }
                   </>
                 )}
               </Button>

@@ -34,7 +34,7 @@ export interface SyncResult {
 }
 
 export class StripeSyncService {
-  private batchSize: number = 10; // Process 10 products at a time to avoid rate limits
+  private batchSize: number = 5; // Process 5 products at a time to avoid rate limits (Stripe recommended)
 
   /**
    * Sync products to Stripe
@@ -69,12 +69,35 @@ export class StripeSyncService {
         for (const product of batch) {
           if (options.dryRun) {
             console.log(`[DRY RUN] Would sync product: ${product.name} (${product.id})`);
+            console.log(`[DRY RUN] - ${product.product_variants?.length || 0} variants to create`);
+            console.log(`[DRY RUN] - Category: ${product.category || 'Unknown'}`);
+            console.log(`[DRY RUN] - Already synced: ${product.stripe_product_id ? 'Yes' : 'No'}`);
             result.productsProcessed++;
+            
+            // Validate product data in dry run
+            if (!product.name || product.name.trim().length === 0) {
+              result.errors.push({
+                type: 'product',
+                id: product.id,
+                name: product.name || 'Unknown',
+                error: 'Product name is missing or empty'
+              });
+            }
+            
+            if (!product.product_variants || product.product_variants.length === 0) {
+              result.errors.push({
+                type: 'product',
+                id: product.id,
+                name: product.name || 'Unknown',
+                error: 'Product has no variants (prices cannot be created)'
+              });
+            }
+            
             continue;
           }
 
           try {
-            await this.syncSingleProduct(product, options);
+            await this.syncSingleProductWithRetry(product, options);
             result.productsProcessed++;
           } catch (error) {
             console.error(`Failed to sync product ${product.name}:`, error);
@@ -85,6 +108,13 @@ export class StripeSyncService {
               error: error.message
             });
             result.success = false;
+            
+            // Log the error to database
+            await this.logSync('product', product.id, 'failed', {
+              error_message: error.message,
+              product_name: product.name,
+              retry_count: 3
+            });
           }
         }
 
@@ -151,6 +181,37 @@ export class StripeSyncService {
     }
 
     return data || [];
+  }
+
+  /**
+   * Sync a single product with retry logic
+   */
+  private async syncSingleProductWithRetry(product: any, options: SyncOptions, maxRetries = 3) {
+    let lastError;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await this.syncSingleProduct(product, options);
+        return; // Success
+      } catch (error) {
+        lastError = error;
+        console.warn(`Sync attempt ${attempt}/${maxRetries} failed for ${product.name}: ${error.message}`);
+        
+        // Don't retry on certain types of errors
+        if (error.message.includes('Invalid') || error.message.includes('already exists')) {
+          throw error;
+        }
+        
+        // Wait before retrying (exponential backoff)
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+          console.log(`Waiting ${delay}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    
+    throw lastError;
   }
 
   /**
@@ -231,19 +292,29 @@ export class StripeSyncService {
   }
 
   /**
-   * Log sync operation
+   * Log sync operation with enhanced details
    */
   private async logSync(type: string, entityId: string, status: string, metadata?: any) {
-    await supabase
-      .from('stripe_sync_log')
-      .insert({
-        sync_type: type,
-        entity_id: entityId,
-        entity_type: type,
-        status: status,
-        metadata: metadata,
-        action: status === 'success' ? 'create' : 'error'
-      });
+    try {
+      await supabase
+        .from('stripe_sync_log')
+        .insert({
+          sync_type: type,
+          entity_id: entityId,
+          entity_type: type,
+          status: status,
+          metadata: {
+            ...metadata,
+            timestamp: new Date().toISOString(),
+            batch_size: this.batchSize,
+            sync_version: '2.0'
+          },
+          action: status === 'success' ? 'create' : (status === 'failed' ? 'error' : 'skip'),
+          error_message: status === 'failed' ? metadata?.error_message : null
+        });
+    } catch (error) {
+      console.error('Failed to log sync operation:', error);
+    }
   }
 
   /**
@@ -310,7 +381,7 @@ export class StripeSyncService {
     // Test Edge Function availability
     let edgeFunctionReady = false;
     try {
-      const { error } = await supabase.functions.invoke('sync-stripe-products', {
+      const { error } = await supabase.functions.invoke('sync-stripe-product', {
         body: { test: true }
       });
       edgeFunctionReady = !error;
@@ -328,6 +399,150 @@ export class StripeSyncService {
       edgeFunctionReady,
       errors
     };
+  }
+
+  /**
+   * Get products by category for progressive sync
+   */
+  async getProductsByCategory(): Promise<Record<string, number>> {
+    const { data, error } = await supabase
+      .from('products')
+      .select('category')
+      .not('category', 'is', null);
+
+    if (error) {
+      throw new Error(`Failed to get product categories: ${error.message}`);
+    }
+
+    const categoryCounts: Record<string, number> = {};
+    data?.forEach(product => {
+      const category = product.category || 'Unknown';
+      categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    });
+
+    return categoryCounts;
+  }
+
+  /**
+   * Get sync progress for UI
+   */
+  async getSyncProgress(): Promise<{
+    totalProducts: number;
+    syncedProducts: number;
+    pendingProducts: number;
+    failedProducts: number;
+    categoryProgress: Record<string, { synced: number; total: number; }>;
+  }> {
+    const [statusResult, categoryResult] = await Promise.all([
+      supabase.from('stripe_sync_summary').select('*').single(),
+      supabase.rpc('get_sync_progress_by_category')
+    ]);
+
+    const categoryProgress: Record<string, { synced: number; total: number; }> = {};
+    
+    if (categoryResult.data) {
+      categoryResult.data.forEach((item: any) => {
+        categoryProgress[item.category] = {
+          synced: item.synced_count,
+          total: item.total_count
+        };
+      });
+    }
+
+    return {
+      totalProducts: statusResult.data?.products_synced + statusResult.data?.products_pending || 0,
+      syncedProducts: statusResult.data?.products_synced || 0,
+      pendingProducts: statusResult.data?.products_pending || 0,
+      failedProducts: statusResult.data?.products_failed || 0,
+      categoryProgress
+    };
+  }
+
+  /**
+   * Execute progressive sync strategy
+   */
+  async executeProgressiveSync(options: SyncOptions = {}): Promise<{
+    phases: Array<{
+      phase: number;
+      category: string;
+      productCount: number;
+      result: SyncResult;
+    }>;
+    overallSuccess: boolean;
+  }> {
+    const categorySizes = await this.getProductsByCategory();
+    
+    // Sort categories by size (smallest first)
+    const sortedCategories = Object.entries(categorySizes)
+      .sort(([,a], [,b]) => a - b)
+      .map(([category, count]) => ({ category, count }));
+
+    console.log('Progressive sync plan:', sortedCategories);
+
+    const phases: Array<{
+      phase: number;
+      category: string;
+      productCount: number;
+      result: SyncResult;
+    }> = [];
+
+    let overallSuccess = true;
+
+    for (let i = 0; i < sortedCategories.length; i++) {
+      const { category, count } = sortedCategories[i];
+      
+      console.log(`\n=== PHASE ${i + 1}: Syncing "${category}" (${count} products) ===`);
+      
+      try {
+        const result = await this.syncProducts({
+          ...options,
+          categories: [category],
+          skipExisting: true
+        });
+
+        phases.push({
+          phase: i + 1,
+          category,
+          productCount: count,
+          result
+        });
+
+        if (!result.success) {
+          console.warn(`Phase ${i + 1} completed with errors`);
+          overallSuccess = false;
+        }
+
+        // Wait between phases (except last one)
+        if (i < sortedCategories.length - 1) {
+          console.log('Waiting 5 seconds before next phase...');
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+
+      } catch (error) {
+        console.error(`Phase ${i + 1} failed:`, error);
+        overallSuccess = false;
+        
+        phases.push({
+          phase: i + 1,
+          category,
+          productCount: count,
+          result: {
+            success: false,
+            productsProcessed: 0,
+            variantsProcessed: 0,
+            errors: [{
+              type: 'product',
+              id: 'unknown',
+              name: `Category: ${category}`,
+              error: error.message
+            }],
+            skipped: 0
+          }
+        });
+      }
+    }
+
+    return { phases, overallSuccess };
   }
 
   /**

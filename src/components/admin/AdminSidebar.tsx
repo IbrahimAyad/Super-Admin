@@ -93,6 +93,7 @@ const navigationItems = [
   {
     title: "System",
     items: [
+      { title: "Stripe Sync", url: "/admin/stripe-sync", icon: CreditCard, badge: "Sync" },
       { title: "Integrations", url: "/admin/integrations", icon: Zap, badge: null },
       { title: "Settings", url: "/admin/settings", icon: Settings, badge: null },
     ]

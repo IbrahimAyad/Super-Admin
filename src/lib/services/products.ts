@@ -305,7 +305,7 @@ export async function getProductsViaFunction(filters?: {
 
 
 /**
- * Get product image URL with fallback and proper Supabase Storage handling
+ * Get product image URL with support for multiple storage sources (R2, Supabase, etc.)
  */
 export function getProductImageUrl(product: any, variant?: string): string {
   const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://gvcswimqaxvylgxbklbz.supabase.co';
@@ -313,27 +313,28 @@ export function getProductImageUrl(product: any, variant?: string): string {
   
   // Helper function to process URL
   const processUrl = (url: string): string => {
-    if (!url) {
+    if (!url || url.trim() === '') {
       return '/placeholder.svg';
     }
 
     // If it's already a full URL (starts with http/https), return as-is
+    // This handles R2 URLs, Supabase URLs, and any other CDN URLs
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
 
-    // If it's a relative path that starts with a slash, remove it
+    // For relative paths, try to construct a full URL
+    // Remove leading slash if present
     const cleanUrl = url.startsWith('/') ? url.substring(1) : url;
     
     // If it's just a filename (no path), it might be a legacy reference
-    // Check if it needs to be treated as a direct filename in the bucket root
     if (!cleanUrl.includes('/')) {
-      // For files like "powder-blue-suspender-set.jpg", try the root first
+      // For files like "powder-blue-suspender-set.jpg", construct Supabase URL
       const rootUrl = `${SUPABASE_URL}${STORAGE_PATH}${cleanUrl}`;
       return rootUrl;
     }
     
-    // For files with paths, construct the full URL
+    // For files with paths, construct the full Supabase URL
     const fullUrl = `${SUPABASE_URL}${STORAGE_PATH}${cleanUrl}`;
     return fullUrl;
   };
