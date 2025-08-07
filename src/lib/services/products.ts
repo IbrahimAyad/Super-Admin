@@ -30,8 +30,9 @@ export interface ProductImage {
   id: string;
   product_id: string;
   variant_id?: string;
-  r2_key: string;
-  r2_url: string;
+  r2_key?: string;
+  r2_url?: string;
+  url: string;  // Primary field used in database
   image_type: 'primary' | 'gallery' | 'thumbnail' | 'detail';
   sort_order: number;
   alt_text?: string;
@@ -298,37 +299,125 @@ export async function getProductsViaFunction(filters?: {
 }
 
 /**
- * Get product image URL with fallback
+ * Debug function to check what image URLs are stored in the database
  */
-export function getProductImageUrl(product: any, variant?: string): string {
+export async function debugImageUrls(limit: number = 10) {
+  try {
+    const { data, error } = await supabase
+      .from('product_images')
+      .select('id, product_id, url, r2_url, image_type, sort_order')
+      .limit(limit);
+
+    if (error) throw error;
+
+    console.log('=== IMAGE URL DEBUGGING ===');
+    console.log(`Found ${data?.length || 0} images in database:`);
+    
+    data?.forEach((img, index) => {
+      console.log(`\nImage ${index + 1}:`);
+      console.log('  ID:', img.id);
+      console.log('  Product ID:', img.product_id);
+      console.log('  URL field:', img.url);
+      console.log('  R2_URL field:', img.r2_url);
+      console.log('  Image type:', img.image_type);
+      console.log('  Sort order:', img.sort_order);
+    });
+
+    console.log('=== END DEBUG ===');
+    return { success: true, data };
+  } catch (error) {
+    console.error('debugImageUrls error:', error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Get product image URL with fallback and proper Supabase Storage handling
+ */
+export function getProductImageUrl(product: any, variant?: string, debugMode: boolean = true): string {
+  const SUPABASE_URL = 'https://gvcswimqaxvylgxbklbz.supabase.co';
+  const STORAGE_PATH = '/storage/v1/object/public/product-images/';
+  
+  if (debugMode) {
+    console.log('getProductImageUrl called with product:', {
+      id: product?.id,
+      name: product?.name,
+      hasImages: !!product?.images,
+      imagesLength: product?.images?.length || 0,
+      firstImage: product?.images?.[0]
+    });
+  }
+
+  // Helper function to process URL
+  const processUrl = (url: string): string => {
+    if (!url) {
+      if (debugMode) console.log('No URL provided, returning placeholder');
+      return '/placeholder.svg';
+    }
+
+    if (debugMode) console.log('Processing URL:', url);
+
+    // If it's already a full URL (starts with http/https), return as-is
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      if (debugMode) console.log('URL is already absolute:', url);
+      return url;
+    }
+
+    // If it's a relative path, prepend Supabase storage URL
+    const fullUrl = `${SUPABASE_URL}${STORAGE_PATH}${url.startsWith('/') ? url.substring(1) : url}`;
+    if (debugMode) console.log('Converted relative URL to absolute:', fullUrl);
+    return fullUrl;
+  };
+
   // Handle the new structure with primary_image field
   if (product.primary_image) {
-    return product.primary_image;
+    if (debugMode) console.log('Using primary_image field:', product.primary_image);
+    return processUrl(product.primary_image);
   }
 
   // Handle image_gallery array
   if (product.image_gallery && Array.isArray(product.image_gallery) && product.image_gallery.length > 0) {
-    return product.image_gallery[0];
+    if (debugMode) console.log('Using image_gallery[0]:', product.image_gallery[0]);
+    return processUrl(product.image_gallery[0]);
   }
 
   // Handle legacy images string array structure  
   if (product.images && Array.isArray(product.images) && typeof product.images[0] === 'string') {
-    return product.images[0];
+    if (debugMode) console.log('Using images string array[0]:', product.images[0]);
+    return processUrl(product.images[0]);
   }
 
   // Handle the proper ProductImage array structure
   if (product.images && Array.isArray(product.images)) {
+    if (debugMode) console.log('Processing ProductImage array, length:', product.images.length);
+    
     // Try to get primary image first
     const primaryImage = product.images.find((img: any) => img.image_type === 'primary');
-    if (primaryImage?.r2_url) return primaryImage.r2_url;
+    if (primaryImage) {
+      if (debugMode) console.log('Found primary image:', primaryImage);
+      // Check for url field first (new structure), then fall back to r2_url
+      if (primaryImage.url) {
+        return processUrl(primaryImage.url);
+      } else if (primaryImage.r2_url) {
+        return processUrl(primaryImage.r2_url);
+      }
+    }
 
-    // Fall back to first image with r2_url
+    // Fall back to first image with url or r2_url
     for (const img of product.images) {
-      if (img.r2_url) return img.r2_url;
+      if (debugMode) console.log('Checking image:', img);
+      if (img.url) {
+        if (debugMode) console.log('Using image.url:', img.url);
+        return processUrl(img.url);
+      } else if (img.r2_url) {
+        if (debugMode) console.log('Using image.r2_url:', img.r2_url);
+        return processUrl(img.r2_url);
+      }
     }
   }
 
   // Return placeholder
+  if (debugMode) console.log('No valid image found, returning placeholder');
   return '/placeholder.svg';
 }
 
@@ -357,6 +446,52 @@ export function getDisplayPrice(product: Product): number {
 }
 
 /**
+ * Comprehensive test function for debugging image loading issues
+ * Call this from browser console: await testImageLoading()
+ */
+export async function testImageLoading() {
+  console.log('=== TESTING IMAGE LOADING ===');
+  
+  try {
+    // Test 1: Check database connection
+    console.log('\n1. Testing database connection...');
+    const connectionTest = await testSupabaseConnection();
+    console.log('Connection test result:', connectionTest);
+
+    // Test 2: Check what URLs are in the database
+    console.log('\n2. Checking image URLs in database...');
+    await debugImageUrls(5);
+
+    // Test 3: Fetch a few products and test image URL generation
+    console.log('\n3. Testing product fetching and image URL generation...');
+    const productsResult = await fetchProductsWithImages({ limit: 3 });
+    
+    if (productsResult.success && productsResult.data.length > 0) {
+      productsResult.data.forEach((product, index) => {
+        console.log(`\n--- Product ${index + 1}: ${product.name} ---`);
+        console.log('Product ID:', product.id);
+        console.log('Images array:', product.images);
+        console.log('Generated URL (debug mode):', getProductImageUrl(product, undefined, true));
+        console.log('Generated URL (prod mode):', getProductImageUrl(product, undefined, false));
+      });
+    } else {
+      console.log('No products found or error:', productsResult.error);
+    }
+
+    // Test 4: Check if storage bucket exists by attempting to access a known file
+    console.log('\n4. Testing storage bucket accessibility...');
+    const testUrl = 'https://gvcswimqaxvylgxbklbz.supabase.co/storage/v1/object/public/product-images/';
+    console.log('Storage base URL:', testUrl);
+    console.log('Note: Check Network tab to see if requests to this URL return 404 (bucket missing) or 403 (no files)');
+
+  } catch (error) {
+    console.error('Test failed:', error);
+  }
+  
+  console.log('\n=== END IMAGE LOADING TEST ===');
+}
+
+/**
  * Test connection - use this to verify Supabase is working
  */
 export async function testSupabaseConnection() {
@@ -380,6 +515,25 @@ export async function testSupabaseConnection() {
       message: 'Supabase connection failed',
       error: error instanceof Error ? error.message : 'Unknown error'
     };
+  }
+}
+
+/**
+ * Export debugging functions to window for easy browser console access
+ * Call this in development: enableImageDebugging()
+ */
+export function enableImageDebugging() {
+  if (typeof window !== 'undefined') {
+    (window as any).testImageLoading = testImageLoading;
+    (window as any).debugImageUrls = debugImageUrls;
+    (window as any).getProductImageUrl = getProductImageUrl;
+    (window as any).fetchProductsWithImages = fetchProductsWithImages;
+    console.log('📸 Image debugging functions enabled!');
+    console.log('Available functions:');
+    console.log('- testImageLoading() - comprehensive test suite');
+    console.log('- debugImageUrls(limit) - check URLs in database');
+    console.log('- getProductImageUrl(product, variant, debugMode) - test URL generation');
+    console.log('- fetchProductsWithImages(options) - fetch products with images');
   }
 }
 
