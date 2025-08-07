@@ -19,7 +19,7 @@ import {
   Star,
   Zap
 } from 'lucide-react';
-import { supabase, type Product } from '@/lib/supabase';
+import { supabase, type Product } from '@/lib/supabase-client';
 
 interface SmartCollection {
   id: string;

@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sparkles, Star, TrendingUp, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getProductImageUrl } from '@/lib/shared/supabase-products';
+import { getProductImageUrl } from '@/lib/services';
+import { storage } from '@/lib/prefixed-storage';
 
 interface RecommendationEngineProps {
   onRecommendationSelected?: (products: any[]) => void;
@@ -47,7 +48,7 @@ export const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('supabase.auth.token')}`
+          'Authorization': `Bearer ${storage.getItem('supabase.auth.token')}`
         },
         body: JSON.stringify({
           recommendation_type: 'outfit',

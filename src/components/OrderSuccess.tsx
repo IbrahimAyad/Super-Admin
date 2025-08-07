@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle } from 'lucide-react';
-import { getOrder, type Order } from '@/lib/shared/supabase-service';
+import { getOrder, type Order } from '@/lib/services';
 import { useToast } from '@/hooks/use-toast';
 
 export function OrderSuccess() {

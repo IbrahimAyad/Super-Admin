@@ -11,7 +11,7 @@ import { CartSheet } from '@/components/cart/CartSheet';
 import { WishlistSheet } from '@/components/wishlist/WishlistSheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { getUserWeddings, getAllWeddings, getWeddingStatistics, getWeddingByCode, type Wedding } from '@/lib/shared/supabase-service';
+import { getUserWeddings, getAllWeddings, getWeddingStatistics, getWeddingByCode, type Wedding } from '@/lib/services';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, Users, MapPin, Plus, Crown, Heart, Shield, BarChart, CheckCircle, ShoppingBag } from 'lucide-react';
 import { format } from 'date-fns';

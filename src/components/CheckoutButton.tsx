@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { createCheckout, type CartItem } from '@/lib/shared/supabase-service';
+import { createCheckout, type CartItem } from '@/lib/services';
 import { useToast } from '@/hooks/use-toast';
 
 interface CheckoutButtonProps {

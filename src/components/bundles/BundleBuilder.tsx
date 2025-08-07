@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Package, Plus, Minus, Percent, DollarSign, TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getProductImageUrl } from '@/lib/shared/supabase-products';
+import { getProductImageUrl } from '@/lib/services';
+import { storage } from '@/lib/prefixed-storage';
 
 interface BundleBuilderProps {
   initialProducts?: any[];
@@ -51,7 +52,7 @@ export const BundleBuilder: React.FC<BundleBuilderProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('supabase.auth.token')}`
+          'Authorization': `Bearer ${storage.getItem('supabase.auth.token')}`
         },
         body: JSON.stringify({
           product_ids: selectedProducts.map(p => p.id),
@@ -90,7 +91,7 @@ export const BundleBuilder: React.FC<BundleBuilderProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('supabase.auth.token')}`
+          'Authorization': `Bearer ${storage.getItem('supabase.auth.token')}`
         },
         body: JSON.stringify({
           selected_products: selectedProducts.map(p => p.id),

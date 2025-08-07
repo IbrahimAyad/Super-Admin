@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { addToWishlist, removeFromWishlist } from '@/lib/shared/supabase-service';
+import { addToWishlist, removeFromWishlist } from '@/lib/services';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 

@@ -17,8 +17,8 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
-import { fetchProductsWithImages } from '@/lib/shared/supabase-products';
+import { supabase } from '@/lib/supabase-client';
+import { fetchProductsWithImages } from '@/lib/services';
 
 interface ProductAnalytics {
   product_id: string;

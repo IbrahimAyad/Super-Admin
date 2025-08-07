@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { testSupabaseConnection, fetchProductsWithImages } from '@/lib/shared/supabase-products';
+import { testSupabaseConnection, fetchProductsWithImages } from '@/lib/services';
 
 export default function SupabaseConnectionTest() {
   const [connectionStatus, setConnectionStatus] = useState<any>(null);

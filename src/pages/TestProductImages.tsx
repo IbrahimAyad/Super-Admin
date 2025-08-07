@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchProductsWithImages, getProductImageUrl } from '@/lib/shared/supabase-products';
+import { fetchProductsWithImages, getProductImageUrl } from '@/lib/services';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function TestProductImages() {

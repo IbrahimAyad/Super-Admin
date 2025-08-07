@@ -12,10 +12,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getWishlist, removeFromWishlist as removeFromWishlistService, type WishlistItem } from '@/lib/shared/supabase-service';
+import { getWishlist, removeFromWishlist as removeFromWishlistService, type WishlistItem } from '@/lib/services';
 import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/contexts/CartContext';
-import { getProductImageUrl } from '@/lib/shared/supabase-products';
+import { getProductImageUrl } from '@/lib/services';
 
 interface WishlistSheetProps {
   children: React.ReactNode;

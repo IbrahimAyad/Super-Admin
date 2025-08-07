@@ -1,19 +1,12 @@
 /**
- * SHARED SUPABASE PRODUCTS SERVICE
- * This file should be identical in both the main site and admin backend
- * Last updated: 2024-08-05
+ * UNIFIED PRODUCTS SERVICE
+ * Centralized product operations using the singleton Supabase client
+ * Last updated: 2025-08-07
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../supabase-client';
 
-// Use the same credentials in both projects (adapted for Vite)
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY!;
-
-// Single client instance
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-// Product type that both projects will use
+// Product types
 export interface Product {
   id: string;
   name: string;
@@ -53,13 +46,33 @@ export interface ProductVariant {
   price: number;
   size?: string;
   color?: string;
-  option1?: string; // For sizes (expected by frontend)
-  option2?: string; // For colors (expected by frontend)
-  inventory_quantity?: number; // Using the correct field name
-  inventory_count: number; // Legacy support
-  available?: boolean; // Calculated field
-  inStock?: boolean; // Calculated field
+  option1?: string;
+  option2?: string;
+  inventory_quantity?: number;
+  inventory_count: number;
+  available?: boolean;
+  inStock?: boolean;
   status: 'active' | 'out_of_stock';
+}
+
+export interface SizeTemplate {
+  id: string;
+  category: string;
+  subcategory?: string;
+  template_name: string;
+  sizes: any;
+  display_type: 'grid' | 'dropdown' | 'two_step';
+  is_default: boolean;
+  is_active: boolean;
+}
+
+export interface ProductSmartTag {
+  id: string;
+  product_id: string;
+  tag_type: 'occasion' | 'style' | 'season' | 'body_type' | 'recommendation';
+  tag_value: string;
+  confidence_score: number;
+  source: 'manual' | 'ai' | 'user_behavior';
 }
 
 /**
@@ -88,7 +101,6 @@ export async function fetchProductsWithImages(options?: {
     if (options?.status) {
       query = query.eq('status', options.status);
     }
-    // No status filter defaults to no status restriction (shows all)
     if (options?.limit) {
       query = query.limit(options.limit);
     }
@@ -103,7 +115,7 @@ export async function fetchProductsWithImages(options?: {
       throw error;
     }
 
-    // Ensure images are sorted by sort_order and handle null/undefined gracefully
+    // Ensure images are sorted by sort_order
     const productsWithSortedImages = data?.map(product => ({
       ...product,
       images: Array.isArray(product.images) 
@@ -206,13 +218,11 @@ export async function getProductById(id: string) {
 
     // Calculate additional fields the frontend expects
     if (data) {
-      // Add calculated fields
       const totalInventory = data.variants?.reduce(
         (sum: number, variant: any) => sum + (variant.inventory_quantity || 0), 
         0
       ) || 0;
 
-      // Ensure variants have expected fields
       const enhancedVariants = data.variants?.map((variant: any) => ({
         ...variant,
         available: (variant.inventory_quantity || 0) > 0,
@@ -247,25 +257,66 @@ export async function getProductById(id: string) {
 }
 
 /**
+ * Get products via Edge Function (for complex filtering)
+ */
+export async function getProductsViaFunction(filters?: {
+  category?: string;
+  product_type?: 'core' | 'catalog' | 'all';
+  search?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  try {
+    const searchParams = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+
+    const { data, error } = await supabase.functions.invoke('get-products', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (error) throw error;
+    return {
+      success: true,
+      data,
+      error: null
+    };
+  } catch (error) {
+    console.error('getProductsViaFunction error:', error);
+    return {
+      success: false,
+      data: [],
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
  * Get product image URL with fallback
  */
 export function getProductImageUrl(product: any, variant?: string): string {
-  // Handle the new structure with primary_image field (used by admin)
-  if ((product as any).primary_image) {
-    return (product as any).primary_image;
+  // Handle the new structure with primary_image field
+  if (product.primary_image) {
+    return product.primary_image;
   }
 
-  // Handle image_gallery array (used by admin)
-  if ((product as any).image_gallery && Array.isArray((product as any).image_gallery) && (product as any).image_gallery.length > 0) {
-    return (product as any).image_gallery[0];
+  // Handle image_gallery array
+  if (product.image_gallery && Array.isArray(product.image_gallery) && product.image_gallery.length > 0) {
+    return product.image_gallery[0];
   }
 
   // Handle legacy images string array structure  
-  if ((product as any).images && Array.isArray((product as any).images) && typeof (product as any).images[0] === 'string') {
-    return (product as any).images[0];
+  if (product.images && Array.isArray(product.images) && typeof product.images[0] === 'string') {
+    return product.images[0];
   }
 
-  // Handle the proper ProductImage array structure (used by frontend)
+  // Handle the proper ProductImage array structure
   if (product.images && Array.isArray(product.images)) {
     // Try to get primary image first
     const primaryImage = product.images.find((img: any) => img.image_type === 'primary');
@@ -334,26 +385,6 @@ export async function testSupabaseConnection() {
 
 // === SMART SIZING SYSTEM ===
 
-export interface SizeTemplate {
-  id: string;
-  category: string;
-  subcategory?: string;
-  template_name: string;
-  sizes: any;
-  display_type: 'grid' | 'dropdown' | 'two_step';
-  is_default: boolean;
-  is_active: boolean;
-}
-
-export interface ProductSmartTag {
-  id: string;
-  product_id: string;
-  tag_type: 'occasion' | 'style' | 'season' | 'body_type' | 'recommendation';
-  tag_value: string;
-  confidence_score: number;
-  source: 'manual' | 'ai' | 'user_behavior';
-}
-
 /**
  * Get size template for a product category
  */
@@ -376,64 +407,6 @@ export async function getSizeTemplate(category: string) {
     };
   } catch (error) {
     console.error('getSizeTemplate error:', error);
-    return {
-      success: false,
-      data: null,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
-  }
-}
-
-/**
- * Get product with smart tags
- */
-export async function getProductWithSmartFeatures(slugOrId: string) {
-  try {
-    const { data: product, error: productError } = await supabase
-      .from('products')
-      .select(`
-        *,
-        images:product_images(*),
-        variants:product_variants(*),
-        smart_tags:product_smart_tags(*)
-      `)
-      .eq('slug', slugOrId)
-      .single();
-
-    if (productError) {
-      // Try by ID if slug fails
-      const { data: productById, error: idError } = await supabase
-        .from('products')
-        .select(`
-          *,
-          images:product_images(*),
-          variants:product_variants(*),
-          smart_tags:product_smart_tags(*)
-        `)
-        .eq('id', slugOrId)
-        .single();
-
-      if (idError) throw idError;
-      
-      return {
-        success: true,
-        data: productById,
-        error: null
-      };
-    }
-
-    // Sort images by sort_order
-    if (product?.images) {
-      product.images.sort((a: ProductImage, b: ProductImage) => a.sort_order - b.sort_order);
-    }
-
-    return {
-      success: true,
-      data: product,
-      error: null
-    };
-  } catch (error) {
-    console.error('getProductWithSmartFeatures error:', error);
     return {
       success: false,
       data: null,
@@ -586,6 +559,90 @@ export async function generateVariantsFromTemplate(productId: string, category: 
     return {
       success: false,
       data: [],
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Sync Stripe products
+ */
+export async function syncStripeProducts() {
+  try {
+    const { data, error } = await supabase.functions.invoke('sync-stripe-products', {
+      method: 'POST',
+    });
+
+    if (error) throw error;
+    return {
+      success: true,
+      data,
+      error: null
+    };
+  } catch (error) {
+    console.error('syncStripeProducts error:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Create a new product with images
+ */
+export async function createProductWithImages(productData: Partial<Product>, imageFiles?: File[]) {
+  try {
+    // For now, redirect to basic product creation
+    const { data, error } = await supabase
+      .from('products')
+      .insert([productData])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      data,
+      error: null
+    };
+  } catch (error) {
+    console.error('createProductWithImages error:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Update an existing product with images
+ */
+export async function updateProductWithImages(productId: string, productData: Partial<Product>, imageFiles?: File[]) {
+  try {
+    // For now, redirect to basic product update
+    const { data, error } = await supabase
+      .from('products')
+      .update(productData)
+      .eq('id', productId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      data,
+      error: null
+    };
+  } catch (error) {
+    console.error('updateProductWithImages error:', error);
+    return {
+      success: false,
+      data: null,
       error: error instanceof Error ? error.message : 'Unknown error'
     };
   }

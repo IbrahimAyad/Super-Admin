@@ -37,7 +37,8 @@ import {
   GripVertical
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { fetchProductsWithImages, getProductImageUrl, supabase as sharedSupabase, Product } from '@/lib/shared/supabase-products';
+import { fetchProductsWithImages, getProductImageUrl, createProductWithImages, updateProductWithImages, Product } from '@/lib/services';
+import { supabase } from '@/lib/supabase-client';
 
 interface ProductFormData {
   // Basic Info
@@ -201,8 +202,6 @@ export const ProductManagement = () => {
         console.log('🔍 First product structure:', {
           id: data[0].id,
           name: data[0].name,
-          primary_image: (data[0] as any).primary_image,
-          image_gallery: (data[0] as any).image_gallery,
           images: data[0].images,
           imageUrl: getProductImageUrl(data[0])
         });
@@ -280,32 +279,32 @@ export const ProductManagement = () => {
       
       switch (action) {
         case 'activate':
-          await sharedSupabase
+          await supabase
             .from('products')
             .update({ status: 'active' })
             .in('id', selectedProducts);
           break;
         case 'deactivate':
-          await sharedSupabase
+          await supabase
             .from('products')
             .update({ status: 'inactive' })
             .in('id', selectedProducts);
           break;
         case 'feature':
-          await sharedSupabase
+          await supabase
             .from('products')
             .update({ is_bundleable: true })
             .in('id', selectedProducts);
           break;
         case 'unfeature':
-          await sharedSupabase
+          await supabase
             .from('products')
             .update({ is_bundleable: false })
             .in('id', selectedProducts);
           break;
         case 'delete':
           if (confirm(`Are you sure you want to delete ${selectedProducts.length} products?`)) {
-            await sharedSupabase
+            await supabase
               .from('products')
               .delete()
               .in('id', selectedProducts);
@@ -334,40 +333,36 @@ export const ProductManagement = () => {
 
   const handleAddProduct = async () => {
     try {
-      // Use shared supabase instance
-      
-      const { data, error } = await sharedSupabase
-        .from('products')
-        .insert({
-          sku: formData.sku || `SKU-${Date.now()}`,
-          name: formData.name,
-          description: formData.description,
-          category: formData.category,
-          product_type: formData.product_type,
-          base_price: formData.base_price,
-          status: formData.status,
-          primary_image: formData.images.length > 0 ? formData.images[0].url : null,
-          image_gallery: formData.images.map(img => img.url)
-        })
-        .select()
-        .single();
+      // Use the new shared service function that properly handles product_images table
+      const result = await createProductWithImages({
+        sku: formData.sku || `SKU-${Date.now()}`,
+        name: formData.name,
+        description: formData.description,
+        category: formData.category,
+        subcategory: formData.product_type, // Map product_type to subcategory
+        base_price: formData.base_price,
+        status: formData.status,
+        images: formData.images.map((img, index) => ({
+          url: img.url,
+          position: index
+        }))
+      });
 
-      if (error) throw error;
+      if (!result.success || !result.data) {
+        throw new Error(result.error || 'Failed to create product');
+      }
 
-      // Add variants and images if any
+      // Add variants if any
       if (formData.variants.length > 0) {
-        await sharedSupabase
+        await supabase
           .from('product_variants')
           .insert(
             formData.variants.map(variant => ({
-              product_id: data.id,
+              product_id: result.data.id,
               ...variant
             }))
           );
       }
-
-      // Note: Images are now stored in primary_image and image_gallery columns
-      // The product_images table insertion is commented out until table structure is confirmed
 
       toast({
         title: "Success",
@@ -391,23 +386,23 @@ export const ProductManagement = () => {
     if (!editingProduct) return;
 
     try {
-      // Use shared supabase instance
-      
-      const { error } = await sharedSupabase
-        .from('products')
-        .update({
-          name: formData.name,
-          description: formData.description,
-          category: formData.category,
-          product_type: formData.product_type,
-          base_price: formData.base_price,
-          status: formData.status,
-          primary_image: formData.images.length > 0 ? formData.images[0].url : null,
-          image_gallery: formData.images.map(img => img.url)
-        })
-        .eq('id', editingProduct.id);
+      // Use the new shared service function that properly handles product_images table
+      const result = await updateProductWithImages(editingProduct.id, {
+        name: formData.name,
+        description: formData.description,
+        category: formData.category,
+        subcategory: formData.product_type, // Map product_type to subcategory
+        base_price: formData.base_price,
+        status: formData.status,
+        images: formData.images.map((img, index) => ({
+          url: img.url,
+          position: index
+        }))
+      });
 
-      if (error) throw error;
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update product');
+      }
 
       toast({
         title: "Success",
@@ -433,7 +428,7 @@ export const ProductManagement = () => {
     try {
       // Use shared supabase instance
       
-      const { error } = await sharedSupabase
+      const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', productId);

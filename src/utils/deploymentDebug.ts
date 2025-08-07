@@ -3,7 +3,7 @@
  * Diagnoses authentication and environment issues across different deployment URLs
  */
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 
 interface DebugInfo {
   timestamp: string;
@@ -365,10 +365,12 @@ export async function debugDeployment(): Promise<void> {
 }
 
 // Auto-run in development or when explicitly enabled
-export function autoDebugIfNeeded(): void {
+export async function autoDebugIfNeeded(): Promise<void> {
+  // Import prefixed storage at runtime to avoid circular deps
+  const { storage } = await import('@/lib/prefixed-storage');
   const shouldAutoDebug = 
     import.meta.env.DEV || 
-    localStorage.getItem('debug-deployment') === 'true' ||
+    storage.getItem('debug-deployment') === 'true' ||
     window.location.search.includes('debug=true');
   
   if (shouldAutoDebug) {
@@ -380,13 +382,15 @@ export function autoDebugIfNeeded(): void {
 }
 
 // Enable/disable auto-debugging
-export function enableAutoDebug(): void {
-  localStorage.setItem('debug-deployment', 'true');
+export async function enableAutoDebug(): Promise<void> {
+  const { storage } = await import('@/lib/prefixed-storage');
+  storage.setItem('debug-deployment', 'true');
   console.log('🔍 Auto-debugging enabled. Refresh to see diagnostics.');
 }
 
-export function disableAutoDebug(): void {
-  localStorage.removeItem('debug-deployment');
+export async function disableAutoDebug(): Promise<void> {
+  const { storage } = await import('@/lib/prefixed-storage');
+  storage.removeItem('debug-deployment');
   console.log('🔍 Auto-debugging disabled.');
 }
 

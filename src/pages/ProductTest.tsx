@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { RefreshCw, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
-import { fetchProductsWithImages } from '@/lib/shared/supabase-products';
+import { fetchProductsWithImages } from '@/lib/services';
 
 export default function ProductTest() {
   const [loading, setLoading] = useState(false);

@@ -14,7 +14,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Crown, Users, MapPin, Palette } from 'lucide-react';
 import { format } from 'date-fns';
-import { createWedding } from '@/lib/shared/supabase-service';
+import { createWedding } from '@/lib/services';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 

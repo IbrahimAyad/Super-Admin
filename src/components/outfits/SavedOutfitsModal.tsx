@@ -24,7 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trash2, Plus, Package, Edit3, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
-import { getSavedOutfits, saveOutfit, deleteOutfit, type SavedOutfit } from '@/lib/shared/supabase-service';
+import { getSavedOutfits, saveOutfit, deleteOutfit, type SavedOutfit } from '@/lib/services';
 import { useToast } from '@/hooks/use-toast';
 
 interface SavedOutfitsModalProps {

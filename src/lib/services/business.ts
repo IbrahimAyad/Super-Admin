@@ -1,12 +1,13 @@
 /**
- * SHARED SUPABASE SERVICE
- * This file handles cart, orders, wishlist, outfits, and other business logic
- * Last updated: 2024-08-05
+ * UNIFIED BUSINESS SERVICE
+ * Centralized business logic operations (cart, orders, wishlist, weddings, etc.)
+ * Using the singleton Supabase client
+ * Last updated: 2025-08-07
  */
 
-import { supabase } from './supabase-products';
+import { supabase } from '../supabase-client';
 
-// Cart Types and Methods
+// Business types
 export interface CartItem {
   product_id?: string;
   variant_id?: string;
@@ -27,27 +28,6 @@ export interface CartItemDB {
   created_at: string;
   product?: any;
   variant?: any;
-}
-
-export interface WishlistItem {
-  id: string;
-  user_id: string;
-  product_id: string;
-  variant_id?: string;
-  notify_on_sale: boolean;
-  created_at: string;
-  product?: any;
-  variant?: any;
-}
-
-export interface SavedOutfit {
-  id: string;
-  user_id: string;
-  name: string;
-  items: any[];
-  occasion?: string;
-  is_public: boolean;
-  created_at: string;
 }
 
 export interface Order {
@@ -71,17 +51,85 @@ export interface Order {
   updated_at: string;
   order_items?: any[];
   customer?: any;
-  totals?: {
-    subtotal: number;
-    tax: number;
-    shipping: number;
-    total: number;
+}
+
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  product_id?: string;
+  variant_id?: string;
+  sku: string;
+  name: string;
+  attributes?: Record<string, any>;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  created_at: string;
+  customization?: Record<string, any>;
+}
+
+export interface WishlistItem {
+  id: string;
+  user_id: string;
+  product_id: string;
+  variant_id?: string;
+  notify_on_sale: boolean;
+  created_at: string;
+  product?: any;
+  variant?: any;
+}
+
+export interface SavedOutfit {
+  id: string;
+  user_id: string;
+  name: string;
+  items: any[];
+  occasion?: string;
+  is_public: boolean;
+  created_at: string;
+}
+
+export interface Wedding {
+  id: string;
+  wedding_code: string;
+  couple_names: string;
+  event_date: string;
+  venue_name?: string;
+  party_size: number;
+  color_scheme: {
+    primary: string;
+    accent?: string;
   };
-  tracking?: {
-    status: string;
-    created_at: string;
-    updated_at: string;
-  };
+  coordinator_email: string;
+  coordinator_phone?: string;
+  discount_percentage: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WeddingMember {
+  id: string;
+  wedding_id: string;
+  role: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  measurements: Record<string, any>;
+  measurement_status: string;
+  assigned_outfit: Record<string, any>;
+  outfit_status: string;
+  order_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserPreferences {
+  id: string;
+  user_id: string;
+  email_marketing: boolean;
+  order_updates: boolean;
+  style_tips: boolean;
 }
 
 /**
@@ -228,6 +276,93 @@ export async function transferGuestCart(sessionId: string, userId: string) {
     };
   } catch (error) {
     console.error('transferGuestCart error:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Checkout and Payment
+ */
+export async function createCheckout(items: CartItem[], options?: {
+  success_url?: string;
+  cancel_url?: string;
+  customer_email?: string;
+}) {
+  try {
+    const { data, error } = await supabase.functions.invoke('create-checkout', {
+      body: { items, ...options },
+    });
+
+    if (error) throw error;
+    return {
+      success: true,
+      data,
+      error: null
+    };
+  } catch (error) {
+    console.error('createCheckout error:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Orders Management
+ */
+export async function getUserOrders(userId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        order_items (*),
+        customers (*)
+      `)
+      .eq('customers.auth_user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return {
+      success: true,
+      data: data || [],
+      error: null
+    };
+  } catch (error) {
+    console.error('getUserOrders error:', error);
+    return {
+      success: false,
+      data: [],
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+export async function getOrder(identifier: {
+  id?: string;
+  order_number?: string;
+  session_id?: string;
+}) {
+  try {
+    const { data, error } = await supabase.functions.invoke('get-order', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (error) throw error;
+    return {
+      success: true,
+      data,
+      error: null
+    };
+  } catch (error) {
+    console.error('getOrder error:', error);
     return {
       success: false,
       data: null,
@@ -408,127 +543,8 @@ export async function deleteOutfit(outfitId: string) {
 }
 
 /**
- * Orders Management
- */
-export async function getUserOrders(userId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('orders')
-      .select(`
-        *,
-        order_items (*),
-        customers (*)
-      `)
-      .eq('customers.auth_user_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return {
-      success: true,
-      data: data || [],
-      error: null
-    };
-  } catch (error) {
-    console.error('getUserOrders error:', error);
-    return {
-      success: false,
-      data: [],
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
-  }
-}
-
-export async function getOrder(identifier: {
-  id?: string;
-  order_number?: string;
-  session_id?: string;
-}) {
-  try {
-    const { data, error } = await supabase.functions.invoke('get-order', {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-    });
-
-    if (error) throw error;
-    return {
-      success: true,
-      data,
-      error: null
-    };
-  } catch (error) {
-    console.error('getOrder error:', error);
-    return {
-      success: false,
-      data: null,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
-  }
-}
-
-/**
- * Checkout and Payment
- */
-export async function createCheckout(items: CartItem[], options?: {
-  success_url?: string;
-  cancel_url?: string;
-  customer_email?: string;
-}) {
-  try {
-    const { data, error } = await supabase.functions.invoke('create-checkout', {
-      body: { items, ...options },
-    });
-
-    if (error) throw error;
-    return {
-      success: true,
-      data,
-      error: null
-    };
-  } catch (error) {
-    console.error('createCheckout error:', error);
-    return {
-      success: false,
-      data: null,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
-  }
-}
-
-/**
- * Inventory Management
- */
-export async function getInventoryStatus(variantId: string) {
-  try {
-    const { data, error } = await supabase
-      .rpc('get_available_inventory', { variant_uuid: variantId });
-
-    if (error) throw error;
-    return {
-      success: true,
-      data,
-      error: null
-    };
-  } catch (error) {
-    console.error('getInventoryStatus error:', error);
-    return {
-      success: false,
-      data: null,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
-  }
-}
-
-/**
  * User Preferences
  */
-export interface UserPreferences {
-  id: string;
-  user_id: string;
-  email_marketing: boolean;
-  order_updates: boolean;
-  style_tips: boolean;
-}
-
 export async function getUserPreferences(userId: string) {
   try {
     const { data, error } = await supabase
@@ -583,41 +599,6 @@ export async function updateUserPreferences(userId: string, preferences: Partial
 /**
  * Wedding Management
  */
-export interface Wedding {
-  id: string;
-  wedding_code: string;
-  couple_names: string;
-  event_date: string;
-  venue_name?: string;
-  party_size: number;
-  color_scheme: {
-    primary: string;
-    accent?: string;
-  };
-  coordinator_email: string;
-  coordinator_phone?: string;
-  discount_percentage: number;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface WeddingMember {
-  id: string;
-  wedding_id: string;
-  role: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  measurements: Record<string, any>;
-  measurement_status: string;
-  assigned_outfit: Record<string, any>;
-  outfit_status: string;
-  order_id?: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export async function createWedding(wedding: {
   couple_names: string;
   event_date: string;
@@ -704,117 +685,6 @@ export async function getWeddingByCode(code: string) {
   }
 }
 
-export async function addWeddingMember(weddingId: string, member: {
-  role: string;
-  name: string;
-  email?: string;
-  phone?: string;
-}) {
-  try {
-    const { data, error } = await supabase
-      .from('wedding_members')
-      .insert({
-        wedding_id: weddingId,
-        ...member
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return {
-      success: true,
-      data,
-      error: null
-    };
-  } catch (error) {
-    console.error('addWeddingMember error:', error);
-    return {
-      success: false,
-      data: null,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
-  }
-}
-
-export async function updateWeddingMemberMeasurements(memberId: string, measurements: Record<string, any>) {
-  try {
-    const { data, error } = await supabase
-      .from('wedding_members')
-      .update({
-        measurements,
-        measurement_status: 'completed',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', memberId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return {
-      success: true,
-      data,
-      error: null
-    };
-  } catch (error) {
-    console.error('updateWeddingMemberMeasurements error:', error);
-    return {
-      success: false,
-      data: null,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
-  }
-}
-
-export async function getWeddingMembers(weddingId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('wedding_members')
-      .select('*')
-      .eq('wedding_id', weddingId)
-      .order('created_at', { ascending: true });
-
-    if (error) throw error;
-    return {
-      success: true,
-      data: data || [],
-      error: null
-    };
-  } catch (error) {
-    console.error('getWeddingMembers error:', error);
-    return {
-      success: false,
-      data: [],
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
-  }
-}
-
-export async function getUserWeddings(userEmail: string) {
-  try {
-    const { data, error } = await supabase
-      .from('weddings')
-      .select(`
-        *,
-        wedding_members!inner(*)
-      `)
-      .or(`coordinator_email.eq.${userEmail},wedding_members.email.eq.${userEmail}`);
-
-    if (error) throw error;
-    return {
-      success: true,
-      data: data || [],
-      error: null
-    };
-  } catch (error) {
-    console.error('getUserWeddings error:', error);
-    return {
-      success: false,
-      data: [],
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
-  }
-}
-
 export async function getAllWeddings() {
   try {
     const { data, error } = await supabase
@@ -841,48 +711,13 @@ export async function getAllWeddings() {
   }
 }
 
-export async function getWeddingStatistics() {
-  try {
-    const { data: weddings, error } = await supabase
-      .from('weddings')
-      .select('*');
-
-    if (error) throw error;
-
-    const { data: members, error: membersError } = await supabase
-      .from('wedding_members')
-      .select('*');
-
-    if (membersError) throw membersError;
-
-    return {
-      success: true,
-      data: {
-        totalWeddings: weddings?.length || 0,
-        totalMembers: members?.length || 0,
-        upcomingWeddings: weddings?.filter(w => new Date(w.event_date) > new Date()).length || 0,
-        completedMeasurements: members?.filter(m => m.measurement_status === 'complete').length || 0
-      },
-      error: null
-    };
-  } catch (error) {
-    console.error('getWeddingStatistics error:', error);
-    return {
-      success: false,
-      data: null,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
-  }
-}
-
 /**
- * Product Sync and Admin Functions
+ * Inventory Management
  */
-export async function syncStripeProducts() {
+export async function getInventoryStatus(variantId: string) {
   try {
-    const { data, error } = await supabase.functions.invoke('sync-stripe-products', {
-      method: 'POST',
-    });
+    const { data, error } = await supabase
+      .rpc('get_available_inventory', { variant_uuid: variantId });
 
     if (error) throw error;
     return {
@@ -891,48 +726,10 @@ export async function syncStripeProducts() {
       error: null
     };
   } catch (error) {
-    console.error('syncStripeProducts error:', error);
+    console.error('getInventoryStatus error:', error);
     return {
       success: false,
       data: null,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
-  }
-}
-
-export async function getProducts(filters?: {
-  category?: string;
-  product_type?: 'core' | 'catalog' | 'all';
-  search?: string;
-  limit?: number;
-  offset?: number;
-}) {
-  try {
-    const searchParams = new URLSearchParams();
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-
-    const { data, error } = await supabase.functions.invoke('get-products', {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-    });
-
-    if (error) throw error;
-    return {
-      success: true,
-      data,
-      error: null
-    };
-  } catch (error) {
-    console.error('getProducts error:', error);
-    return {
-      success: false,
-      data: [],
       error: error instanceof Error ? error.message : 'Unknown error'
     };
   }

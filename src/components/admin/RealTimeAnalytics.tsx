@@ -21,7 +21,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, PieChart as RechartsPieChart, Pie, Cell, FunnelChart, Funnel, LabelList } from 'recharts';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 
 const COLORS = ['#dc2626', '#ea580c', '#d97706', '#65a30d', '#16a34a', '#059669', '#0891b2', '#0284c7', '#2563eb', '#4f46e5'];
 

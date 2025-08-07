@@ -23,7 +23,7 @@ import {
   Plus
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/shared/supabase-products';
+import { supabase } from '@/lib/supabase-client';
 import { CustomerImport } from './CustomerImport';
 
 interface Customer {

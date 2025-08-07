@@ -15,7 +15,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { CartItemCard } from './CartItemCard';
 import { ShoppingBag, Trash2 } from 'lucide-react';
-import { createCheckout } from '@/lib/shared/supabase-service';
+import { createCheckout } from '@/lib/services';
 import { toast } from 'sonner';
 
 interface CartSheetProps {

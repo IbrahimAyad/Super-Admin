@@ -1,4 +1,4 @@
-import { supabase } from '../lib/shared/supabase-products';
+import { supabase } from '../lib/supabase-client';
 
 async function addInventoryToAllProducts() {
   console.log('🔄 Starting inventory update...');

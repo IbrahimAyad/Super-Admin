@@ -2,9 +2,9 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
-import { CartItemDB } from '@/lib/supabase';
+import { CartItemDB } from '@/lib/supabase-client';
 import { Minus, Plus, X } from 'lucide-react';
-import { getProductImageUrl } from '@/lib/shared/supabase-products';
+import { getProductImageUrl } from '@/lib/services';
 
 interface CartItemCardProps {
   item: CartItemDB;

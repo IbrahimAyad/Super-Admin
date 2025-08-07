@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Lock, Eye, EyeOff, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { usePasswordReset } from '@/hooks/usePasswordReset';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 
 export default function ResetPassword() {
   const navigate = useNavigate();

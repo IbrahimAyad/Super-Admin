@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { fetchProductsWithImages, getProductImageUrl, type Product } from '@/lib/shared/supabase-products';
+import { fetchProductsWithImages, getProductImageUrl, type Product } from '@/lib/services';
 import { useToast } from '@/hooks/use-toast';
 import { WishlistButton } from '@/components/wishlist/WishlistButton';
 

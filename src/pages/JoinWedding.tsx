@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '@/components/auth/AuthModal';
-import { getWeddingByCode, addWeddingMember, type Wedding } from '@/lib/shared/supabase-service';
+import { getWeddingByCode, addWeddingMember, type Wedding } from '@/lib/services';
 import { useToast } from '@/hooks/use-toast';
 import { Heart, Users, Calendar, MapPin, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';

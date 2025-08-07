@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ShoppingBag, Shirt, Package, Zap, Heart, Crown, BarChart3 } from 'lucide-react';
-import { syncStripeProducts, type Product } from '@/lib/shared/supabase-service';
+import { syncStripeProducts, type Product } from '@/lib/services';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 

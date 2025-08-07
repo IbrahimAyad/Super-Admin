@@ -9,7 +9,7 @@ import {
   generateVariantsFromTemplate, 
   fetchProductsWithImages,
   SizeTemplate 
-} from '@/lib/shared/supabase-products';
+} from '@/lib/services';
 
 export default function SmartSizingManager() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');

@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { CartItemDB, getCart, addToCart, updateCartItem, removeFromCart, clearCart as clearCartService, transferGuestCart } from '@/lib/shared/supabase-service';
+import { CartItemDB, getCart, addToCart, updateCartItem, removeFromCart, clearCart as clearCartService, transferGuestCart } from '@/lib/services';
 import { useAuth } from './AuthContext';
 import { toast } from 'sonner';
+import { storage } from '@/lib/prefixed-storage';
 
 interface CartContextType {
   items: CartItemDB[];
@@ -24,10 +25,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Generate session ID for guest users
   const [sessionId] = useState(() => {
-    const stored = localStorage.getItem('cart_session_id');
+    const stored = storage.getItem('cart_session_id');
     if (stored) return stored;
     const newId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    localStorage.setItem('cart_session_id', newId);
+    storage.setItem('cart_session_id', newId);
     return newId;
   });
 

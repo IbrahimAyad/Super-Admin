@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabase } from '@/lib/supabase';
-import { fetchProductsWithImages } from '@/lib/shared/supabase-products';
+import { supabase } from '@/lib/supabase-client';
+import { fetchProductsWithImages } from '@/lib/services';
 import { 
   TrendingUp, 
   TrendingDown, 

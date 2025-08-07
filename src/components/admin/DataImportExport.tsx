@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
-import { fetchProductsWithImages, supabase as sharedSupabase } from '@/lib/shared/supabase-products';
+import { supabase } from '@/lib/supabase-client';
+import { fetchProductsWithImages } from '@/lib/services';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

@@ -1,10 +1,10 @@
 /**
- * SHARED SUPABASE AUTH SERVICE
- * This file handles authentication and user profile management
- * Last updated: 2024-08-05
+ * UNIFIED AUTH SERVICE
+ * Centralized authentication operations using the singleton Supabase client
+ * Last updated: 2025-08-07
  */
 
-import { supabase } from './supabase-products';
+import { supabase } from '../supabase-client';
 
 export interface UserProfile {
   id: string;
@@ -136,6 +136,52 @@ export async function resetPassword(email: string) {
 }
 
 /**
+ * Get current session
+ */
+export async function getSession() {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    
+    return {
+      success: true,
+      data: data.session,
+      error: null
+    };
+  } catch (error) {
+    console.error('getSession error:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Get current user
+ */
+export async function getCurrentUser() {
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    
+    return {
+      success: true,
+      data: data.user,
+      error: null
+    };
+  } catch (error) {
+    console.error('getCurrentUser error:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
  * User Profile Methods
  */
 export async function getProfile(userId: string) {
@@ -224,6 +270,51 @@ export async function updateMeasurements(userId: string, measurements: Record<st
     };
   } catch (error) {
     console.error('updateMeasurements error:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Auth state change listener
+ */
+export function onAuthStateChange(callback: (event: string, session: any) => void) {
+  return supabase.auth.onAuthStateChange(callback);
+}
+
+/**
+ * Admin authentication check
+ */
+export async function checkAdminAccess(userId?: string) {
+  try {
+    const { data, error } = await supabase
+      .from('admin_users')
+      .select('*')
+      .eq('user_id', userId || 'unknown')
+      .eq('is_active', true)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return {
+          success: false,
+          data: null,
+          error: 'Admin access not found'
+        };
+      }
+      throw error;
+    }
+
+    return {
+      success: true,
+      data,
+      error: null
+    };
+  } catch (error) {
+    console.error('checkAdminAccess error:', error);
     return {
       success: false,
       data: null,

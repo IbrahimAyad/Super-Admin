@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
-import { getWeddingByCode, getWeddingMembers, type Wedding, type WeddingMember } from '@/lib/shared/supabase-service';
+import { getWeddingByCode, getWeddingMembers, type Wedding, type WeddingMember } from '@/lib/services';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Calendar, 

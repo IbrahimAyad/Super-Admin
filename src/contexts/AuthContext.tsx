@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/lib/shared/supabase-products';
-import * as AuthService from '@/lib/shared/supabase-auth';
-import type { UserProfile } from '@/lib/shared/supabase-auth';
+import { supabase, signUp, signIn, signInWithGoogle, signOut, getProfile, updateProfile, onAuthStateChange } from '@/lib/services';
+import type { UserProfile } from '@/lib/services';
 
 interface AuthContextType {
   user: User | null;
@@ -61,7 +60,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loadProfile = async (userId: string) => {
     try {
       console.log('Loading profile for user:', userId);
-      const profileData = await AuthService.getProfile(userId);
+      const result = await getProfile(userId);
+      const profileData = result.success ? result.data : null;
       console.log('Profile loaded:', profileData);
       setProfile(profileData);
     } catch (error) {
@@ -69,11 +69,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // If profile doesn't exist, create one
       try {
         console.log('Creating new profile for user:', userId);
-        const newProfile = await AuthService.updateProfile(userId, {
+        const result = await updateProfile(userId, {
           onboarding_completed: false,
           measurements: {},
           style_preferences: {}
         });
+        const newProfile = result.success ? result.data : null;
         console.log('New profile created:', newProfile);
         setProfile(newProfile);
       } catch (createError) {
@@ -84,30 +85,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, userData?: Partial<UserProfile>) => {
-    const result = await AuthService.signUp(email, password, userData);
+  const handleSignUp = async (email: string, password: string, userData?: Partial<UserProfile>) => {
+    const result = await signUp(email, password, userData);
     return result.success ? result.data : result;
   };
 
-  const signIn = async (email: string, password: string) => {
-    const result = await AuthService.signIn(email, password);
+  const handleSignIn = async (email: string, password: string) => {
+    const result = await signIn(email, password);
     return result.success ? result.data : result;
   };
 
-  const signInWithGoogle = async () => {
-    const result = await AuthService.signInWithGoogle();
+  const handleSignInWithGoogle = async () => {
+    const result = await signInWithGoogle();
     return result.success ? result.data : result;
   };
 
-  const signOut = async () => {
-    await AuthService.signOut();
+  const handleSignOut = async () => {
+    await signOut();
     setProfile(null);
   };
 
-  const updateProfile = async (updates: Partial<UserProfile>) => {
+  const handleUpdateProfile = async (updates: Partial<UserProfile>) => {
     if (!user) throw new Error('No user logged in');
-    const updatedProfile = await AuthService.updateProfile(user.id, updates);
-    setProfile(updatedProfile);
+    const result = await updateProfile(user.id, updates);
+    if (result.success) {
+      setProfile(result.data);
+    }
   };
 
   const refreshProfile = async () => {
@@ -120,11 +123,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     profile,
     loading,
-    signUp,
-    signIn,
-    signInWithGoogle,
-    signOut,
-    updateProfile,
+    signUp: handleSignUp,
+    signIn: handleSignIn,
+    signInWithGoogle: handleSignInWithGoogle,
+    signOut: handleSignOut,
+    updateProfile: handleUpdateProfile,
     refreshProfile,
   };
 
