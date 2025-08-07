@@ -368,26 +368,23 @@ export class KCTMenswearAPI {
 
   // User Profile Methods
   static async getProfile(userId: string) {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (error) throw error;
-    return data;
+    // Use the shared auth service for consistency
+    const result = await import('@/lib/shared/supabase-auth').then(module => module.getProfile(userId));
+    if (result.success) {
+      return result.data;
+    } else {
+      throw new Error(result.error || 'Failed to get profile');
+    }
   }
 
   static async updateProfile(userId: string, updates: Partial<UserProfile>) {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .update(updates)
-      .eq('id', userId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    // Use the shared auth service for consistency
+    const result = await import('@/lib/shared/supabase-auth').then(module => module.updateProfile(userId, updates));
+    if (result.success) {
+      return result.data;
+    } else {
+      throw new Error(result.error || 'Failed to update profile');
+    }
   }
 
   static async updateMeasurements(userId: string, measurements: Record<string, any>) {

@@ -175,8 +175,8 @@ export const ProductManagement = () => {
       setLoading(true);
       console.log('🔍 Loading products...');
       
-      // Use shared service for fetching products
-      const result = await fetchProductsWithImages({ limit: 10 });
+      // Use shared service for fetching products - fetch all products
+      const result = await fetchProductsWithImages();
       const { data, error } = result.success 
         ? { data: result.data, error: null } 
         : { data: null, error: new Error(result.error || 'Failed to fetch products') };

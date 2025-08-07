@@ -105,11 +105,15 @@ export async function fetchProductsWithImages(options?: {
       throw error;
     }
 
-    // Ensure images are sorted by sort_order
+    // Ensure images are sorted by sort_order and handle null/undefined gracefully
     const productsWithSortedImages = data?.map(product => ({
       ...product,
-      images: product.images?.sort((a: ProductImage, b: ProductImage) => a.sort_order - b.sort_order) || []
+      images: Array.isArray(product.images) 
+        ? product.images.sort((a: ProductImage, b: ProductImage) => (a.sort_order || 0) - (b.sort_order || 0))
+        : []
     })) || [];
+
+    console.log(`✅ Fetched ${productsWithSortedImages.length} products with images`);
 
     return {
       success: true,

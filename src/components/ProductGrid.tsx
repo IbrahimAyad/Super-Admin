@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { fetchProductsWithImages, getProductImageUrl, type Product } from '@/lib/shared/supabase-products';
 import { useToast } from '@/hooks/use-toast';
 import { WishlistButton } from '@/components/wishlist/WishlistButton';
-import { getProductImageUrl } from '@/lib/shared/supabase-products';
 
 interface ProductGridProps {
   category?: string;
@@ -31,19 +30,30 @@ export function ProductGrid({ category, productType = 'all', onAddToCart }: Prod
   const loadProducts = async (offset = 0) => {
     try {
       setLoading(true);
+      // Remove limit to fetch all products or increase significantly
       const result = await fetchProductsWithImages({
         category,
-        product_type: productType,
-        limit: 20,
+        status: 'active', // Only fetch active products for frontend
+        limit: 1000, // Large limit to get all products
         offset,
       });
 
-      if (offset === 0) {
-        setProducts(response.products);
+      if (result.success) {
+        if (offset === 0) {
+          setProducts(result.data);
+        } else {
+          setProducts(prev => [...prev, ...result.data]);
+        }
+        // Set pagination info
+        setPagination({
+          total: result.data.length,
+          limit: 1000,
+          offset,
+          has_more: result.data.length >= 1000 // Only show more if we got max results
+        });
       } else {
-        setProducts(prev => [...prev, ...response.products]);
+        throw new Error(result.error || 'Failed to load products');
       }
-      setPagination(response.pagination);
     } catch (error) {
       console.error('Error loading products:', error);
       toast({

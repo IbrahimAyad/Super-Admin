@@ -38,7 +38,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Transfer guest cart when user logs in
     if (user?.id && sessionId) {
-      transferGuestCart();
+      handleGuestCartTransfer();
     }
   }, [user?.id, sessionId]);
 
@@ -59,7 +59,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const transferGuestCart = async () => {
+  const handleGuestCartTransfer = async () => {
     try {
       const result = await transferGuestCart(sessionId, user!.id);
       if (!result.success) {

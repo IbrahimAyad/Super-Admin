@@ -138,7 +138,7 @@ export async function resetPassword(email: string) {
 /**
  * User Profile Methods
  */
-export async function getProfile(userId: string): Promise<UserProfile> {
+export async function getProfile(userId: string) {
   try {
     const { data, error } = await supabase
       .from('user_profiles')
@@ -146,15 +146,35 @@ export async function getProfile(userId: string): Promise<UserProfile> {
       .eq('id', userId)
       .single();
 
-    if (error) throw error;
-    return data;
+    if (error) {
+      // If no profile exists (404/406 error), return null instead of throwing
+      if (error.code === 'PGRST116' || error.message.includes('no rows') || error.status === 406) {
+        console.log('No profile found for user:', userId);
+        return {
+          success: false,
+          data: null,
+          error: 'Profile not found'
+        };
+      }
+      throw error;
+    }
+
+    return {
+      success: true,
+      data,
+      error: null
+    };
   } catch (error) {
     console.error('getProfile error:', error);
-    throw error;
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
   }
 }
 
-export async function updateProfile(userId: string, updates: Partial<UserProfile>): Promise<UserProfile> {
+export async function updateProfile(userId: string, updates: Partial<UserProfile>) {
   try {
     const { data, error } = await supabase
       .from('user_profiles')
@@ -167,14 +187,23 @@ export async function updateProfile(userId: string, updates: Partial<UserProfile
       .single();
 
     if (error) throw error;
-    return data;
+
+    return {
+      success: true,
+      data,
+      error: null
+    };
   } catch (error) {
     console.error('updateProfile error:', error);
-    throw error;
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
   }
 }
 
-export async function updateMeasurements(userId: string, measurements: Record<string, any>): Promise<UserProfile> {
+export async function updateMeasurements(userId: string, measurements: Record<string, any>) {
   try {
     const { data, error } = await supabase
       .from('user_profiles')
@@ -187,9 +216,18 @@ export async function updateMeasurements(userId: string, measurements: Record<st
       .single();
 
     if (error) throw error;
-    return data;
+
+    return {
+      success: true,
+      data,
+      error: null
+    };
   } catch (error) {
     console.error('updateMeasurements error:', error);
-    throw error;
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
   }
 }
