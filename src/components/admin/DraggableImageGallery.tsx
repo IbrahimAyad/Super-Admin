@@ -194,7 +194,13 @@ const SortableImage: React.FC<SortableImageProps> = ({
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{
+        ...style,
+        // Ensure proper positioning context for drag operations
+        position: 'relative',
+        // Prevent any transform issues during drag
+        transformOrigin: 'top left',
+      }}
       className="relative group bg-white border rounded-lg p-2 space-y-2"
     >
       {/* Drag Handle */}
@@ -202,6 +208,12 @@ const SortableImage: React.FC<SortableImageProps> = ({
         {...attributes}
         {...listeners}
         className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-white/90 rounded p-1"
+        style={{
+          // Ensure the drag handle doesn't interfere with coordinate calculations
+          touchAction: 'none',
+          userSelect: 'none',
+          transform: 'translate3d(0, 0, 0)', // Force GPU acceleration and proper positioning
+        }}
       >
         <GripVertical className="h-4 w-4 text-muted-foreground" />
       </div>
@@ -689,9 +701,22 @@ export const DraggableImageGallery: React.FC<DraggableImageGalleryProps> = ({
           collisionDetection={closestCenter}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
+          // Fix coordinate system issues by ensuring proper measuring
+          measuring={{
+            droppable: {
+              strategy: 'always',
+            },
+          }}
         >
           <SortableContext items={images.map(img => img.url)} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div 
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+              style={{
+                // Ensure the grid container doesn't interfere with drag calculations
+                position: 'relative',
+                isolation: 'isolate',
+              }}
+            >
               {images.map((image, index) => (
                 <SortableImage
                   key={image.url}

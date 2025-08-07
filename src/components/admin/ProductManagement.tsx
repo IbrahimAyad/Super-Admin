@@ -484,7 +484,7 @@ export const ProductManagement = () => {
 
   const handleAddProduct = async () => {
     // Validation with null checks
-    if (!formData.name || !formData.name.trim()) {
+    if (!formData.name || typeof formData.name !== 'string' || !formData.name.trim()) {
       toast({
         title: "Validation Error",
         description: "Product name is required",
@@ -493,7 +493,7 @@ export const ProductManagement = () => {
       return;
     }
 
-    if (!formData.category || !formData.category.trim()) {
+    if (!formData.category || typeof formData.category !== 'string' || !formData.category.trim()) {
       toast({
         title: "Validation Error", 
         description: "Product category is required",
@@ -515,9 +515,9 @@ export const ProductManagement = () => {
       // Prepare product data with proper field mapping and null checks
       const productData = {
         sku: formData.sku || `SKU-${Date.now()}`,
-        name: formData.name.trim(),
-        description: formData.description ? formData.description.trim() : null,
-        category: formData.category.trim(),
+        name: formData.name && typeof formData.name === 'string' ? formData.name.trim() : '',
+        description: formData.description && typeof formData.description === 'string' ? formData.description.trim() : null,
+        category: formData.category && typeof formData.category === 'string' ? formData.category.trim() : '',
         // Map product_type to correct field - use subcategory if it exists in schema
         ...(formData.product_type && { subcategory: formData.product_type }),
         base_price: formData.base_price,
@@ -587,7 +587,7 @@ export const ProductManagement = () => {
     if (!editingProduct) return;
 
     // Validation with null checks
-    if (!formData.name || !formData.name.trim()) {
+    if (!formData.name || typeof formData.name !== 'string' || !formData.name.trim()) {
       toast({
         title: "Validation Error",
         description: "Product name is required",
@@ -596,7 +596,7 @@ export const ProductManagement = () => {
       return;
     }
 
-    if (!formData.category || !formData.category.trim()) {
+    if (!formData.category || typeof formData.category !== 'string' || !formData.category.trim()) {
       toast({
         title: "Validation Error", 
         description: "Product category is required",
@@ -617,9 +617,9 @@ export const ProductManagement = () => {
     try {
       // Prepare update data with null checks and proper field mapping
       const updateData = {
-        name: formData.name.trim(),
-        description: formData.description ? formData.description.trim() : null,
-        category: formData.category.trim(),
+        name: formData.name && typeof formData.name === 'string' ? formData.name.trim() : '',
+        description: formData.description && typeof formData.description === 'string' ? formData.description.trim() : null,
+        category: formData.category && typeof formData.category === 'string' ? formData.category.trim() : '',
         // Map product_type to correct field - use subcategory if it exists in schema
         ...(formData.product_type && { subcategory: formData.product_type }),
         base_price: formData.base_price,
