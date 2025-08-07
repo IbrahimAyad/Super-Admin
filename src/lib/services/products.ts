@@ -32,11 +32,16 @@ export interface ProductImage {
   variant_id?: string;
   r2_key?: string;
   r2_url?: string;
-  url: string;  // Primary field used in database
+  image_url: string;  // Primary field used in database
+  url?: string; // Legacy support
   image_type: 'primary' | 'gallery' | 'thumbnail' | 'detail';
-  sort_order: number;
+  position: number; // Actual column name in database
+  sort_order?: number; // Legacy support
   alt_text?: string;
+  width?: number;
+  height?: number;
   created_at: string;
+  updated_at: string;
 }
 
 export interface ProductVariant {
@@ -116,11 +121,11 @@ export async function fetchProductsWithImages(options?: {
       throw error;
     }
 
-    // Ensure images are sorted by sort_order
+    // Ensure images are sorted by position (database column name)
     const productsWithSortedImages = data?.map(product => ({
       ...product,
       images: Array.isArray(product.images) 
-        ? product.images.sort((a: ProductImage, b: ProductImage) => (a.sort_order || 0) - (b.sort_order || 0))
+        ? product.images.sort((a: ProductImage, b: ProductImage) => (a.position || 0) - (b.position || 0))
         : []
     })) || [];
 
@@ -175,9 +180,9 @@ export async function getProduct(slugOrId: string) {
 
     if (error) throw error;
 
-    // Sort images by sort_order
+    // Sort images by position (database column name)
     if (data?.images) {
-      data.images.sort((a: ProductImage, b: ProductImage) => a.sort_order - b.sort_order);
+      data.images.sort((a: ProductImage, b: ProductImage) => (a.position || 0) - (b.position || 0));
     }
 
     return {
@@ -212,9 +217,9 @@ export async function getProductById(id: string) {
 
     if (error) throw error;
 
-    // Sort images by sort_order
+    // Sort images by position (database column name)
     if (data?.images) {
-      data.images.sort((a: ProductImage, b: ProductImage) => a.sort_order - b.sort_order);
+      data.images.sort((a: ProductImage, b: ProductImage) => (a.position || 0) - (b.position || 0));
     }
 
     // Calculate additional fields the frontend expects
@@ -305,7 +310,7 @@ export async function debugImageUrls(limit: number = 10) {
   try {
     const { data, error } = await supabase
       .from('product_images')
-      .select('id, product_id, url, r2_url, image_type, sort_order')
+      .select('id, product_id, image_url, r2_url, image_type, position')
       .limit(limit);
 
     if (error) throw error;
@@ -317,10 +322,10 @@ export async function debugImageUrls(limit: number = 10) {
       console.log(`\nImage ${index + 1}:`);
       console.log('  ID:', img.id);
       console.log('  Product ID:', img.product_id);
-      console.log('  URL field:', img.url);
+      console.log('  Image URL field:', img.image_url);
       console.log('  R2_URL field:', img.r2_url);
       console.log('  Image type:', img.image_type);
-      console.log('  Sort order:', img.sort_order);
+      console.log('  Position:', img.position);
     });
 
     console.log('=== END DEBUG ===');
@@ -373,15 +378,17 @@ export function getProductImageUrl(product: any, variant?: string, debugMode: bo
   if (product.images && Array.isArray(product.images)) {
     if (debugMode) console.log('Processing ProductImage array, length:', product.images.length);
     
-    // Sort images by sort_order to ensure primary image is first
-    const sortedImages = product.images.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+    // Sort images by position to ensure primary image is first
+    const sortedImages = product.images.sort((a: any, b: any) => (a.position || 0) - (b.position || 0));
     
     // Try to get primary image first
     const primaryImage = sortedImages.find((img: any) => img.image_type === 'primary');
     if (primaryImage) {
       if (debugMode) console.log('Found primary image:', primaryImage);
-      // Check for url field first (main field), then fall back to r2_url
-      if (primaryImage.url) {
+      // Check for image_url field first (main field), then fall back to legacy url field or r2_url
+      if (primaryImage.image_url) {
+        return processUrl(primaryImage.image_url);
+      } else if (primaryImage.url) {
         return processUrl(primaryImage.url);
       } else if (primaryImage.r2_url) {
         return processUrl(primaryImage.r2_url);
@@ -391,7 +398,10 @@ export function getProductImageUrl(product: any, variant?: string, debugMode: bo
     // Fall back to first available image with valid URL
     for (const img of sortedImages) {
       if (debugMode) console.log('Checking image:', img);
-      if (img.url) {
+      if (img.image_url) {
+        if (debugMode) console.log('Using image.image_url:', img.image_url);
+        return processUrl(img.image_url);
+      } else if (img.url) {
         if (debugMode) console.log('Using image.url:', img.url);
         return processUrl(img.url);
       } else if (img.r2_url) {
@@ -549,9 +559,11 @@ export async function diagnoseAdminImageIssues() {
         const firstImage = product.images[0];
         console.log('First image structure:', {
           id: firstImage.id,
+          image_url: firstImage.image_url,
           url: firstImage.url,
           r2_url: firstImage.r2_url,
           image_type: firstImage.image_type,
+          position: firstImage.position,
           sort_order: firstImage.sort_order
         });
         
