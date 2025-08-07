@@ -334,7 +334,7 @@ export async function debugImageUrls(limit: number = 10) {
 /**
  * Get product image URL with fallback and proper Supabase Storage handling
  */
-export function getProductImageUrl(product: any, variant?: string, debugMode: boolean = true): string {
+export function getProductImageUrl(product: any, variant?: string, debugMode: boolean = false): string {
   const SUPABASE_URL = 'https://gvcswimqaxvylgxbklbz.supabase.co';
   const STORAGE_PATH = '/storage/v1/object/public/product-images/';
   
@@ -369,7 +369,39 @@ export function getProductImageUrl(product: any, variant?: string, debugMode: bo
     return fullUrl;
   };
 
-  // Handle the new structure with primary_image field
+  // PRIORITY 1: Handle the proper ProductImage array structure (current database setup)
+  if (product.images && Array.isArray(product.images)) {
+    if (debugMode) console.log('Processing ProductImage array, length:', product.images.length);
+    
+    // Sort images by sort_order to ensure primary image is first
+    const sortedImages = product.images.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+    
+    // Try to get primary image first
+    const primaryImage = sortedImages.find((img: any) => img.image_type === 'primary');
+    if (primaryImage) {
+      if (debugMode) console.log('Found primary image:', primaryImage);
+      // Check for url field first (main field), then fall back to r2_url
+      if (primaryImage.url) {
+        return processUrl(primaryImage.url);
+      } else if (primaryImage.r2_url) {
+        return processUrl(primaryImage.r2_url);
+      }
+    }
+
+    // Fall back to first available image with valid URL
+    for (const img of sortedImages) {
+      if (debugMode) console.log('Checking image:', img);
+      if (img.url) {
+        if (debugMode) console.log('Using image.url:', img.url);
+        return processUrl(img.url);
+      } else if (img.r2_url) {
+        if (debugMode) console.log('Using image.r2_url:', img.r2_url);
+        return processUrl(img.r2_url);
+      }
+    }
+  }
+
+  // PRIORITY 2: Handle direct product image fields (if they exist)
   if (product.primary_image) {
     if (debugMode) console.log('Using primary_image field:', product.primary_image);
     return processUrl(product.primary_image);
@@ -385,35 +417,6 @@ export function getProductImageUrl(product: any, variant?: string, debugMode: bo
   if (product.images && Array.isArray(product.images) && typeof product.images[0] === 'string') {
     if (debugMode) console.log('Using images string array[0]:', product.images[0]);
     return processUrl(product.images[0]);
-  }
-
-  // Handle the proper ProductImage array structure
-  if (product.images && Array.isArray(product.images)) {
-    if (debugMode) console.log('Processing ProductImage array, length:', product.images.length);
-    
-    // Try to get primary image first
-    const primaryImage = product.images.find((img: any) => img.image_type === 'primary');
-    if (primaryImage) {
-      if (debugMode) console.log('Found primary image:', primaryImage);
-      // Check for url field first (new structure), then fall back to r2_url
-      if (primaryImage.url) {
-        return processUrl(primaryImage.url);
-      } else if (primaryImage.r2_url) {
-        return processUrl(primaryImage.r2_url);
-      }
-    }
-
-    // Fall back to first image with url or r2_url
-    for (const img of product.images) {
-      if (debugMode) console.log('Checking image:', img);
-      if (img.url) {
-        if (debugMode) console.log('Using image.url:', img.url);
-        return processUrl(img.url);
-      } else if (img.r2_url) {
-        if (debugMode) console.log('Using image.r2_url:', img.r2_url);
-        return processUrl(img.r2_url);
-      }
-    }
   }
 
   // Return placeholder
@@ -519,6 +522,62 @@ export async function testSupabaseConnection() {
 }
 
 /**
+ * Quick diagnostic for admin panel image issues
+ */
+export async function diagnoseAdminImageIssues() {
+  console.log('🔍 ADMIN PANEL IMAGE DIAGNOSTIC');
+  
+  try {
+    // 1. Test fetching products
+    console.log('\n1. Testing product fetch...');
+    const result = await fetchProductsWithImages({ limit: 3 });
+    
+    if (!result.success) {
+      console.error('❌ Product fetch failed:', result.error);
+      return;
+    }
+    
+    console.log(`✅ Fetched ${result.data.length} products`);
+    
+    // 2. Test each product's image structure  
+    result.data.forEach((product, index) => {
+      console.log(`\n--- Product ${index + 1}: ${product.name} ---`);
+      console.log('Raw images data:', product.images);
+      console.log('Images count:', product.images?.length || 0);
+      
+      if (product.images && product.images.length > 0) {
+        const firstImage = product.images[0];
+        console.log('First image structure:', {
+          id: firstImage.id,
+          url: firstImage.url,
+          r2_url: firstImage.r2_url,
+          image_type: firstImage.image_type,
+          sort_order: firstImage.sort_order
+        });
+        
+        console.log('Generated URL:', getProductImageUrl(product, undefined, true));
+      } else {
+        console.log('⚠️  No images found for this product');
+      }
+    });
+    
+    // 3. Check storage bucket accessibility
+    console.log('\n3. Testing storage bucket accessibility...');
+    const testImageUrl = 'https://gvcswimqaxvylgxbklbz.supabase.co/storage/v1/object/public/product-images/';
+    console.log('Storage base URL:', testImageUrl);
+    
+    // 4. Summary
+    console.log('\n📊 SUMMARY:');
+    console.log(`- Products fetched: ${result.data.length}`);
+    console.log(`- Products with images: ${result.data.filter(p => p.images?.length > 0).length}`);
+    console.log(`- Products without images: ${result.data.filter(p => !p.images?.length).length}`);
+    
+  } catch (error) {
+    console.error('💥 Diagnostic failed:', error);
+  }
+}
+
+/**
  * Export debugging functions to window for easy browser console access
  * Call this in development: enableImageDebugging()
  */
@@ -528,12 +587,14 @@ export function enableImageDebugging() {
     (window as any).debugImageUrls = debugImageUrls;
     (window as any).getProductImageUrl = getProductImageUrl;
     (window as any).fetchProductsWithImages = fetchProductsWithImages;
+    (window as any).diagnoseAdminImageIssues = diagnoseAdminImageIssues;
     console.log('📸 Image debugging functions enabled!');
     console.log('Available functions:');
     console.log('- testImageLoading() - comprehensive test suite');
     console.log('- debugImageUrls(limit) - check URLs in database');
     console.log('- getProductImageUrl(product, variant, debugMode) - test URL generation');
     console.log('- fetchProductsWithImages(options) - fetch products with images');
+    console.log('- diagnoseAdminImageIssues() - quick admin panel diagnostic');
   }
 }
 
