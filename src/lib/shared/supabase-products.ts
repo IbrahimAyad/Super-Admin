@@ -87,10 +87,8 @@ export async function fetchProductsWithImages(options?: {
     }
     if (options?.status) {
       query = query.eq('status', options.status);
-    } else {
-      // Default to active products only
-      query = query.eq('status', 'active');
     }
+    // No status filter defaults to no status restriction (shows all)
     if (options?.limit) {
       query = query.limit(options.limit);
     }
@@ -251,14 +249,32 @@ export async function getProductById(id: string) {
 /**
  * Get product image URL with fallback
  */
-export function getProductImageUrl(product: Product, variant?: string): string {
-  // Try to get primary image first
-  const primaryImage = product.images?.find(img => img.image_type === 'primary');
-  if (primaryImage?.r2_url) return primaryImage.r2_url;
+export function getProductImageUrl(product: any, variant?: string): string {
+  // Handle the new structure with primary_image field (used by admin)
+  if ((product as any).primary_image) {
+    return (product as any).primary_image;
+  }
 
-  // Fall back to first image
-  if (product.images && product.images.length > 0) {
-    return product.images[0].r2_url || '/placeholder.svg';
+  // Handle image_gallery array (used by admin)
+  if ((product as any).image_gallery && Array.isArray((product as any).image_gallery) && (product as any).image_gallery.length > 0) {
+    return (product as any).image_gallery[0];
+  }
+
+  // Handle legacy images string array structure  
+  if ((product as any).images && Array.isArray((product as any).images) && typeof (product as any).images[0] === 'string') {
+    return (product as any).images[0];
+  }
+
+  // Handle the proper ProductImage array structure (used by frontend)
+  if (product.images && Array.isArray(product.images)) {
+    // Try to get primary image first
+    const primaryImage = product.images.find((img: any) => img.image_type === 'primary');
+    if (primaryImage?.r2_url) return primaryImage.r2_url;
+
+    // Fall back to first image with r2_url
+    for (const img of product.images) {
+      if (img.r2_url) return img.r2_url;
+    }
   }
 
   // Return placeholder

@@ -175,7 +175,7 @@ export const ProductManagement = () => {
       setLoading(true);
       console.log('🔍 Loading products...');
       
-      // Use shared service for fetching products - fetch all products
+      // Use shared service for fetching products - don't pass status to fetch all products in admin
       const result = await fetchProductsWithImages();
       const { data, error } = result.success 
         ? { data: result.data, error: null } 
@@ -195,6 +195,19 @@ export const ProductManagement = () => {
       }
       
       console.log('✅ Products loaded successfully:', data?.length || 0, 'items');
+      
+      // Debug: Log first product structure to see available fields
+      if (data && data.length > 0) {
+        console.log('🔍 First product structure:', {
+          id: data[0].id,
+          name: data[0].name,
+          primary_image: (data[0] as any).primary_image,
+          image_gallery: (data[0] as any).image_gallery,
+          images: data[0].images,
+          imageUrl: getProductImageUrl(data[0])
+        });
+      }
+      
       setProducts(data || []);
       
       if (!data || data.length === 0) {
@@ -1387,6 +1400,7 @@ export const ProductManagement = () => {
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
+                          console.warn(`Image failed to load for ${product.name}, using placeholder`);
                           target.src = '/placeholder.svg';
                         }}
                       />
