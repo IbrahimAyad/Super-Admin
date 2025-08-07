@@ -997,71 +997,118 @@ export async function getRecentlyUpdatedProducts(limit: number = 5) {
  */
 export async function updateProductWithImages(productId: string, productData: Partial<Product> & { images?: Array<{ url: string; position: number; alt_text?: string; image_type?: string }> }, imageFiles?: File[]) {
   try {
+    console.log('🔄 updateProductWithImages called with:', { productId, productData, hasImageFiles: !!imageFiles });
+
+    // Validate required parameters
+    if (!productId || !productData) {
+      throw new Error('Product ID and product data are required');
+    }
+
     // First, handle any file uploads
     let uploadedImageUrls: string[] = [];
     if (imageFiles && imageFiles.length > 0) {
+      console.log('📤 Uploading image files...');
       const uploadResult = await uploadProductImageFiles(imageFiles, productId);
       if (!uploadResult.success) {
+        console.error('❌ Image upload failed:', uploadResult.error);
         throw new Error(uploadResult.error || 'Failed to upload images');
       }
       uploadedImageUrls = uploadResult.urls;
+      console.log('✅ Image files uploaded:', uploadedImageUrls);
     }
     
     // Separate product data from images
     const { images, ...productInfo } = productData;
     
+    // Clean product data - remove any undefined values and ensure proper types
+    const cleanProductInfo = Object.fromEntries(
+      Object.entries(productInfo).filter(([_, value]) => value !== undefined)
+    );
+
+    // Ensure updated_at is set
+    cleanProductInfo.updated_at = new Date().toISOString();
+
+    console.log('🔄 Updating product with clean data:', cleanProductInfo);
+    
     // Update the product first
     const { data: product, error: productError } = await supabase
       .from('products')
-      .update(productInfo)
+      .update(cleanProductInfo)
       .eq('id', productId)
       .select()
       .single();
 
-    if (productError) throw productError;
+    if (productError) {
+      console.error('❌ Product update failed:', productError);
+      // Provide more specific error messages
+      if (productError.code === '23505') {
+        throw new Error('A product with this SKU or slug already exists');
+      } else if (productError.code === '23502') {
+        throw new Error('Required field is missing');
+      } else if (productError.code === '42501') {
+        throw new Error('Permission denied. Please check your authentication');
+      }
+      throw new Error(`Database error: ${productError.message}`);
+    }
+
+    console.log('✅ Product updated successfully:', product);
 
     // Handle images if provided
     if (images && product) {
-      // For updates, we'll replace all existing images with the new ones
-      // First, delete existing images
-      const { error: deleteError } = await supabase
-        .from('product_images')
-        .delete()
-        .eq('product_id', productId);
-
-      if (deleteError) {
-        console.warn('Failed to delete existing images:', deleteError);
-      }
-
-      // Combine provided images with newly uploaded ones
-      const allImages = [...images];
-      uploadedImageUrls.forEach((url, index) => {
-        allImages.push({
-          url,
-          position: images.length + index,
-          alt_text: '',
-          image_type: images.length + index === 0 ? 'primary' : 'gallery'
-        });
-      });
-
-      // Then insert all images
-      if (allImages.length > 0) {
-        const imageInserts = allImages.map(img => ({
-          product_id: productId,
-          image_url: img.url,
-          position: img.position,
-          alt_text: img.alt_text || '',
-          image_type: img.image_type || (img.position === 0 ? 'primary' : 'gallery')
-        }));
-
-        const { error: imagesError } = await supabase
+      console.log('🖼️ Updating product images...');
+      
+      try {
+        // For updates, we'll replace all existing images with the new ones
+        // First, delete existing images
+        const { error: deleteError } = await supabase
           .from('product_images')
-          .insert(imageInserts);
+          .delete()
+          .eq('product_id', productId);
 
-        if (imagesError) {
-          console.warn('Failed to insert updated images:', imagesError);
-          // Don't fail the entire operation for image errors
+        if (deleteError) {
+          console.warn('⚠️ Failed to delete existing images (continuing):', deleteError);
         }
+
+        // Combine provided images with newly uploaded ones
+        const allImages = [...images];
+        uploadedImageUrls.forEach((url, index) => {
+          allImages.push({
+            url,
+            position: images.length + index,
+            alt_text: '',
+            image_type: images.length + index === 0 ? 'primary' : 'gallery'
+          });
+        });
+
+        // Then insert all images
+        if (allImages.length > 0) {
+          const imageInserts = allImages.map(img => ({
+            product_id: productId,
+            image_url: img.url,
+            position: img.position,
+            alt_text: img.alt_text || '',
+            image_type: img.image_type || (img.position === 0 ? 'primary' : 'gallery'),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }));
+
+          console.log('🔄 Inserting image records:', imageInserts);
+
+          const { error: imagesError } = await supabase
+            .from('product_images')
+            .insert(imageInserts);
+
+          if (imagesError) {
+            console.error('❌ Failed to insert updated images:', imagesError);
+            // Don't fail the entire operation for image errors, but log it
+            console.warn('⚠️ Product updated but images may not have saved properly');
+          } else {
+            console.log('✅ Product images updated successfully');
+          }
+        }
+      } catch (imageError) {
+        console.error('❌ Error handling images:', imageError);
+        // Don't fail the entire operation for image errors
       }
     }
 
@@ -1071,11 +1118,20 @@ export async function updateProductWithImages(productId: string, productData: Pa
       error: null
     };
   } catch (error) {
-    console.error('updateProductWithImages error:', error);
+    console.error('💥 updateProductWithImages error:', error);
+    
+    // Provide more user-friendly error messages
+    let errorMessage = 'Unknown error occurred';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+
     return {
       success: false,
       data: null,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: errorMessage
     };
   }
 }

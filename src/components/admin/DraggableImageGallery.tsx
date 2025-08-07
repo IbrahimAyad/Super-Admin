@@ -357,29 +357,50 @@ export const DraggableImageGallery: React.FC<DraggableImageGalleryProps> = ({
 
   // Update image positions in database
   const updateImagePositions = async (productId: string, updatedImages: ProductImage[]) => {
-    const updates = updatedImages
-      .filter(img => img.id) // Only update images that exist in DB
-      .map(img => ({
-        id: img.id,
-        position: img.position,
-        image_type: img.is_primary ? 'primary' : 'gallery'
-      }));
+    try {
+      console.log('🔄 Updating image positions for product:', productId);
+      console.log('📋 Updated images:', updatedImages);
 
-    if (updates.length === 0) return;
+      const updates = updatedImages
+        .filter(img => img.id) // Only update images that exist in DB
+        .map(img => ({
+          id: img.id,
+          position: img.position,
+          image_type: img.is_primary ? 'primary' : 'gallery'
+        }));
 
-    // Update positions in batch
-    for (const update of updates) {
-      const { error } = await supabase
-        .from('product_images')
-        .update({ 
-          position: update.position,
-          image_type: update.image_type 
-        })
-        .eq('id', update.id);
+      console.log('📝 Position updates to apply:', updates);
 
-      if (error) {
-        throw error;
+      if (updates.length === 0) {
+        console.log('ℹ️ No database images to update');
+        return;
       }
+
+      // Update positions in batch - use Promise.all for better performance
+      const updatePromises = updates.map(update => 
+        supabase
+          .from('product_images')
+          .update({ 
+            position: update.position,
+            image_type: update.image_type,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', update.id)
+      );
+
+      const results = await Promise.all(updatePromises);
+      
+      // Check for any errors
+      const errors = results.filter(result => result.error);
+      if (errors.length > 0) {
+        console.error('❌ Some position updates failed:', errors);
+        throw new Error(`Failed to update ${errors.length} image positions`);
+      }
+
+      console.log('✅ All image positions updated successfully');
+    } catch (error) {
+      console.error('💥 Error updating image positions:', error);
+      throw error;
     }
   };
 

@@ -483,8 +483,8 @@ export const ProductManagement = () => {
   };
 
   const handleAddProduct = async () => {
-    // Validation
-    if (!formData.name.trim()) {
+    // Validation with null checks
+    if (!formData.name || !formData.name.trim()) {
       toast({
         title: "Validation Error",
         description: "Product name is required",
@@ -493,7 +493,7 @@ export const ProductManagement = () => {
       return;
     }
 
-    if (!formData.category.trim()) {
+    if (!formData.category || !formData.category.trim()) {
       toast({
         title: "Validation Error", 
         description: "Product category is required",
@@ -502,7 +502,7 @@ export const ProductManagement = () => {
       return;
     }
 
-    if (formData.base_price <= 0) {
+    if (!formData.base_price || formData.base_price <= 0) {
       toast({
         title: "Validation Error",
         description: "Base price must be greater than 0",
@@ -512,29 +512,39 @@ export const ProductManagement = () => {
     }
 
     try {
-      // Use the new shared service function that properly handles product_images table
-      const result = await createProductWithImages({
+      // Prepare product data with proper field mapping and null checks
+      const productData = {
         sku: formData.sku || `SKU-${Date.now()}`,
         name: formData.name.trim(),
-        description: formData.description.trim(),
-        category: formData.category,
-        subcategory: formData.product_type, // Map product_type to subcategory
+        description: formData.description ? formData.description.trim() : null,
+        category: formData.category.trim(),
+        // Map product_type to correct field - use subcategory if it exists in schema
+        ...(formData.product_type && { subcategory: formData.product_type }),
         base_price: formData.base_price,
-        status: formData.status,
+        status: formData.status || 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         images: formData.images.map((img, index) => ({
           url: img.url,
-          position: img.position || index,
+          position: img.position ?? index,
           alt_text: img.alt_text || '',
           image_type: img.is_primary ? 'primary' : 'gallery'
         }))
-      });
+      };
+
+      console.log('🔄 Creating product with data:', productData);
+
+      const result = await createProductWithImages(productData);
 
       if (!result.success || !result.data) {
+        console.error('❌ Create failed:', result.error);
         throw new Error(result.error || 'Failed to create product');
       }
 
+      console.log('✅ Product created successfully:', result.data);
+
       // Add variants if any
-      if (formData.variants.length > 0) {
+      if (formData.variants && formData.variants.length > 0) {
         const { error: variantsError } = await supabase
           .from('product_variants')
           .insert(
@@ -563,7 +573,7 @@ export const ProductManagement = () => {
       resetForm();
       await loadProducts(); // Reload products to show the new one
     } catch (error) {
-      console.error('Error adding product:', error);
+      console.error('💥 Error adding product:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Error",
@@ -576,8 +586,8 @@ export const ProductManagement = () => {
   const handleEditProduct = async () => {
     if (!editingProduct) return;
 
-    // Validation
-    if (!formData.name.trim()) {
+    // Validation with null checks
+    if (!formData.name || !formData.name.trim()) {
       toast({
         title: "Validation Error",
         description: "Product name is required",
@@ -586,7 +596,7 @@ export const ProductManagement = () => {
       return;
     }
 
-    if (!formData.category.trim()) {
+    if (!formData.category || !formData.category.trim()) {
       toast({
         title: "Validation Error", 
         description: "Product category is required",
@@ -595,7 +605,7 @@ export const ProductManagement = () => {
       return;
     }
 
-    if (formData.base_price <= 0) {
+    if (!formData.base_price || formData.base_price <= 0) {
       toast({
         title: "Validation Error",
         description: "Base price must be greater than 0",
@@ -605,25 +615,35 @@ export const ProductManagement = () => {
     }
 
     try {
-      // Use the new shared service function that properly handles product_images table
-      const result = await updateProductWithImages(editingProduct.id, {
+      // Prepare update data with null checks and proper field mapping
+      const updateData = {
         name: formData.name.trim(),
-        description: formData.description.trim(),
-        category: formData.category,
-        subcategory: formData.product_type, // Map product_type to subcategory
+        description: formData.description ? formData.description.trim() : null,
+        category: formData.category.trim(),
+        // Map product_type to correct field - use subcategory if it exists in schema
+        ...(formData.product_type && { subcategory: formData.product_type }),
         base_price: formData.base_price,
-        status: formData.status,
+        status: formData.status || 'active',
+        sku: formData.sku || editingProduct.sku,
+        updated_at: new Date().toISOString(),
         images: formData.images.map((img, index) => ({
           url: img.url,
-          position: img.position || index,
+          position: img.position ?? index,
           alt_text: img.alt_text || '',
           image_type: img.is_primary ? 'primary' : 'gallery'
         }))
-      });
+      };
+
+      console.log('🔄 Updating product with data:', updateData);
+
+      const result = await updateProductWithImages(editingProduct.id, updateData);
 
       if (!result.success) {
+        console.error('❌ Update failed:', result.error);
         throw new Error(result.error || 'Failed to update product');
       }
+
+      console.log('✅ Product updated successfully:', result.data);
 
       toast({
         title: "Success",
@@ -635,7 +655,7 @@ export const ProductManagement = () => {
       setShowAddDialog(false);
       await loadProducts(); // Reload products to show changes
     } catch (error) {
-      console.error('Error updating product:', error);
+      console.error('💥 Error updating product:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Error",
