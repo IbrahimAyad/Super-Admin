@@ -36,9 +36,8 @@ import {
   X,
   GripVertical
 } from 'lucide-react';
-import { KCTMenswearAPI, Product } from '@/lib/supabase';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { fetchProductsWithImages, getProductImageUrl, supabase as sharedSupabase } from '@/lib/shared/supabase-products';
+import { fetchProductsWithImages, getProductImageUrl, supabase as sharedSupabase, Product } from '@/lib/shared/supabase-products';
 
 interface ProductFormData {
   // Basic Info
