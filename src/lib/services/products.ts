@@ -614,20 +614,43 @@ export async function syncStripeProducts() {
 /**
  * Create a new product with images
  */
-export async function createProductWithImages(productData: Partial<Product>, imageFiles?: File[]) {
+export async function createProductWithImages(productData: Partial<Product> & { images?: Array<{ url: string; position: number; alt_text?: string; image_type?: string }> }, imageFiles?: File[]) {
   try {
-    // For now, redirect to basic product creation
-    const { data, error } = await supabase
+    // Separate product data from images
+    const { images, ...productInfo } = productData;
+    
+    // Create the product first
+    const { data: product, error: productError } = await supabase
       .from('products')
-      .insert([productData])
+      .insert([productInfo])
       .select()
       .single();
 
-    if (error) throw error;
+    if (productError) throw productError;
+
+    // If there are images, insert them into product_images table
+    if (images && images.length > 0 && product) {
+      const imageInserts = images.map(img => ({
+        product_id: product.id,
+        image_url: img.url,
+        position: img.position,
+        alt_text: img.alt_text || '',
+        image_type: img.image_type || (img.position === 0 ? 'primary' : 'gallery')
+      }));
+
+      const { error: imagesError } = await supabase
+        .from('product_images')
+        .insert(imageInserts);
+
+      if (imagesError) {
+        console.warn('Failed to insert some images:', imagesError);
+        // Don't fail the entire operation for image errors
+      }
+    }
 
     return {
       success: true,
-      data,
+      data: product,
       error: null
     };
   } catch (error) {
@@ -643,21 +666,58 @@ export async function createProductWithImages(productData: Partial<Product>, ima
 /**
  * Update an existing product with images
  */
-export async function updateProductWithImages(productId: string, productData: Partial<Product>, imageFiles?: File[]) {
+export async function updateProductWithImages(productId: string, productData: Partial<Product> & { images?: Array<{ url: string; position: number; alt_text?: string; image_type?: string }> }, imageFiles?: File[]) {
   try {
-    // For now, redirect to basic product update
-    const { data, error } = await supabase
+    // Separate product data from images
+    const { images, ...productInfo } = productData;
+    
+    // Update the product first
+    const { data: product, error: productError } = await supabase
       .from('products')
-      .update(productData)
+      .update(productInfo)
       .eq('id', productId)
       .select()
       .single();
 
-    if (error) throw error;
+    if (productError) throw productError;
+
+    // Handle images if provided
+    if (images && product) {
+      // For updates, we'll replace all existing images with the new ones
+      // First, delete existing images
+      const { error: deleteError } = await supabase
+        .from('product_images')
+        .delete()
+        .eq('product_id', productId);
+
+      if (deleteError) {
+        console.warn('Failed to delete existing images:', deleteError);
+      }
+
+      // Then insert new images
+      if (images.length > 0) {
+        const imageInserts = images.map(img => ({
+          product_id: productId,
+          image_url: img.url,
+          position: img.position,
+          alt_text: img.alt_text || '',
+          image_type: img.image_type || (img.position === 0 ? 'primary' : 'gallery')
+        }));
+
+        const { error: imagesError } = await supabase
+          .from('product_images')
+          .insert(imageInserts);
+
+        if (imagesError) {
+          console.warn('Failed to insert updated images:', imagesError);
+          // Don't fail the entire operation for image errors
+        }
+      }
+    }
 
     return {
       success: true,
-      data,
+      data: product,
       error: null
     };
   } catch (error) {

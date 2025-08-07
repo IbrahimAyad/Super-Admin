@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Plus, 
@@ -38,6 +39,7 @@ import {
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { fetchProductsWithImages, getProductImageUrl, createProductWithImages, updateProductWithImages, Product } from '@/lib/services';
+import { DraggableImageGallery } from './DraggableImageGallery';
 import { supabase } from '@/lib/supabase-client';
 
 interface ProductFormData {
@@ -82,10 +84,14 @@ interface ProductVariant {
 }
 
 interface ProductImage {
+  id?: string;
   url: string;
-  alt_text: string;
-  display_order: number;
-  is_primary: boolean;
+  alt_text?: string;
+  position: number;
+  is_primary?: boolean;
+  image_type?: 'primary' | 'gallery' | 'thumbnail' | 'detail';
+  loading?: boolean;
+  error?: boolean;
 }
 
 const categories = [
@@ -316,35 +322,66 @@ export const ProductManagement = () => {
 
       toast({
         title: "Success",
-        description: `Bulk action ${action} completed for ${selectedProducts.length} products`
+        description: `Bulk action "${action}" completed for ${selectedProducts.length} product(s)`
       });
 
-      loadProducts();
+      await loadProducts(); // Reload to show changes
       setSelectedProducts([]);
     } catch (error) {
       console.error('Bulk action error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Error",
-        description: "Failed to perform bulk action",
+        description: `Failed to perform bulk action: ${errorMessage}`,
         variant: "destructive"
       });
     }
   };
 
   const handleAddProduct = async () => {
+    // Validation
+    if (!formData.name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Product name is required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!formData.category.trim()) {
+      toast({
+        title: "Validation Error", 
+        description: "Product category is required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (formData.base_price <= 0) {
+      toast({
+        title: "Validation Error",
+        description: "Base price must be greater than 0",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       // Use the new shared service function that properly handles product_images table
       const result = await createProductWithImages({
         sku: formData.sku || `SKU-${Date.now()}`,
-        name: formData.name,
-        description: formData.description,
+        name: formData.name.trim(),
+        description: formData.description.trim(),
         category: formData.category,
         subcategory: formData.product_type, // Map product_type to subcategory
         base_price: formData.base_price,
         status: formData.status,
         images: formData.images.map((img, index) => ({
           url: img.url,
-          position: index
+          position: img.position || index,
+          alt_text: img.alt_text || '',
+          image_type: img.is_primary ? 'primary' : 'gallery'
         }))
       });
 
@@ -354,7 +391,7 @@ export const ProductManagement = () => {
 
       // Add variants if any
       if (formData.variants.length > 0) {
-        await supabase
+        const { error: variantsError } = await supabase
           .from('product_variants')
           .insert(
             formData.variants.map(variant => ({
@@ -362,21 +399,31 @@ export const ProductManagement = () => {
               ...variant
             }))
           );
+
+        if (variantsError) {
+          console.warn('Failed to add variants:', variantsError);
+          toast({
+            title: "Partial Success",
+            description: "Product created but some variants failed to save",
+            variant: "default"
+          });
+        }
       }
 
       toast({
         title: "Success",
-        description: "Product added successfully"
+        description: `Product "${formData.name}" added successfully`
       });
 
       setShowAddDialog(false);
       resetForm();
-      loadProducts();
+      await loadProducts(); // Reload products to show the new one
     } catch (error) {
       console.error('Error adding product:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Error",
-        description: "Failed to add product",
+        description: `Failed to add product: ${errorMessage}`,
         variant: "destructive"
       });
     }
@@ -385,18 +432,48 @@ export const ProductManagement = () => {
   const handleEditProduct = async () => {
     if (!editingProduct) return;
 
+    // Validation
+    if (!formData.name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Product name is required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!formData.category.trim()) {
+      toast({
+        title: "Validation Error", 
+        description: "Product category is required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (formData.base_price <= 0) {
+      toast({
+        title: "Validation Error",
+        description: "Base price must be greater than 0",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       // Use the new shared service function that properly handles product_images table
       const result = await updateProductWithImages(editingProduct.id, {
-        name: formData.name,
-        description: formData.description,
+        name: formData.name.trim(),
+        description: formData.description.trim(),
         category: formData.category,
         subcategory: formData.product_type, // Map product_type to subcategory
         base_price: formData.base_price,
         status: formData.status,
         images: formData.images.map((img, index) => ({
           url: img.url,
-          position: index
+          position: img.position || index,
+          alt_text: img.alt_text || '',
+          image_type: img.is_primary ? 'primary' : 'gallery'
         }))
       });
 
@@ -406,17 +483,19 @@ export const ProductManagement = () => {
 
       toast({
         title: "Success",
-        description: "Product updated successfully"
+        description: `Product "${formData.name}" updated successfully`
       });
 
       setEditingProduct(null);
       resetForm();
-      loadProducts();
+      setShowAddDialog(false);
+      await loadProducts(); // Reload products to show changes
     } catch (error) {
       console.error('Error updating product:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Error",
-        description: "Failed to update product",
+        description: `Failed to update product: ${errorMessage}`,
         variant: "destructive"
       });
     }
@@ -653,6 +732,14 @@ export const ProductManagement = () => {
     }));
   };
 
+  // Handle image changes from the draggable gallery
+  const handleImagesChange = (newImages: ProductImage[]) => {
+    setFormData(prev => ({
+      ...prev,
+      images: newImages
+    }));
+  };
+
   const resetForm = () => {
     setFormData({
       sku: '',
@@ -680,6 +767,17 @@ export const ProductManagement = () => {
 
   const openEditDialog = (product: Product) => {
     setEditingProduct(product);
+    
+    // Convert product images to form format
+    const productImages: ProductImage[] = product.images?.map((img: any, index: number) => ({
+      id: img.id,
+      url: img.image_url || img.url || '',
+      alt_text: img.alt_text || '',
+      position: img.position || index,
+      is_primary: img.image_type === 'primary' || index === 0,
+      image_type: img.image_type || (index === 0 ? 'primary' : 'gallery')
+    })) || [];
+
     setFormData({
       sku: product.sku || '',
       name: product.name,
@@ -690,7 +788,7 @@ export const ProductManagement = () => {
       stripe_product_id: product.stripe_product_id || '',
       status: product.status,
       is_bundleable: product.is_bundleable,
-      images: [],
+      images: productImages,
       available_colors: [],
       variants: [],
       materials: '',
@@ -865,52 +963,13 @@ export const ProductManagement = () => {
 
       {/* Images Tab */}
       <TabsContent value="images" className="space-y-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-medium">Product Images</h3>
-              <p className="text-sm text-muted-foreground">Upload and manage product images</p>
-            </div>
-            <Button variant="outline">
-              <Upload className="h-4 w-4 mr-2" />
-              Upload Images
-            </Button>
-          </div>
-          
-          <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center">
-            <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-lg font-medium">Drag & drop images here</p>
-            <p className="text-sm text-muted-foreground">or click to browse</p>
-            <Button variant="outline" className="mt-4">Choose Files</Button>
-          </div>
-
-          {formData.images.length > 0 && (
-            <div className="grid grid-cols-3 gap-4">
-              {formData.images.map((image, index) => (
-                <div key={index} className="relative group">
-                  <img 
-                    src={image.url} 
-                    alt={image.alt_text}
-                    className="w-full h-32 object-cover rounded-lg border"
-                  />
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                  <Badge 
-                    variant={image.is_primary ? "default" : "secondary"}
-                    className="absolute bottom-2 left-2"
-                  >
-                    {image.is_primary ? "Primary" : `${image.display_order}`}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <DraggableImageGallery
+          images={formData.images}
+          onImagesChange={handleImagesChange}
+          productId={editingProduct?.id}
+          maxImages={10}
+          allowUpload={true}
+        />
       </TabsContent>
 
       {/* Variants Tab */}
@@ -1270,12 +1329,100 @@ export const ProductManagement = () => {
     </Tabs>
   );
 
+  // Loading skeleton component for product rows
+  const ProductRowSkeleton = () => (
+    <TableRow>
+      <TableCell>
+        <Skeleton className="h-4 w-4" />
+      </TableCell>
+      <TableCell>
+        <Skeleton className="h-16 w-16 rounded-md" />
+      </TableCell>
+      <TableCell>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-48" />
+        </div>
+      </TableCell>
+      <TableCell>
+        <Skeleton className="h-4 w-20" />
+      </TableCell>
+      <TableCell>
+        <Skeleton className="h-5 w-16 rounded" />
+      </TableCell>
+      <TableCell>
+        <Skeleton className="h-4 w-12" />
+      </TableCell>
+      <TableCell>
+        <div className="flex gap-1">
+          <Skeleton className="h-5 w-14 rounded" />
+        </div>
+      </TableCell>
+      <TableCell>
+        <Skeleton className="h-5 w-12 rounded" />
+      </TableCell>
+      <TableCell>
+        <Skeleton className="h-8 w-8 rounded" />
+      </TableCell>
+    </TableRow>
+  );
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-lg font-medium">Loading products...</p>
+      <div className="space-y-6">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+
+        {/* Filters Skeleton */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4 mb-6">
+              <Skeleton className="h-10 flex-1 max-w-sm" />
+              <Skeleton className="h-10 w-48" />
+            </div>
+
+            {/* Table Skeleton */}
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12"><Skeleton className="h-4 w-4" /></TableHead>
+                  <TableHead className="w-20"><Skeleton className="h-4 w-12" /></TableHead>
+                  <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+                  <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+                  <TableHead><Skeleton className="h-4 w-12" /></TableHead>
+                  <TableHead><Skeleton className="h-4 w-12" /></TableHead>
+                  <TableHead><Skeleton className="h-4 w-12" /></TableHead>
+                  <TableHead><Skeleton className="h-4 w-12" /></TableHead>
+                  <TableHead className="w-24"><Skeleton className="h-4 w-16" /></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Array.from({ length: 5 }, (_, i) => (
+                  <ProductRowSkeleton key={i} />
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Stats Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }, (_, i) => (
+            <Card key={i}>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-4 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-12" />
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     );
@@ -1296,7 +1443,7 @@ export const ProductManagement = () => {
               Add Product
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
             </DialogHeader>
@@ -1309,9 +1456,9 @@ export const ProductManagement = () => {
       {/* Filters and Search */}
       <Card>
         <CardContent className="p-6">
-          <div className="flex items-center justify-between gap-4 mb-6">
-            <div className="flex items-center gap-4 flex-1">
-              <div className="relative flex-1 max-w-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1">
+              <div className="relative flex-1 sm:max-w-sm">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search products..."
@@ -1360,7 +1507,8 @@ export const ProductManagement = () => {
           )}
 
           {/* Products Table */}
-          <Table>
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12">
@@ -1393,12 +1541,18 @@ export const ProductManagement = () => {
                       <img
                         src={getProductImageUrl(product)}
                         alt={product.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-opacity duration-300"
+                        loading="lazy"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           console.warn(`Image failed to load for ${product.name}, using placeholder`);
                           target.src = '/placeholder.svg';
                         }}
+                        onLoad={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.opacity = '1';
+                        }}
+                        style={{ opacity: '0' }}
                       />
                     </div>
                   </TableCell>
@@ -1462,6 +1616,7 @@ export const ProductManagement = () => {
               ))}
             </TableBody>
           </Table>
+          </div>
 
           {filteredProducts.length === 0 && (
             <div className="text-center py-12">
