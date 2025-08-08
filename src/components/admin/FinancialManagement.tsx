@@ -85,7 +85,7 @@ export function FinancialManagement() {
               {loading ? (
                 <Loader2 className="h-6 w-6 animate-spin" />
               ) : (
-                `$${financialSummary.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                `$${(financialSummary?.totalRevenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
               )}
             </div>
             <p className="text-xs text-muted-foreground">{financialSummary.orderCount} orders</p>

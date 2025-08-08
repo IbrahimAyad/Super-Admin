@@ -398,7 +398,7 @@ const AdminDashboard = () => {
     },
     {
       title: "Revenue",
-      value: `$${dashboardStats.totalRevenue.toLocaleString()}`,
+      value: `$${(dashboardStats?.totalRevenue || 0).toLocaleString()}`,
       icon: DollarSign,
       change: "+8.2%",
       color: "text-green-600"
