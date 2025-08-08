@@ -304,17 +304,19 @@ export function ProductEditorSimple({ productId, onSave, onCancel }: ProductEdit
           base_price: parseFloat(price),
           status: isActive ? 'active' : 'inactive',
           category: category || 'Uncategorized',
+          description: description || '',  // Always include description, even if empty
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
 
         // Only add optional fields if they have values
         if (slug) newProductData.slug = slug;
-        if (description) newProductData.description = description;
         if (productType) newProductData.product_type = productType;
         if (details && details.filter(d => d.trim()).length > 0) {
           newProductData.details = JSON.stringify(details.filter(d => d.trim()));
         }
+        // Add empty metadata if needed
+        newProductData.metadata = {};
 
         const { data, error } = await supabase
           .from('products')

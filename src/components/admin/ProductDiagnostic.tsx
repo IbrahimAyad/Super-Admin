@@ -46,8 +46,10 @@ export function ProductDiagnostic() {
         base_price: 99.99,
         status: 'active',
         category: 'Test',
+        description: '',  // Include empty description if required
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        metadata: {},  // Include empty metadata if required
       };
 
       const { data: insertData, error: insertError } = await supabase
