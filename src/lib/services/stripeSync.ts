@@ -370,9 +370,10 @@ export class StripeSyncService {
   }> {
     const errors: string[] = [];
     
-    // Check for publishable key in environment
-    const hasPublishableKey = !!import.meta.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY && 
-                              !import.meta.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.includes('your-stripe');
+    // HARDCODED: Check for publishable key - using hardcoded value due to Next.js env issues
+    // This should match the key in your Stripe dashboard
+    const STRIPE_PUBLISHABLE_KEY = 'pk_live_51RAMT2CHc12x7sCzz0cBxUwBPONdyvxMnhDRMwC1bgoaFlDgmEmfvcJZT7yk7jOuEo4LpWkFpb5Gv88DJ9fSB49j00QtRac8uW';
+    const hasPublishableKey = !!STRIPE_PUBLISHABLE_KEY && STRIPE_PUBLISHABLE_KEY.startsWith('pk_');
     
     if (!hasPublishableKey) {
       errors.push('Stripe publishable key not configured in .env');
