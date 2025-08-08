@@ -157,8 +157,8 @@ export function ProductEditorSimple({ productId, onSave, onCancel }: ProductEdit
           size: v.size,
           sku: v.sku,
           inventory: v.inventory_quantity || 0,
-          price: v.price || product.base_price,
-          enabled: v.is_active,
+          price: (v.price || product.base_price) / 100, // Convert cents to dollars
+          enabled: true, // Default to enabled since is_active might not exist
         }));
         setSizes(sizeData);
       }
@@ -366,17 +366,14 @@ export function ProductEditorSimple({ productId, onSave, onCancel }: ProductEdit
           .delete()
           .eq('product_id', savedProductId);
 
-        // Insert new variants with all required fields
+        // Insert new variants - only include fields that exist
         const variantData = enabledSizes.map((size, idx) => ({
           product_id: savedProductId,
           size: size.size,
           sku: size.sku || `${sku}-${size.size}`, // Ensure SKU is always present
-          price: size.price || parseFloat(price),
+          price: Math.round((size.price || parseFloat(price)) * 100), // Convert to cents
           inventory_quantity: size.inventory || 0,
-          is_active: true,
           position: idx,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
         }));
 
         const { error: variantError } = await supabase

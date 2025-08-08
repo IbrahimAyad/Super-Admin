@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ProductEditorSimple } from './ProductEditorSimple';
-import { ProductDiagnostic } from './ProductDiagnostic';
 import { supabase } from '@/lib/supabase-client';
 import { toast } from 'sonner';
 import { 
@@ -136,9 +135,6 @@ export function ProductManagementClean() {
         <h1 className="text-3xl font-bold mb-2">Products</h1>
         <p className="text-gray-600">Manage your product catalog</p>
       </div>
-
-      {/* Diagnostic Tool - Temporary for debugging */}
-      <ProductDiagnostic />
 
       {/* Actions Bar */}
       <div className="flex justify-between items-center mb-6">
