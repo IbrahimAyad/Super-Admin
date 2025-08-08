@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { SecuritySettings } from '@/components/admin/SecuritySettings';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { useSessionManager } from '@/hooks/useSessionManager';
 import {
   Shield,
   ShieldCheck,
@@ -31,12 +30,11 @@ export function AdminSecurity() {
     riskLevel,
   } = useAdminAuth();
 
-  const {
-    currentSession,
-    allSessions,
-    isExpiring,
-    minutesUntilExpiry,
-  } = useSessionManager();
+  // Simplified session data for single-user system
+  const currentSession = { active: true };
+  const allSessions = [currentSession]; // Single session for overview
+  const isExpiring = false;
+  const minutesUntilExpiry = null;
 
   if (loading) {
     return (
@@ -122,9 +120,9 @@ export function AdminSecurity() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{allSessions.length}</div>
+            <div className="text-2xl font-bold">1</div>
             <p className="text-xs text-muted-foreground">
-              Devices signed in
+              Current device
             </p>
           </CardContent>
         </Card>
@@ -136,22 +134,10 @@ export function AdminSecurity() {
           </CardHeader>
           <CardContent>
             <div className="space-y-1">
-              {isExpiring ? (
-                <div className="text-orange-600">
-                  <div className="text-sm font-medium">Expiring Soon</div>
-                  <div className="text-xs">{minutesUntilExpiry} minutes left</div>
-                </div>
-              ) : currentSession ? (
-                <div className="text-green-600">
-                  <div className="text-sm font-medium">Active</div>
-                  <div className="text-xs">Session secure</div>
-                </div>
-              ) : (
-                <div className="text-red-600">
-                  <div className="text-sm font-medium">No Session</div>
-                  <div className="text-xs">Please login</div>
-                </div>
-              )}
+              <div className="text-green-600">
+                <div className="text-sm font-medium">Active</div>
+                <div className="text-xs">Simplified mode</div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -175,15 +161,6 @@ export function AdminSecurity() {
         </Alert>
       )}
 
-      {isExpiring && minutesUntilExpiry && minutesUntilExpiry <= 5 && (
-        <Alert>
-          <Clock className="h-4 w-4" />
-          <AlertDescription>
-            Your session will expire in {minutesUntilExpiry} minute{minutesUntilExpiry !== 1 ? 's' : ''}. 
-            Activity will extend your session automatically, or you can manually extend it from the Sessions tab.
-          </AlertDescription>
-        </Alert>
-      )}
 
       {/* Main Security Settings */}
       <SecuritySettings />

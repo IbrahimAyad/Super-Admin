@@ -39,7 +39,6 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { TwoFactorAuth } from './TwoFactorAuth';
-import { SessionManager } from './SessionManager';
 import { PasswordStrengthIndicator } from './PasswordStrengthIndicator';
 import {
   validatePassword,
@@ -230,11 +229,10 @@ export function SecuritySettings({ className }: SecuritySettingsProps) {
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="2fa">Two-Factor Auth</TabsTrigger>
           <TabsTrigger value="passwords">Passwords</TabsTrigger>
-          <TabsTrigger value="sessions">Sessions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -522,9 +520,6 @@ export function SecuritySettings({ className }: SecuritySettingsProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="sessions">
-          <SessionManager />
-        </TabsContent>
       </Tabs>
     </div>
   );
