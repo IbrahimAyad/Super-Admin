@@ -9,12 +9,12 @@ CREATE TABLE IF NOT EXISTS daily_reports (
   data JSONB NOT NULL,
   email_sent BOOLEAN DEFAULT false,
   email_sent_to TEXT[],
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  
-  -- Indexes
-  INDEX idx_daily_reports_date (report_date DESC),
-  INDEX idx_daily_reports_created (created_at DESC)
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Create indexes for daily_reports
+CREATE INDEX IF NOT EXISTS idx_daily_reports_date ON daily_reports(report_date DESC);
+CREATE INDEX IF NOT EXISTS idx_daily_reports_created ON daily_reports(created_at DESC);
 
 -- Function to get yesterday's report for comparison
 CREATE OR REPLACE FUNCTION get_previous_report(p_date DATE)

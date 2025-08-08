@@ -10,12 +10,12 @@ CREATE TABLE IF NOT EXISTS order_status_history (
   notes TEXT,
   metadata JSONB DEFAULT '{}',
   created_by UUID REFERENCES auth.users(id),
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  
-  -- Indexes
-  INDEX idx_order_status_history_order (order_id),
-  INDEX idx_order_status_history_created (created_at DESC)
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Create indexes for order_status_history
+CREATE INDEX IF NOT EXISTS idx_order_status_history_order ON order_status_history(order_id);
+CREATE INDEX IF NOT EXISTS idx_order_status_history_created ON order_status_history(created_at DESC);
 
 -- Shipping Labels Table
 CREATE TABLE IF NOT EXISTS shipping_labels (
@@ -30,12 +30,12 @@ CREATE TABLE IF NOT EXISTS shipping_labels (
   dimensions JSONB,
   status VARCHAR(50) DEFAULT 'created',
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  voided_at TIMESTAMPTZ,
-  
-  -- Indexes
-  INDEX idx_shipping_labels_order (order_id),
-  INDEX idx_shipping_labels_tracking (tracking_number)
+  voided_at TIMESTAMPTZ
 );
+
+-- Create indexes for shipping_labels
+CREATE INDEX IF NOT EXISTS idx_shipping_labels_order ON shipping_labels(order_id);
+CREATE INDEX IF NOT EXISTS idx_shipping_labels_tracking ON shipping_labels(tracking_number);
 
 -- Add missing columns to orders table if they don't exist
 ALTER TABLE orders 

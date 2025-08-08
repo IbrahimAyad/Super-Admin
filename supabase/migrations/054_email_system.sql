@@ -13,13 +13,13 @@ CREATE TABLE IF NOT EXISTS email_logs (
   error TEXT,
   metadata JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  sent_at TIMESTAMPTZ,
-  
-  -- Indexes
-  INDEX idx_email_logs_status (status),
-  INDEX idx_email_logs_created (created_at DESC),
-  INDEX idx_email_logs_template (template)
+  sent_at TIMESTAMPTZ
 );
+
+-- Create indexes for email_logs
+CREATE INDEX IF NOT EXISTS idx_email_logs_status ON email_logs(status);
+CREATE INDEX IF NOT EXISTS idx_email_logs_created ON email_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_email_logs_template ON email_logs(template);
 
 -- Email Templates Table (for custom templates)
 CREATE TABLE IF NOT EXISTS email_templates (
@@ -47,13 +47,13 @@ CREATE TABLE IF NOT EXISTS email_queue (
   last_attempt_at TIMESTAMPTZ,
   sent_at TIMESTAMPTZ,
   error TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  
-  -- Indexes
-  INDEX idx_email_queue_status (status),
-  INDEX idx_email_queue_scheduled (scheduled_for),
-  INDEX idx_email_queue_attempts (attempts)
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Create indexes for email_queue
+CREATE INDEX IF NOT EXISTS idx_email_queue_status ON email_queue(status);
+CREATE INDEX IF NOT EXISTS idx_email_queue_scheduled ON email_queue(scheduled_for);
+CREATE INDEX IF NOT EXISTS idx_email_queue_attempts ON email_queue(attempts);
 
 -- Insert default email templates
 INSERT INTO email_templates (name, subject, html_template, variables) VALUES

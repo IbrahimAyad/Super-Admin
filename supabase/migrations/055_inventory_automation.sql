@@ -12,14 +12,14 @@ CREATE TABLE IF NOT EXISTS inventory_movements (
   reference_id UUID, -- Order ID, Refund ID, etc.
   notes TEXT,
   created_by UUID REFERENCES auth.users(id),
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  
-  -- Indexes
-  INDEX idx_inventory_movements_variant (variant_id),
-  INDEX idx_inventory_movements_type (movement_type),
-  INDEX idx_inventory_movements_created (created_at DESC),
-  INDEX idx_inventory_movements_reference (reference_type, reference_id)
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Create indexes for inventory_movements
+CREATE INDEX IF NOT EXISTS idx_inventory_movements_variant ON inventory_movements(variant_id);
+CREATE INDEX IF NOT EXISTS idx_inventory_movements_type ON inventory_movements(movement_type);
+CREATE INDEX IF NOT EXISTS idx_inventory_movements_created ON inventory_movements(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_inventory_movements_reference ON inventory_movements(reference_type, reference_id);
 
 -- Low Stock Alerts Table
 CREATE TABLE IF NOT EXISTS low_stock_alerts (
@@ -32,13 +32,13 @@ CREATE TABLE IF NOT EXISTS low_stock_alerts (
   alert_sent_at TIMESTAMPTZ,
   resolved BOOLEAN DEFAULT false,
   resolved_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  
-  -- Indexes
-  INDEX idx_low_stock_alerts_variant (variant_id),
-  INDEX idx_low_stock_alerts_resolved (resolved),
-  INDEX idx_low_stock_alerts_created (created_at DESC)
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Create indexes for low_stock_alerts
+CREATE INDEX IF NOT EXISTS idx_low_stock_alerts_variant ON low_stock_alerts(variant_id);
+CREATE INDEX IF NOT EXISTS idx_low_stock_alerts_resolved ON low_stock_alerts(resolved);
+CREATE INDEX IF NOT EXISTS idx_low_stock_alerts_created ON low_stock_alerts(created_at DESC);
 
 -- Inventory Thresholds Table
 CREATE TABLE IF NOT EXISTS inventory_thresholds (
