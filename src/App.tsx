@@ -18,6 +18,7 @@ import StorageTest from "./pages/StorageTest";
 import SupabaseConnectionTest from "./pages/SupabaseConnectionTest";
 import TestProductImages from "./pages/TestProductImages";
 import SmartSizingManager from "./components/admin/SmartSizingManager";
+import { OrderProcessingDashboard } from "./components/admin/OrderProcessingDashboard";
 import { AdminRoute } from "./components/auth/AdminRoute";
 import { autoDebugIfNeeded } from "@/utils/deploymentDebug";
 import AdminDashboardDirect from "./pages/AdminDashboardDirect";
@@ -73,6 +74,7 @@ const App = () => (
               <Route path="/supabase-test" element={<SupabaseConnectionTest />} />
               <Route path="/test-images" element={<TestProductImages />} />
               <Route path="/admin/sizing" element={<AdminRoute><SmartSizingManager /></AdminRoute>} />
+              <Route path="/admin/order-processing" element={<AdminRoute><OrderProcessingDashboard /></AdminRoute>} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />

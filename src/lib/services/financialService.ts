@@ -1,348 +1,333 @@
-import { supabase } from '../supabase-client';
-import Stripe from 'stripe';
+import { supabase } from '@/lib/supabase-client';
 
-// Initialize Stripe (replace with your secret key)
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-06-20',
-});
+interface FinancialSummary {
+  totalRevenue: number;
+  pendingRefunds: number;
+  processingFees: number;
+  taxCollected: number;
+  pendingPayouts: number;
+  refundCount: number;
+  orderCount: number;
+  averageOrderValue: number;
+}
 
-export interface RefundRequest {
+interface RevenueData {
+  date: string;
+  revenue: number;
+  orders: number;
+  refunds: number;
+}
+
+interface Transaction {
   id: string;
-  orderId: string;
-  customerId: string;
+  order_number: string;
   amount: number;
-  originalAmount: number;
-  reason: string;
-  status: 'pending' | 'approved' | 'rejected' | 'processed';
-  requestDate: string;
-  processedDate?: string;
-  stripeRefundId?: string;
-  notes?: string;
+  status: string;
+  payment_method: string;
+  customer_name: string;
+  customer_email: string;
+  created_at: string;
+  stripe_payment_intent_id?: string;
 }
 
-export interface TaxRate {
-  id: string;
-  jurisdiction: string;
-  taxType: string;
-  rate: number;
-  appliesTo: string;
-  effectiveDate: string;
-  status: 'active' | 'inactive';
-}
+/**
+ * Get financial summary for dashboard
+ */
+export async function getFinancialSummary(days: number = 30): Promise<FinancialSummary> {
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
 
-export interface PaymentTransaction {
-  id: string;
-  orderId: string;
-  customerId: string;
-  amount: number;
-  currency: string;
-  paymentMethod: string;
-  processorTransactionId: string;
-  status: 'pending' | 'completed' | 'failed' | 'refunded';
-  fees: number;
-  netAmount: number;
-  createdAt: string;
-}
+    // Get orders data
+    const { data: orders, error: ordersError } = await supabase
+      .from('orders')
+      .select('total_amount, financial_status, created_at')
+      .gte('created_at', startDate.toISOString())
+      .in('financial_status', ['paid', 'partially_refunded']);
 
-export class FinancialService {
-  // Refund Management
-  static async getRefundRequests(status?: string): Promise<{ success: boolean; data: RefundRequest[]; error?: string }> {
-    try {
-      let query = supabase.from('refund_requests').select('*');
-      
-      if (status) {
-        query = query.eq('status', status);
-      }
-      
-      const { data, error } = await query.order('created_at', { ascending: false });
+    if (ordersError) throw ordersError;
 
-      if (error) {
-        return { success: false, data: [], error: error.message };
-      }
+    // Get pending refunds
+    const { data: refunds, error: refundsError } = await supabase
+      .from('refund_requests')
+      .select('refund_amount, status')
+      .eq('status', 'pending');
 
-      return { success: true, data: data || [] };
-    } catch (error) {
-      return { success: false, data: [], error: 'Failed to fetch refund requests' };
-    }
-  }
+    if (refundsError) throw refundsError;
 
-  static async createRefundRequest(request: Omit<RefundRequest, 'id'>): Promise<{ success: boolean; data?: RefundRequest; error?: string }> {
-    try {
-      const { data, error } = await supabase
-        .from('refund_requests')
-        .insert([request])
-        .select()
-        .single();
+    // Calculate totals
+    const totalRevenue = orders?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
+    const pendingRefunds = refunds?.reduce((sum, refund) => sum + (refund.refund_amount || 0), 0) || 0;
+    
+    // Estimate processing fees (2.9% + $0.30 per transaction for Stripe)
+    const processingFees = orders?.reduce((sum, order) => {
+      return sum + (order.total_amount * 0.029 + 30); // 2.9% + 30 cents
+    }, 0) || 0;
 
-      if (error) {
-        return { success: false, error: error.message };
-      }
+    // Estimate tax (you might want to store actual tax in orders table)
+    const taxCollected = orders?.reduce((sum, order) => {
+      return sum + (order.total_amount * 0.085); // 8.5% estimate
+    }, 0) || 0;
 
-      return { success: true, data };
-    } catch (error) {
-      return { success: false, error: 'Failed to create refund request' };
-    }
-  }
+    // Pending payouts (revenue - fees - refunds)
+    const pendingPayouts = totalRevenue - processingFees - pendingRefunds;
 
-  static async processRefund(refundId: string, amount: number, reason: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      // Get the refund request
-      const { data: refundRequest, error: fetchError } = await supabase
-        .from('refund_requests')
-        .select('*')
-        .eq('id', refundId)
-        .single();
-
-      if (fetchError || !refundRequest) {
-        return { success: false, error: 'Refund request not found' };
-      }
-
-      // Get the original order to find the Stripe payment intent
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .select('stripe_payment_intent_id')
-        .eq('id', refundRequest.order_id)
-        .single();
-
-      if (orderError || !order?.stripe_payment_intent_id) {
-        return { success: false, error: 'Original payment not found' };
-      }
-
-      // Process refund through Stripe
-      const refund = await stripe.refunds.create({
-        payment_intent: order.stripe_payment_intent_id,
-        amount: Math.round(amount * 100), // Convert to cents
-        reason: 'requested_by_customer',
-        metadata: {
-          refund_request_id: refundId,
-          reason: reason
-        }
-      });
-
-      // Update refund request status
-      const { error: updateError } = await supabase
-        .from('refund_requests')
-        .update({
-          status: 'processed',
-          processed_date: new Date().toISOString(),
-          stripe_refund_id: refund.id,
-          amount: amount
-        })
-        .eq('id', refundId);
-
-      if (updateError) {
-        return { success: false, error: 'Failed to update refund status' };
-      }
-
-      // Log the transaction
-      await this.logTransaction({
-        orderId: refundRequest.order_id,
-        customerId: refundRequest.customer_id,
-        amount: -amount, // Negative for refund
-        currency: 'USD',
-        paymentMethod: 'stripe_refund',
-        processorTransactionId: refund.id,
-        status: 'completed',
-        fees: 0,
-        netAmount: -amount
-      });
-
-      return { success: true };
-    } catch (error: any) {
-      console.error('Refund processing error:', error);
-      return { success: false, error: error.message || 'Failed to process refund' };
-    }
-  }
-
-  // Tax Management
-  static async getTaxRates(): Promise<{ success: boolean; data: TaxRate[]; error?: string }> {
-    try {
-      const { data, error } = await supabase
-        .from('tax_rates')
-        .select('*')
-        .order('jurisdiction');
-
-      if (error) {
-        return { success: false, data: [], error: error.message };
-      }
-
-      return { success: true, data: data || [] };
-    } catch (error) {
-      return { success: false, data: [], error: 'Failed to fetch tax rates' };
-    }
-  }
-
-  static async calculateTax(amount: number, jurisdiction: string): Promise<{ success: boolean; data?: { taxAmount: number; rate: number }; error?: string }> {
-    try {
-      const { data: taxRate, error } = await supabase
-        .from('tax_rates')
-        .select('rate')
-        .eq('jurisdiction', jurisdiction)
-        .eq('status', 'active')
-        .single();
-
-      if (error || !taxRate) {
-        return { success: false, error: 'Tax rate not found for jurisdiction' };
-      }
-
-      const taxAmount = (amount * taxRate.rate) / 100;
-
-      return {
-        success: true,
-        data: {
-          taxAmount,
-          rate: taxRate.rate
-        }
-      };
-    } catch (error) {
-      return { success: false, error: 'Failed to calculate tax' };
-    }
-  }
-
-  static async saveTaxRate(taxRate: Omit<TaxRate, 'id'>): Promise<{ success: boolean; data?: TaxRate; error?: string }> {
-    try {
-      const { data, error } = await supabase
-        .from('tax_rates')
-        .insert([taxRate])
-        .select()
-        .single();
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      return { success: true, data };
-    } catch (error) {
-      return { success: false, error: 'Failed to save tax rate' };
-    }
-  }
-
-  // Transaction Management
-  static async logTransaction(transaction: Omit<PaymentTransaction, 'id' | 'createdAt'>): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { error } = await supabase
-        .from('payment_transactions')
-        .insert([{
-          ...transaction,
-          created_at: new Date().toISOString()
-        }]);
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: 'Failed to log transaction' };
-    }
-  }
-
-  static async getTransactions(limit = 50): Promise<{ success: boolean; data: PaymentTransaction[]; error?: string }> {
-    try {
-      const { data, error } = await supabase
-        .from('payment_transactions')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (error) {
-        return { success: false, data: [], error: error.message };
-      }
-
-      return { success: true, data: data || [] };
-    } catch (error) {
-      return { success: false, data: [], error: 'Failed to fetch transactions' };
-    }
-  }
-
-  // Financial Reports
-  static async getFinancialSummary(dateRange: { start: string; end: string }): Promise<{
-    success: boolean;
-    data?: {
-      totalRevenue: number;
-      totalTransactions: number;
-      totalFees: number;
-      totalRefunds: number;
-      avgOrderValue: number;
+    return {
+      totalRevenue: totalRevenue / 100, // Convert from cents
+      pendingRefunds: pendingRefunds / 100,
+      processingFees: processingFees / 100,
+      taxCollected: taxCollected / 100,
+      pendingPayouts: pendingPayouts / 100,
+      refundCount: refunds?.length || 0,
+      orderCount: orders?.length || 0,
+      averageOrderValue: orders?.length ? (totalRevenue / orders.length) / 100 : 0
     };
-    error?: string;
-  }> {
-    try {
-      const { data, error } = await supabase
-        .rpc('get_financial_summary', {
-          start_date: dateRange.start,
-          end_date: dateRange.end
-        });
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      return { success: true, data: data || {} };
-    } catch (error) {
-      return { success: false, error: 'Failed to fetch financial summary' };
-    }
-  }
-
-  // Daily Reconciliation
-  static async getDailyReconciliation(date: string): Promise<{
-    success: boolean;
-    data?: {
-      totalSales: number;
-      totalRefunds: number;
-      totalFees: number;
-      netAmount: number;
-      transactionCount: number;
-      discrepancies: any[];
+  } catch (error) {
+    console.error('Error fetching financial summary:', error);
+    // Return default values on error
+    return {
+      totalRevenue: 0,
+      pendingRefunds: 0,
+      processingFees: 0,
+      taxCollected: 0,
+      pendingPayouts: 0,
+      refundCount: 0,
+      orderCount: 0,
+      averageOrderValue: 0
     };
-    error?: string;
-  }> {
-    try {
-      const { data, error } = await supabase
-        .rpc('get_daily_reconciliation', { reconciliation_date: date });
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      return { success: true, data: data || {} };
-    } catch (error) {
-      return { success: false, error: 'Failed to fetch daily reconciliation' };
-    }
   }
+}
 
-  // Payment Method Configuration
-  static async getPaymentMethods(): Promise<{ success: boolean; data: any[]; error?: string }> {
-    try {
-      const { data, error } = await supabase
-        .from('payment_methods')
-        .select('*')
-        .eq('is_active', true);
+/**
+ * Get recent transactions
+ */
+export async function getRecentTransactions(limit: number = 10): Promise<Transaction[]> {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`
+        id,
+        order_number,
+        total_amount,
+        financial_status,
+        stripe_payment_intent_id,
+        created_at,
+        customers!left(
+          first_name,
+          last_name,
+          email
+        )
+      `)
+      .order('created_at', { ascending: false })
+      .limit(limit);
 
-      if (error) {
-        return { success: false, data: [], error: error.message };
-      }
+    if (error) throw error;
 
-      return { success: true, data: data || [] };
-    } catch (error) {
-      return { success: false, data: [], error: 'Failed to fetch payment methods' };
-    }
+    return (data || []).map(order => ({
+      id: order.id,
+      order_number: order.order_number,
+      amount: order.total_amount / 100,
+      status: order.financial_status || 'pending',
+      payment_method: order.stripe_payment_intent_id ? 'stripe' : 'other',
+      customer_name: order.customers 
+        ? `${order.customers.first_name || ''} ${order.customers.last_name || ''}`.trim()
+        : 'Guest',
+      customer_email: order.customers?.email || 'N/A',
+      created_at: order.created_at,
+      stripe_payment_intent_id: order.stripe_payment_intent_id
+    }));
+  } catch (error) {
+    console.error('Error fetching recent transactions:', error);
+    return [];
   }
+}
 
-  static async updatePaymentMethodSettings(method: string, settings: any): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { error } = await supabase
-        .from('payment_methods')
-        .update({ settings, updated_at: new Date().toISOString() })
-        .eq('method_name', method);
+/**
+ * Get revenue data for charts
+ */
+export async function getRevenueData(days: number = 30): Promise<RevenueData[]> {
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
 
-      if (error) {
-        return { success: false, error: error.message };
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select('total_amount, financial_status, created_at')
+      .gte('created_at', startDate.toISOString())
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    // Group by date
+    const revenueByDate = new Map<string, { revenue: number; orders: number; refunds: number }>();
+
+    orders?.forEach(order => {
+      const date = new Date(order.created_at).toISOString().split('T')[0];
+      const existing = revenueByDate.get(date) || { revenue: 0, orders: 0, refunds: 0 };
+      
+      if (order.financial_status === 'refunded') {
+        existing.refunds += order.total_amount / 100;
+      } else if (order.financial_status === 'paid' || order.financial_status === 'partially_refunded') {
+        existing.revenue += order.total_amount / 100;
+        existing.orders += 1;
       }
+      
+      revenueByDate.set(date, existing);
+    });
 
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: 'Failed to update payment method settings' };
+    // Convert to array and fill missing dates
+    const result: RevenueData[] = [];
+    const currentDate = new Date(startDate);
+    
+    while (currentDate <= new Date()) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const data = revenueByDate.get(dateStr) || { revenue: 0, orders: 0, refunds: 0 };
+      
+      result.push({
+        date: dateStr,
+        revenue: data.revenue,
+        orders: data.orders,
+        refunds: data.refunds
+      });
+      
+      currentDate.setDate(currentDate.getDate() + 1);
     }
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching revenue data:', error);
+    return [];
+  }
+}
+
+/**
+ * Get payment method breakdown
+ */
+export async function getPaymentMethodBreakdown(): Promise<Record<string, number>> {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('stripe_payment_intent_id, total_amount')
+      .in('financial_status', ['paid', 'partially_refunded']);
+
+    if (error) throw error;
+
+    const breakdown: Record<string, number> = {
+      stripe: 0,
+      other: 0
+    };
+
+    data?.forEach(order => {
+      if (order.stripe_payment_intent_id) {
+        breakdown.stripe += order.total_amount / 100;
+      } else {
+        breakdown.other += order.total_amount / 100;
+      }
+    });
+
+    return breakdown;
+  } catch (error) {
+    console.error('Error fetching payment method breakdown:', error);
+    return { stripe: 0, other: 0 };
+  }
+}
+
+/**
+ * Get tax summary by region
+ */
+export async function getTaxSummary(): Promise<Record<string, number>> {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('total_amount, shipping_address')
+      .in('financial_status', ['paid', 'partially_refunded']);
+
+    if (error) throw error;
+
+    const taxByState: Record<string, number> = {};
+
+    data?.forEach(order => {
+      const state = order.shipping_address?.state || 'Unknown';
+      const estimatedTax = (order.total_amount * 0.085) / 100; // 8.5% estimate
+      taxByState[state] = (taxByState[state] || 0) + estimatedTax;
+    });
+
+    return taxByState;
+  } catch (error) {
+    console.error('Error fetching tax summary:', error);
+    return {};
+  }
+}
+
+/**
+ * Calculate and update processing fees for an order
+ */
+export async function calculateProcessingFees(amount: number, paymentMethod: string = 'stripe'): number {
+  // Stripe: 2.9% + $0.30
+  // PayPal: 2.99% + $0.49
+  // Others: 3% flat estimate
+  
+  switch (paymentMethod.toLowerCase()) {
+    case 'stripe':
+      return amount * 0.029 + 0.30;
+    case 'paypal':
+      return amount * 0.0299 + 0.49;
+    default:
+      return amount * 0.03;
+  }
+}
+
+/**
+ * Get financial metrics for a specific date range
+ */
+export async function getFinancialMetrics(startDate: Date, endDate: Date) {
+  try {
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select('*')
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString());
+
+    if (error) throw error;
+
+    // Calculate various metrics
+    const metrics = {
+      grossRevenue: 0,
+      netRevenue: 0,
+      totalOrders: 0,
+      completedOrders: 0,
+      refundedAmount: 0,
+      averageOrderValue: 0,
+      conversionRate: 0,
+      processingFees: 0
+    };
+
+    orders?.forEach(order => {
+      metrics.totalOrders++;
+      
+      if (order.financial_status === 'paid') {
+        metrics.grossRevenue += order.total_amount / 100;
+        metrics.completedOrders++;
+        const fees = calculateProcessingFees(order.total_amount / 100);
+        metrics.processingFees += fees;
+        metrics.netRevenue += (order.total_amount / 100) - fees;
+      } else if (order.financial_status === 'refunded') {
+        metrics.refundedAmount += order.total_amount / 100;
+      } else if (order.financial_status === 'partially_refunded') {
+        metrics.grossRevenue += order.total_amount / 100;
+        metrics.completedOrders++;
+        // You might want to track partial refund amounts separately
+      }
+    });
+
+    if (metrics.completedOrders > 0) {
+      metrics.averageOrderValue = metrics.grossRevenue / metrics.completedOrders;
+      metrics.conversionRate = (metrics.completedOrders / metrics.totalOrders) * 100;
+    }
+
+    return metrics;
+  } catch (error) {
+    console.error('Error fetching financial metrics:', error);
+    throw error;
   }
 }

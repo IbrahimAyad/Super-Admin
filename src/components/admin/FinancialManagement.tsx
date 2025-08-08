@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -11,30 +11,57 @@ import {
   RefreshCw,
   Settings,
   FileText,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
 import { RefundProcessor } from './RefundProcessor';
 import { TaxConfiguration } from './TaxConfiguration';
 import { PaymentMethodSettings } from './PaymentMethodSettings';
 import { FinancialReports } from './FinancialReports';
+import { getFinancialSummary, getRecentTransactions } from '@/lib/services/financialService';
+import { useToast } from '@/hooks/use-toast';
 
 export function FinancialManagement() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [loading, setLoading] = useState(true);
+  const [financialSummary, setFinancialSummary] = useState({
+    totalRevenue: 0,
+    pendingRefunds: 0,
+    processingFees: 0,
+    taxCollected: 0,
+    pendingPayouts: 0,
+    refundCount: 0,
+    orderCount: 0,
+    averageOrderValue: 0
+  });
+  const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
+  const { toast } = useToast();
 
-  // Mock data - replace with real data
-  const financialSummary = {
-    totalRevenue: 125680.50,
-    pendingRefunds: 2340.00,
-    processingFees: 3456.78,
-    taxCollected: 8965.23,
-    pendingPayouts: 4567.89
+  const loadFinancialData = async () => {
+    try {
+      setLoading(true);
+      const [summary, transactions] = await Promise.all([
+        getFinancialSummary(30),
+        getRecentTransactions(10)
+      ]);
+      
+      setFinancialSummary(summary);
+      setRecentTransactions(transactions);
+    } catch (error) {
+      console.error('Error loading financial data:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load financial data',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const recentTransactions = [
-    { id: '1', amount: 299.99, status: 'completed', method: 'stripe', customer: 'John Smith' },
-    { id: '2', amount: 149.50, status: 'refunded', method: 'stripe', customer: 'Sarah Johnson' },
-    { id: '3', amount: 459.00, status: 'pending', method: 'paypal', customer: 'Mike Wilson' }
-  ];
+  useEffect(() => {
+    loadFinancialData();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -54,8 +81,14 @@ export function FinancialManagement() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${financialSummary.totalRevenue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
+            <div className="text-2xl font-bold">
+              {loading ? (
+                <Loader2 className="h-6 w-6 animate-spin" />
+              ) : (
+                `$${financialSummary.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">{financialSummary.orderCount} orders</p>
           </CardContent>
         </Card>
 
@@ -65,8 +98,14 @@ export function FinancialManagement() {
             <RefreshCw className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${financialSummary.pendingRefunds.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">3 requests pending</p>
+            <div className="text-2xl font-bold">
+              {loading ? (
+                <Loader2 className="h-6 w-6 animate-spin" />
+              ) : (
+                `$${financialSummary.pendingRefunds.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">{financialSummary.refundCount} requests pending</p>
           </CardContent>
         </Card>
 
@@ -76,8 +115,14 @@ export function FinancialManagement() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${financialSummary.processingFees.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">2.9% avg rate</p>
+            <div className="text-2xl font-bold">
+              {loading ? (
+                <Loader2 className="h-6 w-6 animate-spin" />
+              ) : (
+                `$${financialSummary.processingFees.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">2.9% + $0.30 per transaction</p>
           </CardContent>
         </Card>
 
@@ -87,8 +132,14 @@ export function FinancialManagement() {
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${financialSummary.taxCollected.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">8.5% avg rate</p>
+            <div className="text-2xl font-bold">
+              {loading ? (
+                <Loader2 className="h-6 w-6 animate-spin" />
+              ) : (
+                `$${financialSummary.taxCollected.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">8.5% estimated</p>
           </CardContent>
         </Card>
 
@@ -98,8 +149,14 @@ export function FinancialManagement() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${financialSummary.pendingPayouts.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Next payout in 2 days</p>
+            <div className="text-2xl font-bold">
+              {loading ? (
+                <Loader2 className="h-6 w-6 animate-spin" />
+              ) : (
+                `$${financialSummary.pendingPayouts.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">After fees & refunds</p>
           </CardContent>
         </Card>
       </div>
@@ -115,8 +172,8 @@ export function FinancialManagement() {
         <CardContent>
           <div className="space-y-2">
             <div className="flex items-center justify-between p-2 bg-yellow-50 rounded-lg">
-              <span className="text-sm">3 refund requests awaiting approval</span>
-              <Button size="sm" variant="outline">Review</Button>
+              <span className="text-sm">{financialSummary.refundCount} refund requests awaiting approval</span>
+              <Button size="sm" variant="outline" onClick={() => setActiveTab('refunds')}>Review</Button>
             </div>
             <div className="flex items-center justify-between p-2 bg-blue-50 rounded-lg">
               <span className="text-sm">Tax rates update needed for Q4</span>
@@ -143,31 +200,51 @@ export function FinancialManagement() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Recent Transactions */}
             <Card>
-              <CardHeader>
+              <CardHeader className="relative">
                 <CardTitle>Recent Transactions</CardTitle>
                 <CardDescription>Latest payment activity</CardDescription>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={loadFinancialData}
+                  className="absolute right-6 top-4"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {recentTransactions.map((transaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{transaction.customer}</p>
-                        <p className="text-sm text-muted-foreground">{transaction.method}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">${transaction.amount}</p>
-                        <Badge 
-                          variant={
-                            transaction.status === 'completed' ? 'default' :
-                            transaction.status === 'refunded' ? 'destructive' : 'secondary'
-                          }
-                        >
-                          {transaction.status}
-                        </Badge>
-                      </div>
+                  {loading ? (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="h-6 w-6 animate-spin" />
                     </div>
-                  ))}
+                  ) : recentTransactions.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">No transactions yet</p>
+                  ) : (
+                    recentTransactions.map((transaction) => (
+                      <div key={transaction.id} className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{transaction.customer_name || 'Guest'}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {transaction.order_number} • {transaction.payment_method}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">${transaction.amount.toFixed(2)}</p>
+                          <Badge 
+                            variant={
+                              transaction.status === 'paid' ? 'default' :
+                              transaction.status === 'refunded' ? 'destructive' :
+                              transaction.status === 'partially_refunded' ? 'outline' :
+                              'secondary'
+                            }
+                          >
+                            {transaction.status.replace('_', ' ')}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
                 <Button className="w-full mt-4" variant="outline">
                   View All Transactions

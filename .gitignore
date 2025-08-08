@@ -52,3 +52,13 @@ supabase/.temp
 .parcel-cache
 .turbo
 .vercel
+
+# Secret files and scripts with sensitive data
+*_STRIPE_*.sh
+SET_STRIPE_SECRET.sh
+SETUP_STRIPE_LIVE.sh
+UPDATE_TO_LIVE_STRIPE.sh
+UPDATE_STRIPE_WEBHOOK.sh
+test-order-sync.js
+TEST_FINANCIAL_DATA.sql
+.env.backup*
