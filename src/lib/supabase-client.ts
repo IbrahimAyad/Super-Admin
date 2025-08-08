@@ -33,20 +33,9 @@ function createSupabaseClient(): SupabaseClient {
     return supabaseInstance;
   }
 
-  // Get environment variables (Next.js client-side format)
-  const supabaseUrl = typeof window !== 'undefined' 
-    ? process.env.NEXT_PUBLIC_SUPABASE_URL 
-    : process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = typeof window !== 'undefined'
-    ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  // Validate environment variables
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error(
-      'Missing Supabase environment variables. Please check your .env file and ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set.'
-    );
-  }
+  // HARDCODED VALUES - Environment variables not working in production
+  const supabaseUrl = 'https://gvcswimqaxvylgxbklbz.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2Y3N3aW1xYXh2eWxneGJrbGJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3NjA1MzAsImV4cCI6MjA2OTMzNjUzMH0.UZdiGcJXUV5VYetjWXV26inmbj2yXdiT03Z6t_5Lg24';
 
   const storageKeyPrefix = createStorageKeyPrefix();
   
