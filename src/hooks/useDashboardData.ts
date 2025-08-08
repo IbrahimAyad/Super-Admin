@@ -69,7 +69,18 @@ export function useDashboardData() {
         .rpc('get_dashboard_stats');
       
       if (statsError) throw statsError;
-      setStats(statsData);
+      
+      // Map the nested structure to flat structure expected by components
+      if (statsData) {
+        setStats({
+          totalOrders: statsData.orders?.total || 0,
+          totalRevenue: statsData.revenue?.total || 0,
+          totalCustomers: statsData.customers?.total || 0,
+          avgOrderValue: statsData.revenue?.total && statsData.orders?.total > 0 
+            ? (statsData.revenue.total / statsData.orders.total) 
+            : 0
+        });
+      }
 
       // Load recent orders
       const { data: ordersData, error: ordersError } = await supabase
