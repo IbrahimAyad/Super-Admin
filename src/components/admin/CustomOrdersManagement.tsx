@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from '@/lib/supabase-client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,49 +30,25 @@ export const CustomOrdersManagement = () => {
   const loadCustomOrders = async () => {
     try {
       setLoading(true);
-      // Placeholder data for now
-      const mockOrders: CustomOrder[] = [
-        {
-          id: "1",
-          customer_name: "John Smith",
-          customer_email: "john@example.com",
-          order_type: "bespoke",
-          status: "in_progress",
-          description: "Custom three-piece wedding suit in navy blue",
-          estimated_completion: "2024-03-15",
-          price_estimate: 2500,
-          created_at: "2024-01-15T10:30:00Z"
-        },
-        {
-          id: "2",
-          customer_name: "Michael Johnson",
-          customer_email: "michael@example.com",
-          order_type: "alteration",
-          status: "pending",
-          description: "Hem adjustment and sleeve shortening",
-          estimated_completion: "2024-02-20",
-          price_estimate: 150,
-          created_at: "2024-01-14T15:45:00Z"
-        },
-        {
-          id: "3",
-          customer_name: "David Wilson",
-          customer_email: "david@example.com",
-          order_type: "fitting",
-          status: "completed",
-          description: "Final fitting for wedding tuxedo",
-          estimated_completion: "2024-01-30",
-          price_estimate: 0,
-          created_at: "2024-01-10T09:15:00Z"
-        }
-      ];
       
-      setCustomOrders(mockOrders);
+      // Load custom orders from database
+      const { data: orders, error } = await supabase
+        .from('custom_orders')
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      toast({
-        title: "Custom Orders Loaded",
-        description: "Custom orders data loaded successfully"
-      });
+      if (error) throw error;
+      
+      // If no orders exist, set empty array
+      setCustomOrders(orders || []);
+      
+      // Only show toast if we have orders
+      if (orders && orders.length > 0) {
+        toast({
+          title: "Custom Orders Loaded",
+          description: `${orders.length} custom orders loaded`
+        });
+      }
     } catch (error) {
       console.error('Error loading custom orders:', error);
       toast({

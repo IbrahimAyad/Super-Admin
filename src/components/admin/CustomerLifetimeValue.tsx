@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from '@/lib/supabase-client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,25 +14,92 @@ export function CustomerLifetimeValue() {
   const [timeRange, setTimeRange] = useState("1_year");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSegment, setSelectedSegment] = useState("all");
-
-  const clvMetrics = {
-    average: 485,
-    total: 2400000,
+  const [loading, setLoading] = useState(true);
+  const [topCustomers, setTopCustomers] = useState<any[]>([]);
+  const [clvMetrics, setClvMetrics] = useState({
+    average: 0,
+    total: 0,
     segments: {
-      vip: { count: 45, avgClv: 1250, color: "text-purple-600" },
-      loyal: { count: 234, avgClv: 780, color: "text-blue-600" },
-      regular: { count: 567, avgClv: 320, color: "text-green-600" },
-      new: { count: 1200, avgClv: 85, color: "text-gray-600" }
+      vip: { count: 0, avgClv: 0, color: "text-purple-600" },
+      loyal: { count: 0, avgClv: 0, color: "text-blue-600" },
+      regular: { count: 0, avgClv: 0, color: "text-green-600" },
+      new: { count: 0, avgClv: 0, color: "text-gray-600" }
+    }
+  });
+
+  useEffect(() => {
+    loadCustomerData();
+  }, [timeRange]);
+
+  const loadCustomerData = async () => {
+    try {
+      setLoading(true);
+      
+      // Get customer CLV data from Supabase
+      const { data: customerData, error } = await supabase.rpc('get_customer_ltv_analytics');
+      
+      if (error) throw error;
+      
+      if (customerData && customerData.length > 0) {
+        // Format top customers
+        const formattedCustomers = customerData.map((c: any) => ({
+          id: c.customer_id,
+          name: c.email?.split('@')[0] || 'Customer',
+          email: c.email,
+          clv: Math.round(c.total_spent || 0),
+          orders: c.total_orders || 0,
+          segment: c.total_spent > 2000 ? 'VIP' : c.total_spent > 1000 ? 'Loyal' : c.total_spent > 500 ? 'Regular' : 'New',
+          lastOrder: c.last_order_date || new Date().toISOString().split('T')[0]
+        }));
+        
+        setTopCustomers(formattedCustomers.slice(0, 10));
+        
+        // Calculate metrics
+        const totalClv = customerData.reduce((sum: number, c: any) => sum + (c.total_spent || 0), 0);
+        const avgClv = customerData.length > 0 ? totalClv / customerData.length : 0;
+        
+        // Segment customers
+        const segments = {
+          vip: customerData.filter((c: any) => c.total_spent > 2000),
+          loyal: customerData.filter((c: any) => c.total_spent > 1000 && c.total_spent <= 2000),
+          regular: customerData.filter((c: any) => c.total_spent > 500 && c.total_spent <= 1000),
+          new: customerData.filter((c: any) => c.total_spent <= 500)
+        };
+        
+        setClvMetrics({
+          average: Math.round(avgClv),
+          total: Math.round(totalClv),
+          segments: {
+            vip: {
+              count: segments.vip.length,
+              avgClv: segments.vip.length > 0 ? Math.round(segments.vip.reduce((sum: number, c: any) => sum + c.total_spent, 0) / segments.vip.length) : 0,
+              color: "text-purple-600"
+            },
+            loyal: {
+              count: segments.loyal.length,
+              avgClv: segments.loyal.length > 0 ? Math.round(segments.loyal.reduce((sum: number, c: any) => sum + c.total_spent, 0) / segments.loyal.length) : 0,
+              color: "text-blue-600"
+            },
+            regular: {
+              count: segments.regular.length,
+              avgClv: segments.regular.length > 0 ? Math.round(segments.regular.reduce((sum: number, c: any) => sum + c.total_spent, 0) / segments.regular.length) : 0,
+              color: "text-green-600"
+            },
+            new: {
+              count: segments.new.length,
+              avgClv: segments.new.length > 0 ? Math.round(segments.new.reduce((sum: number, c: any) => sum + c.total_spent, 0) / segments.new.length) : 0,
+              color: "text-gray-600"
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error loading customer CLV data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const topCustomers = [
-    { id: 1, name: "Sarah Johnson", email: "sarah@example.com", clv: 2450, orders: 28, segment: "VIP", lastOrder: "2024-01-15" },
-    { id: 2, name: "Michael Chen", email: "michael@example.com", clv: 1890, orders: 22, segment: "VIP", lastOrder: "2024-01-14" },
-    { id: 3, name: "Emily Davis", email: "emily@example.com", clv: 1650, orders: 19, segment: "VIP", lastOrder: "2024-01-13" },
-    { id: 4, name: "David Wilson", email: "david@example.com", clv: 1420, orders: 16, segment: "Loyal", lastOrder: "2024-01-12" },
-    { id: 5, name: "Lisa Brown", email: "lisa@example.com", clv: 1380, orders: 18, segment: "Loyal", lastOrder: "2024-01-11" }
-  ];
 
   const cohortData = [
     { month: "Jan 2024", customers: 450, clv: 520, retention: 85 },
@@ -229,7 +297,25 @@ export function CustomerLifetimeValue() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {topCustomers.map((customer) => (
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        Loading customer data...
+                      </TableCell>
+                    </TableRow>
+                  ) : topCustomers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        No customer data available
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    topCustomers.filter(customer => 
+                      (selectedSegment === 'all' || customer.segment.toLowerCase() === selectedSegment.toLowerCase()) &&
+                      (searchTerm === '' || 
+                        customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        customer.email.toLowerCase().includes(searchTerm.toLowerCase()))
+                    ).map((customer) => (
                     <TableRow key={customer.id}>
                       <TableCell>
                         <div>
@@ -248,7 +334,8 @@ export function CustomerLifetimeValue() {
                       </TableCell>
                       <TableCell>{customer.lastOrder}</TableCell>
                     </TableRow>
-                  ))}
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

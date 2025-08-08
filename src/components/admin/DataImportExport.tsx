@@ -79,6 +79,44 @@ export function DataImportExport() {
     }
   };
 
+  const importProducts = async () => {
+    if (!csvData) {
+      toast({
+        title: "No data",
+        description: "Please upload a CSV file first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const jsonData = parseCsvToJson(csvData);
+      
+      const { data, error } = await supabase.rpc('import_products_from_csv', {
+        csv_data: jsonData
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Import successful",
+        description: `Imported ${data.imported} products with ${data.errors} errors`,
+      });
+      
+      setCsvData('');
+    } catch (error: any) {
+      console.error('Import error:', error);
+      toast({
+        title: "Import failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const exportCustomers = async () => {
     setLoading(true);
     try {
@@ -285,6 +323,56 @@ export function DataImportExport() {
                 email,first_name,last_name,phone,company<br />
                 john@example.com,John,Doe,555-1234,ABC Corp<br />
                 jane@example.com,Jane,Smith,555-5678,XYZ Inc
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Import Products from CSV
+              </CardTitle>
+              <CardDescription>
+                Upload a CSV file with product data. Required columns: name, description, category, base_price, sizes
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="product-csv">Product CSV File</Label>
+                <Input
+                  id="product-csv"
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => handleFileUpload(e, 'products')}
+                />
+              </div>
+              
+              {csvData && (
+                <div>
+                  <Label>Preview Data</Label>
+                  <Textarea
+                    value={csvData.substring(0, 500) + (csvData.length > 500 ? '...' : '')}
+                    readOnly
+                    className="font-mono text-sm"
+                    rows={6}
+                  />
+                </div>
+              )}
+
+              <Button 
+                onClick={importProducts}
+                disabled={loading || !csvData}
+                className="w-full"
+              >
+                {loading ? 'Importing...' : 'Import Products'}
+              </Button>
+
+              <div className="text-sm text-muted-foreground">
+                <strong>CSV Format Example:</strong><br />
+                name,description,category,base_price,sizes,stock<br />
+                Classic Suit,Premium wool suit,Suits,299.99,"S,M,L,XL",10<br />
+                Dress Shirt,Cotton dress shirt,Shirts,79.99,"S,M,L,XL,XXL",25
               </div>
             </CardContent>
           </Card>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase-client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -58,103 +59,121 @@ export function LoyaltyManagement() {
 
   const loadLoyaltyData = async () => {
     try {
-      // Mock data - replace with actual API calls
-      const mockTiers = [
-        {
-          id: '1',
-          name: 'Bronze',
-          tier_level: 1,
-          threshold_amount: 0,
-          points_multiplier: 1.0,
-          benefits: {
-            early_access: false,
-            free_shipping: false,
-            birthday_discount: 5
+      setLoading(true);
+      
+      // Load loyalty tiers from database
+      const { data: tiersData, error: tiersError } = await supabase
+        .from('loyalty_tiers')
+        .select('*')
+        .order('tier_level', { ascending: true });
+      
+      if (tiersError) throw tiersError;
+      
+      // If no tiers exist, create default tiers
+      if (!tiersData || tiersData.length === 0) {
+        const defaultTiers = [
+          {
+            name: 'Bronze',
+            tier_level: 1,
+            threshold_amount: 0,
+            points_multiplier: 1.0,
+            benefits: {
+              early_access: false,
+              free_shipping: false,
+              birthday_discount: 5
+            },
+            tier_color: '#CD7F32',
+            is_active: true
           },
-          tier_color: '#CD7F32',
-          is_active: true
-        },
-        {
-          id: '2',
-          name: 'Silver',
-          tier_level: 2,
-          threshold_amount: 500,
-          points_multiplier: 1.25,
-          benefits: {
-            early_access: true,
-            free_shipping: true,
-            birthday_discount: 10,
-            exclusive_events: false
+          {
+            name: 'Silver',
+            tier_level: 2,
+            threshold_amount: 500,
+            points_multiplier: 1.25,
+            benefits: {
+              early_access: true,
+              free_shipping: true,
+              birthday_discount: 10
+            },
+            tier_color: '#C0C0C0',
+            is_active: true
           },
-          tier_color: '#C0C0C0',
-          is_active: true
-        },
-        {
-          id: '3',
-          name: 'Gold',
-          tier_level: 3,
-          threshold_amount: 1500,
-          points_multiplier: 1.5,
-          benefits: {
-            early_access: true,
-            free_shipping: true,
-            birthday_discount: 15,
-            exclusive_events: true,
-            personal_stylist: false
+          {
+            name: 'Gold',
+            tier_level: 3,
+            threshold_amount: 1500,
+            points_multiplier: 1.5,
+            benefits: {
+              early_access: true,
+              free_shipping: true,
+              birthday_discount: 15,
+              exclusive_events: true
+            },
+            tier_color: '#FFD700',
+            is_active: true
           },
-          tier_color: '#FFD700',
-          is_active: true
-        },
-        {
-          id: '4',
-          name: 'Platinum',
-          tier_level: 4,
-          threshold_amount: 5000,
-          points_multiplier: 2.0,
-          benefits: {
-            early_access: true,
-            free_shipping: true,
-            birthday_discount: 20,
-            exclusive_events: true,
-            personal_stylist: true,
-            concierge: true
-          },
-          tier_color: '#E5E4E2',
-          is_active: true
-        }
-      ];
-
-      const mockCustomers = [
-        {
-          id: '1',
-          customer_id: 'user1',
-          customer_email: 'john@example.com',
-          customer_name: 'John Smith',
-          current_tier: mockTiers[2], // Gold
-          points_balance: 2450,
-          lifetime_spend: 2340,
-          total_orders: 8,
-          referral_count: 3,
-          joined_program_at: '2024-01-15',
-          last_activity: '2024-01-25'
-        },
-        {
-          id: '2',
-          customer_id: 'user2',
-          customer_email: 'mike@example.com',
-          customer_name: 'Mike Johnson',
-          current_tier: mockTiers[1], // Silver
-          points_balance: 890,
-          lifetime_spend: 780,
-          total_orders: 3,
-          referral_count: 1,
-          joined_program_at: '2024-01-20',
-          last_activity: '2024-01-28'
-        }
-      ];
-
-      setTiers(mockTiers);
-      setCustomers(mockCustomers);
+          {
+            name: 'Platinum',
+            tier_level: 4,
+            threshold_amount: 5000,
+            points_multiplier: 2.0,
+            benefits: {
+              early_access: true,
+              free_shipping: true,
+              birthday_discount: 20,
+              exclusive_events: true,
+              personal_stylist: true
+            },
+            tier_color: '#E5E4E2',
+            is_active: true
+          }
+        ];
+        
+        // Insert default tiers
+        const { data: insertedTiers } = await supabase
+          .from('loyalty_tiers')
+          .insert(defaultTiers)
+          .select();
+        
+        setTiers(insertedTiers || []);
+      } else {
+        setTiers(tiersData);
+      }
+      
+      // Load customer loyalty data
+      const { data: customersData, error: customersError } = await supabase
+        .from('customer_loyalty')
+        .select(`
+          *,
+          customers (
+            id,
+            email,
+            full_name
+          ),
+          loyalty_tiers (
+            *
+          )
+        `)
+        .order('points_balance', { ascending: false });
+      
+      if (customersError) throw customersError;
+      
+      // Format customer data
+      const formattedCustomers = (customersData || []).map(c => ({
+        id: c.id,
+        customer_id: c.customer_id,
+        customer_email: c.customers?.email || '',
+        customer_name: c.customers?.full_name || c.customers?.email?.split('@')[0] || 'Customer',
+        current_tier: c.loyalty_tiers || tiersData?.[0],
+        points_balance: c.points_balance || 0,
+        lifetime_spend: c.lifetime_spend || 0,
+        total_orders: c.total_orders || 0,
+        referral_count: c.referral_count || 0,
+        joined_program_at: c.joined_program_at || new Date().toISOString(),
+        last_activity: c.last_activity || new Date().toISOString()
+      }));
+      
+      setCustomers(formattedCustomers);
     } catch (error) {
       console.error('Error loading loyalty data:', error);
       toast({
