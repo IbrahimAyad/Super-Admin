@@ -48,7 +48,7 @@ import { ReviewManagement } from '@/components/admin/ReviewManagement';
 import { InventoryManagement } from '@/components/admin/InventoryManagement';
 import { StripeOrderManagement } from '@/components/admin/StripeOrderManagement';
 import { DataImportExport } from '@/components/admin/DataImportExport';
-import { ProductManagement } from '@/components/admin/ProductManagement';
+import { ProductManagementClean } from '@/components/admin/ProductManagementClean';
 import { CollectionManagement } from '@/components/admin/CollectionManagement';
 import { ReportsManagement } from '@/components/admin/ReportsManagement';
 import { EventsManagement } from '@/components/admin/EventsManagement';
@@ -137,7 +137,7 @@ const AdminDashboard = () => {
       case '/admin/inventory-forecasting':
         return <InventoryForecasting />;
       case '/admin/products':
-        return <ProductManagement />;
+        return <ProductManagementClean />;
       case '/admin/collections':
         return <CollectionManagement />;
       case '/admin/orders':
