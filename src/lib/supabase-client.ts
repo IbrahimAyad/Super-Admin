@@ -33,9 +33,13 @@ function createSupabaseClient(): SupabaseClient {
     return supabaseInstance;
   }
 
-  // Get environment variables (Next.js format)
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // Get environment variables (Next.js client-side format)
+  const supabaseUrl = typeof window !== 'undefined' 
+    ? process.env.NEXT_PUBLIC_SUPABASE_URL 
+    : process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = typeof window !== 'undefined'
+    ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   // Validate environment variables
   if (!supabaseUrl || !supabaseKey) {

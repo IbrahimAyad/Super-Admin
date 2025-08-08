@@ -1,14 +1,6 @@
-/**
- * UNIFIED SUPABASE MODULE
- * Main entry point - redirects to the new unified services architecture
- * Last updated: 2025-08-07
- */
+import { createClient } from '@supabase/supabase-js'
 
-// Export everything from the new unified services
-export * from './services';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// For backward compatibility, also export the legacy API wrapper
-export { KCTMenswearAPI } from './supabase-legacy';
-
-// Default export is the supabase client
-export { supabase as default } from './services';
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
