@@ -35,8 +35,10 @@ ALTER TABLE public.product_images ADD COLUMN IF NOT EXISTS position INTEGER DEFA
 ALTER TABLE public.product_images ADD COLUMN IF NOT EXISTS image_type VARCHAR(20) DEFAULT 'additional';
 
 -- 4. Add missing columns to products table
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS slug VARCHAR(255) UNIQUE;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS details JSONB;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS product_type VARCHAR(50);
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb;
 
 -- 5. Enable RLS with simple policies
 ALTER TABLE public.product_variants ENABLE ROW LEVEL SECURITY;

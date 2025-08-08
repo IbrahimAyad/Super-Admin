@@ -96,7 +96,7 @@ export function ProductEditorSimple({ productId, onSave, onCancel }: ProductEdit
 
     const newSizes: ProductSize[] = sizeList.map(size => ({
       size,
-      sku: `${sku}-${size}`.toUpperCase(),
+      sku: sku ? `${sku}-${size}`.toUpperCase() : `SKU-${size}`.toUpperCase(),
       inventory: 0,
       price: parseFloat(price) || 0,
       enabled: false,
@@ -260,16 +260,31 @@ export function ProductEditorSimple({ productId, onSave, onCancel }: ProductEdit
     setIsSaving(true);
 
     try {
+      // Generate slug from name for new products
+      const slug = name.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
       const productData = {
         name,
         sku,
-        category,
+        slug: productId ? undefined : slug, // Only add slug for new products
+        category: category || 'Uncategorized',
         base_price: parseFloat(price),
         description,
-        details: details.filter(d => d.trim()),
+        details: JSON.stringify(details.filter(d => d.trim())), // Ensure details is stringified
         status: isActive ? 'active' : 'inactive',
         product_type: productType,
+        metadata: {}, // Add empty metadata object
+        updated_at: new Date().toISOString(),
       };
+
+      // Remove undefined fields
+      Object.keys(productData).forEach(key => {
+        if (productData[key as keyof typeof productData] === undefined) {
+          delete productData[key as keyof typeof productData];
+        }
+      });
 
       let savedProductId = productId;
 
@@ -282,14 +297,23 @@ export function ProductEditorSimple({ productId, onSave, onCancel }: ProductEdit
 
         if (error) throw error;
       } else {
-        // Create new product
+        // Create new product - add required fields for insert
+        const newProductData = {
+          ...productData,
+          slug, // Ensure slug is included for new products
+          created_at: new Date().toISOString(),
+        };
+
         const { data, error } = await supabase
           .from('products')
-          .insert(productData)
+          .insert(newProductData)
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error creating product:', error);
+          throw error;
+        }
         savedProductId = data.id;
       }
 
@@ -325,22 +349,27 @@ export function ProductEditorSimple({ productId, onSave, onCancel }: ProductEdit
           .delete()
           .eq('product_id', savedProductId);
 
-        // Insert new variants
+        // Insert new variants with all required fields
         const variantData = enabledSizes.map((size, idx) => ({
           product_id: savedProductId,
           size: size.size,
-          sku: size.sku,
+          sku: size.sku || `${sku}-${size.size}`, // Ensure SKU is always present
           price: size.price || parseFloat(price),
-          inventory_quantity: size.inventory,
+          inventory_quantity: size.inventory || 0,
           is_active: true,
           position: idx,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         }));
 
         const { error: variantError } = await supabase
           .from('product_variants')
           .insert(variantData);
 
-        if (variantError) throw variantError;
+        if (variantError) {
+          console.error('Error saving variants:', variantError);
+          throw variantError;
+        }
       }
 
       toast.success(productId ? 'Product updated successfully' : 'Product created successfully');
