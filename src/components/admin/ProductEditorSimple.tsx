@@ -297,7 +297,11 @@ export function ProductEditorSimple({ productId, onSave, onCancel }: ProductEdit
 
         if (error) throw error;
       } else {
-        // Create new product - add required fields for insert
+        // Create new product - include ALL potentially required fields
+        const handle = slug || name.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+          
         const newProductData: any = {
           name,
           sku,
@@ -305,18 +309,21 @@ export function ProductEditorSimple({ productId, onSave, onCancel }: ProductEdit
           status: isActive ? 'active' : 'inactive',
           category: category || 'Uncategorized',
           description: description || '',  // Always include description, even if empty
+          handle: handle,  // Include handle field
+          slug: slug,  // Include slug field
+          supplier: 'KCT Menswear',  // Default supplier
+          brand: 'KCT Menswear',  // Default brand
+          subcategory: category || 'Formal Accessories',  // Default subcategory
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
+          metadata: {},  // Empty metadata
         };
 
         // Only add optional fields if they have values
-        if (slug) newProductData.slug = slug;
         if (productType) newProductData.product_type = productType;
         if (details && details.filter(d => d.trim()).length > 0) {
           newProductData.details = JSON.stringify(details.filter(d => d.trim()));
         }
-        // Add empty metadata if needed
-        newProductData.metadata = {};
 
         const { data, error } = await supabase
           .from('products')

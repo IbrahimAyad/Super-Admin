@@ -38,18 +38,23 @@ export function ProductDiagnostic() {
         details: readError ? readError.message : 'Can read products table',
       });
 
-      // 3. Test minimal product insert
+      // 3. Test minimal product insert with ALL required fields
+      const timestamp = Date.now();
       const testProduct = {
-        name: 'Test Product ' + Date.now(),
-        sku: 'TEST-' + Date.now(),
-        slug: 'test-product-' + Date.now(),
+        name: 'Test Product ' + timestamp,
+        sku: 'TEST-' + timestamp,
+        slug: 'test-product-' + timestamp,
+        handle: 'test-handle-' + timestamp,
         base_price: 99.99,
         status: 'active',
         category: 'Test',
-        description: '',  // Include empty description if required
+        subcategory: 'Test Subcategory',
+        description: '',  // Empty description
+        supplier: 'KCT Menswear',
+        brand: 'KCT Menswear',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        metadata: {},  // Include empty metadata if required
+        metadata: {},  // Empty metadata
       };
 
       const { data: insertData, error: insertError } = await supabase
