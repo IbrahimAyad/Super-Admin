@@ -122,7 +122,7 @@ export function ProductEditorSimple({ productId, onSave, onCancel }: ProductEdit
       setName(product.name || '');
       setSku(product.sku || '');
       setCategory(product.category || '');
-      setPrice(product.base_price || '');
+      setPrice((product.base_price / 100).toFixed(2)); // Convert cents to dollars
       setDescription(product.description || '');
       setIsActive(product.status === 'active');
 
@@ -268,23 +268,19 @@ export function ProductEditorSimple({ productId, onSave, onCancel }: ProductEdit
       const productData = {
         name,
         sku,
-        slug: productId ? undefined : slug, // Only add slug for new products
         category: category || 'Uncategorized',
-        base_price: parseFloat(price),
-        description,
-        details: JSON.stringify(details.filter(d => d.trim())), // Ensure details is stringified
+        base_price: Math.round(parseFloat(price) * 100), // Convert to cents (integer)
+        description: description || '',
+        handle: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
         status: isActive ? 'active' : 'inactive',
-        product_type: productType,
-        metadata: {}, // Add empty metadata object
+        product_type: productType || 'Formal Accessories',
         updated_at: new Date().toISOString(),
       };
-
-      // Remove undefined fields
-      Object.keys(productData).forEach(key => {
-        if (productData[key as keyof typeof productData] === undefined) {
-          delete productData[key as keyof typeof productData];
-        }
-      });
+      
+      // Add details if provided
+      if (details && details.filter(d => d.trim()).length > 0) {
+        (productData as any).details = details.filter(d => d.trim());
+      }
 
       let savedProductId = productId;
 
@@ -297,85 +293,43 @@ export function ProductEditorSimple({ productId, onSave, onCancel }: ProductEdit
 
         if (error) throw error;
       } else {
-        // Create new product - only include fields we know exist
+        // Create new product with EXACTLY the required fields from your database
         const handle = name.toLowerCase()
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-+|-+$/g, '');
           
         const newProductData: any = {
+          // REQUIRED fields (NOT NULL without defaults)
           name,
-          sku,
-          base_price: parseFloat(price),
-          status: isActive ? 'active' : 'inactive',
+          description: description || '',  // Required, can be empty string
           category: category || 'Uncategorized',
-          description: description || '',  // Always include description, even if empty
-          created_at: new Date().toISOString(),
+          sku,
+          handle: handle,
+          base_price: Math.round(parseFloat(price) * 100),  // Convert to cents (integer)
+          
+          // Optional fields with defaults - will use database defaults if not specified
+          status: isActive ? 'active' : 'inactive',
+          product_type: productType || 'Formal Accessories',
+          
+          // Optional fields we want to set
           updated_at: new Date().toISOString(),
         };
         
-        // Add optional fields that might exist
-        // We'll add these conditionally based on what the database accepts
-        const optionalFields: any = {
-          handle: handle,
-          slug: slug || handle,
-          subcategory: category || 'Formal Accessories',
-          metadata: {},
-        };
-
-        // Try to add optional fields - database might accept them
-        Object.assign(newProductData, optionalFields);
-        
-        // Only add optional fields if they have values
-        if (productType) newProductData.product_type = productType;
+        // Add product details if provided
         if (details && details.filter(d => d.trim()).length > 0) {
-          newProductData.details = JSON.stringify(details.filter(d => d.trim()));
+          newProductData.details = details.filter(d => d.trim());
         }
 
-        // First attempt with all fields
-        let insertError = null;
-        let data = null;
-        
-        try {
-          const result = await supabase
-            .from('products')
-            .insert(newProductData)
-            .select()
-            .single();
-          data = result.data;
-          insertError = result.error;
-        } catch (e) {
-          insertError = e;
-        }
+        const { data, error } = await supabase
+          .from('products')
+          .insert(newProductData)
+          .select()
+          .single();
 
-        // If failed, try with minimal fields
-        if (insertError) {
-          console.error('First attempt failed:', insertError);
-          console.error('Trying with minimal fields...');
-          
-          const minimalData = {
-            name,
-            sku,
-            base_price: parseFloat(price),
-            status: isActive ? 'active' : 'inactive',
-            category: category || 'Uncategorized',
-            description: description || '',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          };
-          
-          const { data: minimalResult, error: minimalError } = await supabase
-            .from('products')
-            .insert(minimalData)
-            .select()
-            .single();
-            
-          if (minimalError) {
-            console.error('Minimal insert also failed:', minimalError);
-            console.error('Minimal data attempted:', minimalData);
-            throw minimalError;
-          }
-          
-          data = minimalResult;
+        if (error) {
+          console.error('Error creating product:', error);
+          console.error('Product data attempted:', newProductData);
+          throw error;
         }
         savedProductId = data.id;
       }

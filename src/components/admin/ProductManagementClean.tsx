@@ -198,7 +198,7 @@ export function ProductManagementClean() {
             <div>
               <p className="text-sm text-gray-600">Avg Price</p>
               <p className="text-2xl font-bold">
-                ${(products.reduce((sum, p) => sum + p.base_price, 0) / products.length || 0).toFixed(2)}
+                ${(products.reduce((sum, p) => sum + (p.base_price / 100), 0) / products.length || 0).toFixed(2)}
               </p>
             </div>
             <DollarSign className="h-8 w-8 text-gray-400" />
@@ -259,7 +259,7 @@ export function ProductManagementClean() {
                 <p className="text-sm text-gray-600 mb-2">{product.sku}</p>
                 
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xl font-bold">${product.base_price}</span>
+                  <span className="text-xl font-bold">${(product.base_price / 100).toFixed(2)}</span>
                   <Badge variant="outline">{product.category}</Badge>
                 </div>
 
