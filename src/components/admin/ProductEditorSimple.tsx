@@ -298,11 +298,23 @@ export function ProductEditorSimple({ productId, onSave, onCancel }: ProductEdit
         if (error) throw error;
       } else {
         // Create new product - add required fields for insert
-        const newProductData = {
-          ...productData,
-          slug, // Ensure slug is included for new products
+        const newProductData: any = {
+          name,
+          sku,
+          base_price: parseFloat(price),
+          status: isActive ? 'active' : 'inactive',
+          category: category || 'Uncategorized',
           created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         };
+
+        // Only add optional fields if they have values
+        if (slug) newProductData.slug = slug;
+        if (description) newProductData.description = description;
+        if (productType) newProductData.product_type = productType;
+        if (details && details.filter(d => d.trim()).length > 0) {
+          newProductData.details = JSON.stringify(details.filter(d => d.trim()));
+        }
 
         const { data, error } = await supabase
           .from('products')
@@ -312,6 +324,7 @@ export function ProductEditorSimple({ productId, onSave, onCancel }: ProductEdit
 
         if (error) {
           console.error('Error creating product:', error);
+          console.error('Product data attempted:', newProductData);
           throw error;
         }
         savedProductId = data.id;
