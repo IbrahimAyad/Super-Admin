@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,57 +8,119 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { RefreshCw, Check, X, DollarSign, AlertCircle } from 'lucide-react';
+import { RefreshCw, Check, X, DollarSign, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { 
+  getPendingRefunds, 
+  getRefundMetrics, 
+  processRefund as processRefundAPI, 
+  rejectRefund,
+  type RefundRequest,
+  type RefundMetrics 
+} from '@/lib/services/refundService';
 
 export function RefundProcessor() {
-  const [selectedRefund, setSelectedRefund] = useState<any>(null);
+  const [selectedRefund, setSelectedRefund] = useState<RefundRequest | null>(null);
   const [showRefundDialog, setShowRefundDialog] = useState(false);
   const [refundAmount, setRefundAmount] = useState('');
   const [refundReason, setRefundReason] = useState('');
+  const [refundNotes, setRefundNotes] = useState('');
+  const [pendingRefunds, setPendingRefunds] = useState<RefundRequest[]>([]);
+  const [metrics, setMetrics] = useState<RefundMetrics>({
+    pending_count: 0,
+    pending_amount: 0,
+    today_count: 0,
+    today_amount: 0,
+    week_count: 0,
+    week_amount: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
 
-  // Mock data - replace with real data
-  const pendingRefunds = [
-    {
-      id: 'rf_001',
-      orderId: 'ord_12345',
-      customer: 'John Smith',
-      amount: 299.99,
-      originalAmount: 299.99,
-      reason: 'Item not as described',
-      status: 'pending',
-      requestDate: '2025-08-06',
-      paymentMethod: 'Stripe'
-    },
-    {
-      id: 'rf_002',
-      orderId: 'ord_12346',
-      customer: 'Sarah Johnson',
-      amount: 149.50,
-      originalAmount: 299.00,
-      reason: 'Partial return - size issue',
-      status: 'pending',
-      requestDate: '2025-08-05',
-      paymentMethod: 'PayPal'
+  // Load refunds and metrics on mount
+  useEffect(() => {
+    loadRefundData();
+  }, []);
+
+  const loadRefundData = async () => {
+    setLoading(true);
+    try {
+      const [refunds, refundMetrics] = await Promise.all([
+        getPendingRefunds(),
+        getRefundMetrics(),
+      ]);
+      setPendingRefunds(refunds);
+      setMetrics(refundMetrics);
+    } catch (error) {
+      console.error('Error loading refund data:', error);
+      toast.error('Failed to load refund data');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const handleApproveRefund = (refund: any) => {
+  const handleApproveRefund = (refund: RefundRequest) => {
     setSelectedRefund(refund);
     setRefundAmount(refund.amount.toString());
+    setRefundReason(refund.reason);
+    setRefundNotes('');
     setShowRefundDialog(true);
   };
 
-  const processRefund = async () => {
+  const handleRejectRefund = async (refund: RefundRequest) => {
+    if (!confirm(`Are you sure you want to reject the refund for ${refund.customer_name}?`)) {
+      return;
+    }
+    
     try {
-      // Mock API call - replace with actual refund processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      toast.success(`Refund of $${refundAmount} processed successfully`);
-      setShowRefundDialog(false);
-      setSelectedRefund(null);
+      const result = await rejectRefund(refund.id, 'Rejected by admin');
+      if (result.success) {
+        toast.success('Refund rejected');
+        loadRefundData();
+      } else {
+        toast.error(result.message);
+      }
     } catch (error) {
+      toast.error('Failed to reject refund');
+    }
+  };
+
+  const processRefund = async () => {
+    if (!selectedRefund) return;
+    
+    setProcessing(true);
+    try {
+      const amount = parseFloat(refundAmount);
+      if (isNaN(amount) || amount <= 0) {
+        toast.error('Invalid refund amount');
+        return;
+      }
+      
+      if (amount > selectedRefund.original_amount) {
+        toast.error('Refund amount exceeds original amount');
+        return;
+      }
+      
+      const result = await processRefundAPI(
+        selectedRefund.id,
+        amount,
+        refundReason,
+        refundNotes
+      );
+      
+      if (result.success) {
+        toast.success(result.message);
+        setShowRefundDialog(false);
+        setSelectedRefund(null);
+        loadRefundData();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error('Error processing refund:', error);
       toast.error('Failed to process refund');
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -70,8 +132,8 @@ export function RefundProcessor() {
           <h3 className="text-2xl font-bold">Refund Processing</h3>
           <p className="text-muted-foreground">Manage refund requests and processing</p>
         </div>
-        <Button variant="outline">
-          <RefreshCw className="h-4 w-4 mr-2" />
+        <Button variant="outline" onClick={loadRefundData} disabled={loading}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
       </div>
@@ -84,7 +146,7 @@ export function RefundProcessor() {
             <AlertCircle className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingRefunds.length}</div>
+            <div className="text-2xl font-bold">{metrics.pending_count}</div>
             <p className="text-xs text-muted-foreground">Awaiting approval</p>
           </CardContent>
         </Card>
@@ -96,7 +158,7 @@ export function RefundProcessor() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${pendingRefunds.reduce((sum, r) => sum + r.amount, 0).toLocaleString()}
+              ${metrics.pending_amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground">Pending refund value</p>
           </CardContent>
@@ -108,8 +170,10 @@ export function RefundProcessor() {
             <RefreshCw className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">5</div>
-            <p className="text-xs text-muted-foreground">Processed today</p>
+            <div className="text-2xl font-bold">{metrics.today_count}</div>
+            <p className="text-xs text-muted-foreground">
+              ${metrics.today_amount.toFixed(2)} processed today
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -134,16 +198,29 @@ export function RefundProcessor() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {pendingRefunds.map((refund) => (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Loading refunds...</p>
+                  </TableCell>
+                </TableRow>
+              ) : pendingRefunds.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8">
+                    <p className="text-sm text-muted-foreground">No pending refunds</p>
+                  </TableCell>
+                </TableRow>
+              ) : pendingRefunds.map((refund) => (
                 <TableRow key={refund.id}>
-                  <TableCell className="font-medium">{refund.orderId}</TableCell>
-                  <TableCell>{refund.customer}</TableCell>
+                  <TableCell className="font-medium">{refund.order_id}</TableCell>
+                  <TableCell>{refund.customer_name || refund.customer_email || 'N/A'}</TableCell>
                   <TableCell>
                     <div>
-                      <div className="font-medium">${refund.amount}</div>
-                      {refund.amount < refund.originalAmount && (
+                      <div className="font-medium">${refund.amount.toFixed(2)}</div>
+                      {refund.amount < refund.original_amount && (
                         <div className="text-sm text-muted-foreground">
-                          of ${refund.originalAmount}
+                          of ${refund.original_amount.toFixed(2)}
                         </div>
                       )}
                     </div>
@@ -153,9 +230,9 @@ export function RefundProcessor() {
                       {refund.reason}
                     </div>
                   </TableCell>
-                  <TableCell>{refund.requestDate}</TableCell>
+                  <TableCell>{refund.request_date}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{refund.paymentMethod}</Badge>
+                    <Badge variant="outline">{refund.payment_method}</Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -169,7 +246,7 @@ export function RefundProcessor() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => toast.info('Refund rejected')}
+                        onClick={() => handleRejectRefund(refund)}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -188,7 +265,7 @@ export function RefundProcessor() {
           <DialogHeader>
             <DialogTitle>Process Refund</DialogTitle>
             <DialogDescription>
-              Process refund for order {selectedRefund?.orderId}
+              Process refund for order {selectedRefund?.order_id}
             </DialogDescription>
           </DialogHeader>
 
@@ -204,7 +281,7 @@ export function RefundProcessor() {
                 placeholder="0.00"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Max refundable: ${selectedRefund?.originalAmount}
+                Max refundable: ${selectedRefund?.original_amount?.toFixed(2) || '0.00'}
               </p>
             </div>
 
@@ -229,6 +306,8 @@ export function RefundProcessor() {
               <Label htmlFor="refund-notes">Additional Notes (Optional)</Label>
               <Textarea
                 id="refund-notes"
+                value={refundNotes}
+                onChange={(e) => setRefundNotes(e.target.value)}
                 placeholder="Add any additional notes about this refund..."
                 className="min-h-[80px]"
               />
@@ -239,7 +318,13 @@ export function RefundProcessor() {
             <Button variant="outline" onClick={() => setShowRefundDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={processRefund}>Process Refund</Button>
+            <Button onClick={processRefund} disabled={processing}>
+              {processing ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing...</>
+              ) : (
+                'Process Refund'
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
