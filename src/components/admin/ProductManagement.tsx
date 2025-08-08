@@ -55,6 +55,8 @@ import {
   getRecentlyUpdatedProducts,
   Product 
 } from '@/lib/services';
+import { fashionClip, type ImageAnalysisResult } from '@/lib/services/fashionClip';
+import { kctIntelligence } from '@/lib/services/kctIntelligence';
 import { DraggableImageGallery } from './DraggableImageGallery';
 import { supabase } from '@/lib/supabase-client';
 import { testStorageBucket } from '@/lib/storage';
@@ -93,12 +95,20 @@ interface ProductFormData {
 }
 
 interface ProductVariant {
+  id?: string;
   size: string;
   color: string;
   sku: string;
   price: number;
   stock_quantity: number;
   image_url?: string;
+  barcode?: string;
+  weight?: number;
+  cost_price?: number;
+  compare_at_price?: number;
+  inventory_policy?: 'deny' | 'continue';
+  status?: 'active' | 'inactive' | 'archived';
+  position?: number;
 }
 
 interface ProductImage {
@@ -185,6 +195,21 @@ export const ProductManagement = () => {
   // Recent products
   const [recentProducts, setRecentProducts] = useState<any[]>([]);
   const [loadingRecent, setLoadingRecent] = useState(false);
+
+  // AI Analysis state
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState<ImageAnalysisResult | null>(null);
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+
+  // Variant management
+  const [editingVariant, setEditingVariant] = useState<ProductVariant | null>(null);
+  const [showVariantDialog, setShowVariantDialog] = useState(false);
+  const [bulkVariantOperation, setBulkVariantOperation] = useState<'update_prices' | 'update_inventory' | 'create_sizes' | null>(null);
+
+  // Enhanced features state
+  const [showAdvancedFeatures, setShowAdvancedFeatures] = useState(false);
+  const [validationResults, setValidationResults] = useState<any>(null);
+  const [generatingContent, setGeneratingContent] = useState(false);
   const [formData, setFormData] = useState<ProductFormData>({
     sku: '',
     name: '',
@@ -545,14 +570,26 @@ export const ProductManagement = () => {
 
       // Add variants if any
       if (formData.variants && formData.variants.length > 0) {
+        const variantsToInsert = formData.variants.map(variant => ({
+          product_id: result.data.id,
+          size: variant.size,
+          color: variant.color,
+          sku: variant.sku,
+          price: variant.price,
+          cost_price: variant.cost_price || null,
+          compare_at_price: variant.compare_at_price || null,
+          inventory_quantity: variant.stock_quantity,
+          inventory_policy: variant.inventory_policy || 'deny',
+          status: variant.status || 'active',
+          position: variant.position || 0,
+          barcode: variant.barcode || null,
+          weight: variant.weight || null,
+          image_url: variant.image_url || null
+        }));
+
         const { error: variantsError } = await supabase
           .from('product_variants')
-          .insert(
-            formData.variants.map(variant => ({
-              product_id: result.data.id,
-              ...variant
-            }))
-          );
+          .insert(variantsToInsert);
 
         if (variantsError) {
           console.warn('Failed to add variants:', variantsError);
@@ -561,6 +598,8 @@ export const ProductManagement = () => {
             description: "Product created but some variants failed to save",
             variant: "default"
           });
+        } else {
+          console.log(`✅ Created ${variantsToInsert.length} variants successfully`);
         }
       }
 
@@ -834,27 +873,23 @@ export const ProductManagement = () => {
     });
   };
 
-  // Generate variants from colors and sizes
+  // Generate variants from colors and sizes (enhanced version)
   const generateVariants = () => {
-    if (formData.available_colors.length === 0) return;
-    
-    const variants: ProductVariant[] = [];
-    formData.available_colors.forEach(color => {
-      formData.variants.forEach(variant => {
-        variants.push({
-          ...variant,
-          color,
-          sku: `${formData.sku}-${variant.size.replace(/\s+/g, '')}-${color.substring(0, 3).toUpperCase()}`,
-          price: formData.base_price
-        });
+    if (formData.available_colors.length === 0) {
+      toast({
+        title: "No Colors Selected",
+        description: "Please select colors before generating variants",
+        variant: "destructive"
       });
-    });
+      return;
+    }
     
-    setFormData(prev => ({ ...prev, variants }));
-    toast({
-      title: "Variants Generated",
-      description: `Created ${variants.length} variants from color and size combinations`
-    });
+    // Get base sizes from existing variants or generate standard sizes
+    const baseSizes = formData.variants.length > 0 
+      ? [...new Set(formData.variants.map(v => v.size))]
+      : ['S', 'M', 'L', 'XL', 'XXL']; // Default sizes if none exist
+    
+    bulkCreateSizes(baseSizes, formData.available_colors);
   };
 
   // Auto-generate URL slug from product name
@@ -883,6 +918,237 @@ export const ProductManagement = () => {
         ? [...prev.features, feature]
         : prev.features.filter(f => f !== feature)
     }));
+  };
+
+  // === AI ANALYSIS FUNCTIONS ===
+
+  const analyzeProductImages = async () => {
+    if (!formData.images || formData.images.length === 0) {
+      toast({
+        title: "No Images",
+        description: "Please add product images before analyzing",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setAiAnalyzing(true);
+      const primaryImage = formData.images.find(img => img.is_primary) || formData.images[0];
+      
+      const result = await fashionClip.analyzeImage(primaryImage.url, {
+        includeDescription: true,
+        includeSuggestions: true,
+        category: formData.category
+      });
+
+      if (result.success && result.data) {
+        setAnalysisResults(result.data);
+        setShowAnalysisModal(true);
+        
+        toast({
+          title: "Analysis Complete",
+          description: "AI analysis completed successfully. Review the suggestions.",
+        });
+      } else {
+        throw new Error(result.error || 'Analysis failed');
+      }
+    } catch (error) {
+      console.error('AI analysis failed:', error);
+      toast({
+        title: "Analysis Failed",
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
+        variant: "destructive"
+      });
+    } finally {
+      setAiAnalyzing(false);
+    }
+  };
+
+  const applyAIAnalysis = () => {
+    if (!analysisResults) return;
+
+    // Auto-fill based on analysis
+    setFormData(prev => ({
+      ...prev,
+      category: analysisResults.category || prev.category,
+      product_type: analysisResults.product_type as any || prev.product_type,
+      available_colors: analysisResults.colors.all_colors || prev.available_colors,
+      materials: analysisResults.materials.primary || prev.materials,
+      fit_type: analysisResults.style.fit_type || prev.fit_type,
+      occasion: analysisResults.occasions.join(', ') || prev.occasion,
+      features: [...prev.features, ...analysisResults.features],
+      description: analysisResults.suggested_description || prev.description,
+      meta_title: prev.meta_title || `${analysisResults.suggested_name} | KCT Menswear`,
+      meta_description: prev.meta_description || analysisResults.suggested_description?.substring(0, 160)
+    }));
+
+    setShowAnalysisModal(false);
+    toast({
+      title: "Applied Analysis",
+      description: "Product information has been updated with AI suggestions",
+    });
+  };
+
+  const generateProductContent = async () => {
+    if (!formData.name || !formData.category) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter product name and category first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setGeneratingContent(true);
+      
+      const result = await kctIntelligence.generateDescriptionEnhanced({
+        name: formData.name,
+        category: formData.category,
+        materials: formData.materials ? [formData.materials] : undefined,
+        fit_type: formData.fit_type,
+        price: formData.base_price,
+        images: formData.images.map(img => img.url)
+      });
+
+      if (result.success && result.data) {
+        setFormData(prev => ({
+          ...prev,
+          description: result.data.description || prev.description,
+          meta_description: result.data.seo_description || prev.meta_description,
+          features: [...prev.features, ...result.data.key_features],
+        }));
+
+        toast({
+          title: "Content Generated",
+          description: `AI-generated content applied (${result.data.generated_by}, ${Math.round(result.data.confidence * 100)}% confidence)`,
+        });
+      }
+    } catch (error) {
+      console.error('Content generation failed:', error);
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate content. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingContent(false);
+    }
+  };
+
+  const validateProduct = async () => {
+    try {
+      const result = await kctIntelligence.validateProductEnhanced(formData);
+      if (result.success) {
+        setValidationResults(result.data);
+        toast({
+          title: "Validation Complete",
+          description: `Quality score: ${result.data.quality_score}% (${result.data.completeness * 100}% complete)`,
+          variant: result.data.isValid ? "default" : "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Validation failed:', error);
+    }
+  };
+
+  // === VARIANT MANAGEMENT FUNCTIONS ===
+
+  const createVariant = (variant: Partial<ProductVariant>) => {
+    const newVariant: ProductVariant = {
+      size: variant.size || '',
+      color: variant.color || 'Default',
+      sku: variant.sku || `${formData.sku}-${variant.size}-${variant.color}`,
+      price: variant.price || formData.base_price,
+      stock_quantity: variant.stock_quantity || 0,
+      inventory_policy: 'deny',
+      status: 'active',
+      position: formData.variants.length,
+      ...variant
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      variants: [...prev.variants, newVariant]
+    }));
+  };
+
+  const updateVariant = (index: number, updates: Partial<ProductVariant>) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: prev.variants.map((variant, i) => 
+        i === index ? { ...variant, ...updates } : variant
+      )
+    }));
+  };
+
+  const deleteVariant = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: prev.variants.filter((_, i) => i !== index)
+    }));
+  };
+
+  const bulkCreateSizes = (sizes: string[], colors: string[]) => {
+    const newVariants: ProductVariant[] = [];
+    
+    sizes.forEach(size => {
+      colors.forEach(color => {
+        // Check if variant already exists
+        const exists = formData.variants.some(v => v.size === size && v.color === color);
+        if (!exists) {
+          newVariants.push({
+            size,
+            color,
+            sku: `${formData.sku}-${size.replace(/\s+/g, '')}-${color.substring(0, 3).toUpperCase()}`,
+            price: formData.base_price,
+            stock_quantity: 0,
+            inventory_policy: 'deny',
+            status: 'active',
+            position: formData.variants.length + newVariants.length
+          });
+        }
+      });
+    });
+
+    setFormData(prev => ({
+      ...prev,
+      variants: [...prev.variants, ...newVariants]
+    }));
+
+    toast({
+      title: "Bulk Variants Created",
+      description: `Created ${newVariants.length} new variants`,
+    });
+  };
+
+  const bulkUpdateVariantPrices = (newPrice: number, applyMarkup?: number) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: prev.variants.map(variant => ({
+        ...variant,
+        price: applyMarkup ? newPrice * (1 + applyMarkup / 100) : newPrice
+      }))
+    }));
+  };
+
+  const bulkUpdateInventory = (quantity: number) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: prev.variants.map(variant => ({
+        ...variant,
+        stock_quantity: quantity
+      }))
+    }));
+  };
+
+  const importVariantsFromCSV = async (file: File) => {
+    // This would implement CSV parsing for bulk variant import
+    toast({
+      title: "Feature Coming Soon",
+      description: "CSV import functionality will be available soon",
+    });
   };
 
   // Bulk edit variant prices
@@ -1136,9 +1402,73 @@ export const ProductManagement = () => {
         />
       </TabsContent>
 
-      {/* Variants Tab */}
+      {/* Enhanced Variants Tab */}
       <TabsContent value="variants" className="space-y-6">
         <div className="space-y-6">
+          {/* AI-Powered Analysis Section */}
+          <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-medium flex items-center gap-2">
+                  <Palette className="h-5 w-5" />
+                  AI-Powered Product Analysis
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Let AI analyze your product images to suggest colors, materials, and features
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={analyzeProductImages}
+                  disabled={aiAnalyzing || formData.images.length === 0}
+                >
+                  {aiAnalyzing ? <Clock className="h-4 w-4 mr-2 animate-spin" /> : <Eye className="h-4 w-4 mr-2" />}
+                  {aiAnalyzing ? 'Analyzing...' : 'Analyze Images'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={generateProductContent}
+                  disabled={generatingContent || !formData.name}
+                >
+                  {generatingContent ? <Clock className="h-4 w-4 mr-2 animate-spin" /> : <Tag className="h-4 w-4 mr-2" />}
+                  {generatingContent ? 'Generating...' : 'Generate Content'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={validateProduct}
+                >
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Validate
+                </Button>
+              </div>
+            </div>
+            
+            {validationResults && (
+              <div className="bg-white rounded p-3 border">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium">Quality Score: {validationResults.quality_score}%</span>
+                  <Badge variant={validationResults.isValid ? "default" : "destructive"}>
+                    {Math.round(validationResults.completeness * 100)}% Complete
+                  </Badge>
+                </div>
+                {validationResults.recommendations?.length > 0 && (
+                  <div className="text-sm text-muted-foreground">
+                    <strong>Recommendations:</strong>
+                    <ul className="list-disc list-inside mt-1">
+                      {validationResults.recommendations.slice(0, 3).map((rec: string, idx: number) => (
+                        <li key={idx}>{rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Color Selection */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -1146,6 +1476,16 @@ export const ProductManagement = () => {
                 <h3 className="text-lg font-medium">Available Colors</h3>
                 <p className="text-sm text-muted-foreground">Select colors available for this product</p>
               </div>
+              {analysisResults && (
+                <Button variant="outline" size="sm" onClick={() => {
+                  setFormData(prev => ({
+                    ...prev,
+                    available_colors: [...new Set([...prev.available_colors, ...analysisResults.colors.all_colors])]
+                  }));
+                }}>
+                  Apply AI Colors
+                </Button>
+              )}
             </div>
             
             <div className="grid grid-cols-4 gap-3">
@@ -1168,120 +1508,207 @@ export const ProductManagement = () => {
 
           <Separator />
 
-          {/* Size Templates */}
-          {['3-piece-suit', '2-piece-suit', 'blazer', 'dress-shirt'].includes(formData.product_type) && (
+          {/* Size Templates and Bulk Operations */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Size Templates */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-medium">Size Templates</h3>
+              <h3 className="text-lg font-medium">Size Templates</h3>
+              {['3-piece-suit', '2-piece-suit', 'blazer', 'dress-shirt'].includes(formData.product_type) ? (
+                <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">
                     Apply pre-configured sizes for {formData.product_type.replace('-', ' ')}
                   </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleApplySizeTemplate}
+                    disabled={!formData.base_price}
+                    size="sm"
+                  >
+                    <Package className="h-4 w-4 mr-2" />
+                    Apply Size Template
+                  </Button>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleApplySizeTemplate}
-                  disabled={!formData.base_price}
-                >
-                  <Package className="h-4 w-4 mr-2" />
-                  Apply Size Template
-                </Button>
-              </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Manual size entry for {formData.product_type}</p>
+                  <div className="flex gap-2">
+                    <Input placeholder="Enter size (e.g., S, M, L)" className="flex-1" />
+                    <Button size="sm" onClick={() => {
+                      // This would add a custom size
+                      toast({ title: "Custom sizes", description: "Feature coming soon" });
+                    }}>
+                      Add
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
 
-          {/* Variant Generation */}
-          {formData.available_colors.length > 0 && formData.variants.length > 0 && (
+            {/* Bulk Operations */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-medium">Generate Variants</h3>
-                  <p className="text-sm text-muted-foreground">Create variants from color × size combinations</p>
+              <h3 className="text-lg font-medium">Bulk Operations</h3>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input 
+                    type="number" 
+                    placeholder="Price" 
+                    className="w-24" 
+                    step="0.01"
+                  />
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={(e) => {
+                      const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                      const price = parseFloat(input.value);
+                      if (price > 0) {
+                        bulkUpdateVariantPrices(price);
+                        toast({ title: "Updated", description: "All variant prices updated" });
+                      }
+                    }}
+                  >
+                    Update All Prices
+                  </Button>
                 </div>
-                <Button variant="outline" onClick={generateVariants}>
+                
+                <div className="flex gap-2">
+                  <Input 
+                    type="number" 
+                    placeholder="Inventory" 
+                    className="w-24" 
+                  />
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={(e) => {
+                      const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                      const qty = parseInt(input.value);
+                      if (qty >= 0) {
+                        bulkUpdateInventory(qty);
+                        toast({ title: "Updated", description: "All variant inventory updated" });
+                      }
+                    }}
+                  >
+                    Update All Inventory
+                  </Button>
+                </div>
+
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={generateVariants}
+                  disabled={formData.available_colors.length === 0}
+                >
                   <DollarSign className="h-4 w-4 mr-2" />
                   Generate All Variants
                 </Button>
               </div>
             </div>
-          )}
+          </div>
 
-          {/* Bulk Edit Prices */}
+          {/* Enhanced Variants List */}
           {formData.variants.length > 0 && (
             <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <h3 className="text-lg font-medium">Bulk Edit Prices</h3>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="New price"
-                    className="w-32"
-                    onChange={(e) => {
-                      const price = parseFloat(e.target.value);
-                      if (!isNaN(price)) {
-                        bulkEditVariantPrices(price);
-                      }
-                    }}
-                  />
-                  <span className="text-sm text-muted-foreground">Apply to all variants</span>
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">Product Variants ({formData.variants.length})</h4>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFormData(prev => ({ ...prev, variants: [] }))}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Clear All
+                  </Button>
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* Variants List */}
-          {formData.variants.length > 0 && (
-            <div className="space-y-4">
-              <h4 className="font-medium">Generated Variants ({formData.variants.length})</h4>
-              <div className="max-h-64 overflow-y-auto border rounded-md">
+              
+              <div className="max-h-80 overflow-y-auto border rounded-md">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="sticky top-0 bg-white">
                     <TableRow>
                       <TableHead>Size</TableHead>
                       <TableHead>Color</TableHead>
                       <TableHead>SKU</TableHead>
                       <TableHead>Price</TableHead>
-                      <TableHead>Stock</TableHead>
+                      <TableHead>Cost</TableHead>
+                      <TableHead>Inventory</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {formData.variants.map((variant, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{variant.size}</TableCell>
-                        <TableCell>{variant.color}</TableCell>
+                      <TableRow key={index} className="hover:bg-muted/50">
+                        <TableCell className="font-medium">{variant.size}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-4 h-4 rounded-full border" 
+                              style={{backgroundColor: variant.color.toLowerCase()}} 
+                            />
+                            {variant.color}
+                          </div>
+                        </TableCell>
                         <TableCell className="font-mono text-xs">{variant.sku}</TableCell>
-                        <TableCell>${variant.price}</TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={variant.price}
+                            onChange={(e) => updateVariant(index, { price: parseFloat(e.target.value) || 0 })}
+                            className="w-20"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={variant.cost_price || ''}
+                            onChange={(e) => updateVariant(index, { cost_price: parseFloat(e.target.value) || undefined })}
+                            className="w-20"
+                            placeholder="Cost"
+                          />
+                        </TableCell>
                         <TableCell>
                           <Input
                             type="number"
                             value={variant.stock_quantity}
-                            onChange={(e) => {
-                              const stock = parseInt(e.target.value) || 0;
-                              setFormData(prev => ({
-                                ...prev,
-                                variants: prev.variants.map((v, i) => 
-                                  i === index ? { ...v, stock_quantity: stock } : v
-                                )
-                              }));
-                            }}
+                            onChange={(e) => updateVariant(index, { stock_quantity: parseInt(e.target.value) || 0 })}
                             className="w-20"
                           />
+                        </TableCell>
+                        <TableCell>
+                          <Select 
+                            value={variant.status || 'active'} 
+                            onValueChange={(value: 'active' | 'inactive' | 'archived') => updateVariant(index, { status: value })}
+                          >
+                            <SelectTrigger className="w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="active">Active</SelectItem>
+                              <SelectItem value="inactive">Inactive</SelectItem>
+                              <SelectItem value="archived">Archived</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteVariant(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setFormData(prev => ({ ...prev, variants: [] }))}
-              >
-                Clear All Variants
-              </Button>
             </div>
           )}
         </div>
@@ -1978,6 +2405,139 @@ export const ProductManagement = () => {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* AI Analysis Results Modal */}
+      <Dialog open={showAnalysisModal} onOpenChange={setShowAnalysisModal}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>AI Product Analysis Results</DialogTitle>
+          </DialogHeader>
+          {analysisResults && (
+            <div className="space-y-6">
+              {/* Analysis Overview */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium">Detected Category</Label>
+                  <p className="text-lg">{analysisResults.category}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {Math.round(analysisResults.confidence * 100)}% confidence
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Product Type</Label>
+                  <p className="text-lg">{analysisResults.product_type}</p>
+                </div>
+              </div>
+
+              {/* Colors */}
+              <div>
+                <Label className="text-sm font-medium">Detected Colors</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {analysisResults.colors.all_colors.map((color, idx) => (
+                    <div key={idx} className="flex items-center gap-2 px-3 py-1 bg-muted rounded-full">
+                      <div 
+                        className="w-4 h-4 rounded-full border" 
+                        style={{ backgroundColor: color.toLowerCase() }} 
+                      />
+                      <span className="text-sm">{color}</span>
+                      {color === analysisResults.colors.primary && (
+                        <Badge variant="secondary" className="text-xs">Primary</Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Style Analysis */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium">Style Details</Label>
+                  <div className="space-y-1 mt-1">
+                    <p><span className="text-sm text-muted-foreground">Formality:</span> {analysisResults.style.formality}</p>
+                    <p><span className="text-sm text-muted-foreground">Fit:</span> {analysisResults.style.fit_type}</p>
+                    <p><span className="text-sm text-muted-foreground">Pattern:</span> {analysisResults.style.pattern}</p>
+                    <p><span className="text-sm text-muted-foreground">Season:</span> {analysisResults.style.season}</p>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Materials</Label>
+                  <div className="space-y-1 mt-1">
+                    <p><span className="text-sm text-muted-foreground">Primary:</span> {analysisResults.materials.primary}</p>
+                    <p><span className="text-sm text-muted-foreground">Texture:</span> {analysisResults.materials.texture}</p>
+                    <p><span className="text-sm text-muted-foreground">Weight:</span> {analysisResults.materials.weight}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Occasions */}
+              <div>
+                <Label className="text-sm font-medium">Suitable Occasions</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {analysisResults.occasions.map((occasion, idx) => (
+                    <Badge key={idx} variant="outline">{occasion}</Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Features */}
+              {analysisResults.features.length > 0 && (
+                <div>
+                  <Label className="text-sm font-medium">Detected Features</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {analysisResults.features.map((feature, idx) => (
+                      <Badge key={idx} variant="secondary">{feature}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Suggested Content */}
+              {analysisResults.suggested_name && (
+                <div>
+                  <Label className="text-sm font-medium">Suggested Product Name</Label>
+                  <p className="mt-1 p-2 bg-muted rounded">{analysisResults.suggested_name}</p>
+                </div>
+              )}
+
+              {analysisResults.suggested_description && (
+                <div>
+                  <Label className="text-sm font-medium">Suggested Description</Label>
+                  <p className="mt-1 p-2 bg-muted rounded text-sm">{analysisResults.suggested_description}</p>
+                </div>
+              )}
+
+              {/* Image Quality */}
+              <div>
+                <Label className="text-sm font-medium">Image Quality Analysis</Label>
+                <div className="mt-2 p-3 bg-muted rounded">
+                  <div className="flex items-center justify-between mb-2">
+                    <span>Overall Score</span>
+                    <Badge variant={analysisResults.image_quality.score > 70 ? "default" : "destructive"}>
+                      {analysisResults.image_quality.score}%
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>Lighting: {analysisResults.image_quality.lighting}</div>
+                    <div>Clarity: {analysisResults.image_quality.clarity}</div>
+                    <div>Background: {analysisResults.image_quality.background}</div>
+                    <div>Resolution: {analysisResults.image_quality.resolution.width}×{analysisResults.image_quality.resolution.height}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button variant="outline" onClick={() => setShowAnalysisModal(false)}>
+                  Close
+                </Button>
+                <Button onClick={applyAIAnalysis}>
+                  Apply Analysis
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Recent Products Section - Only show on desktop */}
       <div className="hidden lg:block">
