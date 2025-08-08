@@ -371,8 +371,8 @@ export class StripeSyncService {
     const errors: string[] = [];
     
     // Check for publishable key in environment
-    const hasPublishableKey = !!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY && 
-                              !import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY.includes('your-stripe');
+    const hasPublishableKey = !!import.meta.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY && 
+                              !import.meta.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.includes('your-stripe');
     
     if (!hasPublishableKey) {
       errors.push('Stripe publishable key not configured in .env');

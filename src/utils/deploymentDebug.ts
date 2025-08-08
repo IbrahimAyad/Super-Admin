@@ -70,7 +70,7 @@ class DeploymentDebugger {
     return {
       supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
       supabaseKeyPrefix: import.meta.env.VITE_SUPABASE_ANON_KEY?.substring(0, 20) + '...',
-      stripeKeyPrefix: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY?.substring(0, 20) + '...',
+      stripeKeyPrefix: import.meta.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.substring(0, 20) + '...',
       appUrl: import.meta.env.VITE_APP_URL,
       nodeEnv: import.meta.env.NODE_ENV,
       viteMode: import.meta.env.MODE,
