@@ -350,7 +350,7 @@ export async function getProductsViaFunction(filters?: {
  * Get product image URL with support for multiple storage sources (R2, Supabase, etc.)
  */
 export function getProductImageUrl(product: any, variant?: string): string {
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://gvcswimqaxvylgxbklbz.supabase.co';
+  const SUPABASE_URL = import.meta.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gvcswimqaxvylgxbklbz.supabase.co';
   const STORAGE_PATH = '/storage/v1/object/public/product-images/';
   
   // Helper function to process URL
@@ -435,7 +435,7 @@ export function getProductImageUrl(product: any, variant?: string): string {
  * Call from console: window.debugImageUrl('powder-blue-suspender-set.jpg')
  */
 export function debugImageUrl(filename: string) {
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://gvcswimqaxvylgxbklbz.supabase.co';
+  const SUPABASE_URL = import.meta.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gvcswimqaxvylgxbklbz.supabase.co';
   const STORAGE_PATH = '/storage/v1/object/public/product-images/';
   
   console.group('🔍 Image URL Debug');

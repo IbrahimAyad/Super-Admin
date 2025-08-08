@@ -106,8 +106,8 @@ export default function SupabaseConnectionTest() {
       <div className="mt-4 text-sm text-gray-600">
         <p>Environment Variables:</p>
         <ul className="list-disc list-inside">
-          <li>VITE_SUPABASE_URL: {import.meta.env.VITE_SUPABASE_URL ? '✓ Set' : '✗ Missing'}</li>
-          <li>VITE_SUPABASE_ANON_KEY: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✓ Set' : '✗ Missing'}</li>
+          <li>NEXT_PUBLIC_SUPABASE_URL: {import.meta.env.NEXT_PUBLIC_SUPABASE_URL ? '✓ Set' : '✗ Missing'}</li>
+          <li>NEXT_PUBLIC_SUPABASE_ANON_KEY: {import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✓ Set' : '✗ Missing'}</li>
         </ul>
       </div>
     </div>

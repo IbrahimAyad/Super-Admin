@@ -20,7 +20,7 @@ const CONFIG = {
 };
 
 // Encryption key for storing 2FA secrets (in production, use environment variable)
-const ENCRYPTION_KEY = process.env.VITE_2FA_ENCRYPTION_KEY || 'kct-admin-2fa-key-2025';
+const ENCRYPTION_KEY = process.env.NEXT_PUBLIC_2FA_ENCRYPTION_KEY || 'kct-admin-2fa-key-2025';
 
 export interface TwoFactorSetupData {
   secret: string;

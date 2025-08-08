@@ -9,7 +9,7 @@ const getDeploymentUrl = (): string => {
   if (typeof window !== 'undefined') {
     return window.location.origin;
   }
-  return import.meta.env.VITE_SUPABASE_URL || 'localhost';
+  return import.meta.env.NEXT_PUBLIC_SUPABASE_URL || 'localhost';
 };
 
 // Create storage key prefix based on deployment URL

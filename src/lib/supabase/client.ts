@@ -5,9 +5,9 @@ let supabaseInstance: ReturnType<typeof createClient> | null = null;
 
 export function getSupabaseClient() {
   if (!supabaseInstance) {
-    // Use Vite environment variables (VITE_ prefix)
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    // Use Next.js public environment variables (NEXT_PUBLIC_ prefix)
+    const supabaseUrl = import.meta.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error('Missing Supabase environment variables');

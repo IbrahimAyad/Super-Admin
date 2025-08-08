@@ -27,7 +27,7 @@ const mockStripeClient = {
 vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_123')
 vi.stubEnv('SUPABASE_URL', 'https://test.supabase.co')
 vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'test-service-role-key')
-vi.stubEnv('VITE_APP_URL', 'http://localhost:3000')
+vi.stubEnv('NEXT_PUBLIC_APP_URL', 'http://localhost:3000')
 
 // Mock external modules
 vi.mock('https://deno.land/std@0.168.0/http/server.ts', () => ({
