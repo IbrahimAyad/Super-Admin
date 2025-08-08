@@ -15,7 +15,7 @@ const getDeploymentUrl = (): string => {
   if (typeof window !== 'undefined') {
     return window.location.origin;
   }
-  return import.meta.env.VITE_SUPABASE_URL || 'localhost';
+  return process.env.NEXT_PUBLIC_SUPABASE_URL || 'localhost';
 };
 
 // Create storage key prefix based on deployment URL
@@ -33,14 +33,14 @@ function createSupabaseClient(): SupabaseClient {
     return supabaseInstance;
   }
 
-  // Get environment variables
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  // Get environment variables (Next.js format)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   // Validate environment variables
   if (!supabaseUrl || !supabaseKey) {
     throw new Error(
-      'Missing Supabase environment variables. Please check your .env file and ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.'
+      'Missing Supabase environment variables. Please check your .env file and ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set.'
     );
   }
 
