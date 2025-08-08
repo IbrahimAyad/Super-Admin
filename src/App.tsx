@@ -38,36 +38,36 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+              <Route path="/" element={<AdminDashboard />} />
               <Route path="/login" element={<Login />} />
               <Route path="/test" element={<TestLogin />} />
               <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/analytics" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/products" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/collections" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/orders" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/stripe-orders" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/financial" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/customers" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/inventory" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/weddings" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/events" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/custom-orders" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/reviews" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/search" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/search-analytics" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/reports" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/integrations" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/settings" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/email-analytics" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/revenue-forecast" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/ai-recommendations" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/predictive-analytics" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/customer-lifetime-value" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/ab-testing" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/inventory-forecasting" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/automation" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/stripe-sync" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+              <Route path="/admin/analytics" element={<AdminDashboard />} />
+              <Route path="/admin/products" element={<AdminDashboard />} />
+              <Route path="/admin/collections" element={<AdminDashboard />} />
+              <Route path="/admin/orders" element={<AdminDashboard />} />
+              <Route path="/admin/stripe-orders" element={<AdminDashboard />} />
+              <Route path="/admin/financial" element={<AdminDashboard />} />
+              <Route path="/admin/customers" element={<AdminDashboard />} />
+              <Route path="/admin/inventory" element={<AdminDashboard />} />
+              <Route path="/admin/weddings" element={<AdminDashboard />} />
+              <Route path="/admin/events" element={<AdminDashboard />} />
+              <Route path="/admin/custom-orders" element={<AdminDashboard />} />
+              <Route path="/admin/reviews" element={<AdminDashboard />} />
+              <Route path="/admin/search" element={<AdminDashboard />} />
+              <Route path="/admin/search-analytics" element={<AdminDashboard />} />
+              <Route path="/admin/reports" element={<AdminDashboard />} />
+              <Route path="/admin/integrations" element={<AdminDashboard />} />
+              <Route path="/admin/settings" element={<AdminDashboard />} />
+              <Route path="/admin/email-analytics" element={<AdminDashboard />} />
+              <Route path="/admin/revenue-forecast" element={<AdminDashboard />} />
+              <Route path="/admin/ai-recommendations" element={<AdminDashboard />} />
+              <Route path="/admin/predictive-analytics" element={<AdminDashboard />} />
+              <Route path="/admin/customer-lifetime-value" element={<AdminDashboard />} />
+              <Route path="/admin/ab-testing" element={<AdminDashboard />} />
+              <Route path="/admin/inventory-forecasting" element={<AdminDashboard />} />
+              <Route path="/admin/automation" element={<AdminDashboard />} />
+              <Route path="/admin/stripe-sync" element={<AdminDashboard />} />
               <Route path="/admin/test-auth" element={<AdminRoute><AdminAuthTest /></AdminRoute>} />
               <Route path="/product-test" element={<ProductTest />} />
               <Route path="/storage-test" element={<StorageTest />} />
