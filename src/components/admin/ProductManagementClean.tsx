@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ProductEditorSimple } from './ProductEditorSimple';
+import { ImageMigrationHelper } from './ImageMigrationHelper';
 import { supabase } from '@/lib/supabase-client';
 import { toast } from 'sonner';
 import { 
@@ -152,6 +153,11 @@ export function ProductManagementClean() {
           <Plus className="h-4 w-4 mr-2" />
           Add Product
         </Button>
+      </div>
+
+      {/* Image Migration Helper */}
+      <div className="mb-6">
+        <ImageMigrationHelper />
       </div>
 
       {/* Stats Cards */}
