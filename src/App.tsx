@@ -20,27 +20,48 @@ import TestProductImages from "./pages/TestProductImages";
 import SmartSizingManager from "./components/admin/SmartSizingManager";
 import { OrderProcessingDashboard } from "./components/admin/OrderProcessingDashboard";
 import { AdminRoute } from "./components/auth/AdminRoute";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { ErrorBoundary } from "./components/error/ErrorBoundary";
+import { AsyncErrorBoundary } from "./components/error/AsyncErrorBoundary";
 import { autoDebugIfNeeded } from "@/utils/deploymentDebug";
+import { getEnv } from "@/lib/config/env";
+import { monitoring, logger } from "@/lib/services/monitoring";
 import AdminDashboardDirect from "./pages/AdminDashboardDirect";
 import EmergencyAdmin from "./pages/EmergencyAdmin";
 
 const queryClient = new QueryClient();
 
+// Initialize monitoring
+monitoring.info('Application starting', {
+  environment: import.meta.env.MODE,
+  version: import.meta.env.VITE_APP_VERSION || 'unknown'
+});
+
+// Validate environment variables on app start
+try {
+  getEnv();
+  logger.info('Environment validation successful');
+} catch (error) {
+  logger.fatal('Critical environment error', error as Error);
+}
+
 // Auto-run deployment diagnostics if needed
 autoDebugIfNeeded();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <CartProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <CartProvider>
+            <AsyncErrorBoundary>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
               <Route path="/" element={<AdminDashboard />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/test" element={<TestLogin />} />
+              <Route path="/test" element={<ProtectedRoute><TestLogin /></ProtectedRoute>} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/analytics" element={<AdminDashboard />} />
               <Route path="/admin/products" element={<AdminDashboard />} />
@@ -68,11 +89,11 @@ const App = () => (
               <Route path="/admin/inventory-forecasting" element={<AdminDashboard />} />
               <Route path="/admin/automation" element={<AdminDashboard />} />
               <Route path="/admin/stripe-sync" element={<AdminDashboard />} />
-              <Route path="/admin/test-auth" element={<AdminRoute><AdminAuthTest /></AdminRoute>} />
-              <Route path="/product-test" element={<ProductTest />} />
-              <Route path="/storage-test" element={<StorageTest />} />
-              <Route path="/supabase-test" element={<SupabaseConnectionTest />} />
-              <Route path="/test-images" element={<TestProductImages />} />
+              <Route path="/admin/test-auth" element={<ProtectedRoute><AdminRoute><AdminAuthTest /></AdminRoute></ProtectedRoute>} />
+              <Route path="/product-test" element={<ProtectedRoute><ProductTest /></ProtectedRoute>} />
+              <Route path="/storage-test" element={<ProtectedRoute><StorageTest /></ProtectedRoute>} />
+              <Route path="/supabase-test" element={<ProtectedRoute><SupabaseConnectionTest /></ProtectedRoute>} />
+              <Route path="/test-images" element={<ProtectedRoute><TestProductImages /></ProtectedRoute>} />
               <Route path="/admin/sizing" element={<AdminRoute><SmartSizingManager /></AdminRoute>} />
               <Route path="/admin/order-processing" element={<AdminRoute><OrderProcessingDashboard /></AdminRoute>} />
               <Route path="/verify-email" element={<VerifyEmail />} />
@@ -84,10 +105,12 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+            </AsyncErrorBoundary>
         </CartProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
