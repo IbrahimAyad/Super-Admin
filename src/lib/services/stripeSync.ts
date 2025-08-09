@@ -10,16 +10,11 @@
  * - Dry run mode for testing
  */
 
-import { getAdminSupabaseClient, supabase as publicSupabase } from '../supabase-client';
+import { supabase } from '../supabase-client';
 
-// Try to use admin client, fall back to public client with warning
-const adminClient = getAdminSupabaseClient();
-const supabase = adminClient || publicSupabase;
-
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.warn('⚠️ Stripe sync using public client - may encounter permission errors');
-  console.warn('   Set SUPABASE_SERVICE_ROLE_KEY in .env.local for admin operations');
-}
+// Note: Stripe sync operations should go through Edge Functions
+// which have their own service role access. Client-side code
+// should never have service role keys.
 
 export interface SyncOptions {
   dryRun?: boolean;

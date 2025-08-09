@@ -63,28 +63,30 @@ function createSupabaseClient(): SupabaseClient {
 
 /**
  * Create and configure the admin Supabase client (service role key)
- * Used for: Admin operations, bypassing RLS, privileged data access
+ * WARNING: This should ONLY be used server-side, never in browser
  */
-function createAdminSupabaseClient(): SupabaseClient {
+function createAdminSupabaseClient(): SupabaseClient | null {
+  // Don't create admin client in browser environment
+  if (typeof window !== 'undefined') {
+    console.warn('⚠️ Admin client not available in browser - use Edge Functions for admin operations');
+    return null;
+  }
+
   if (adminSupabaseInstance) {
     return adminSupabaseInstance;
   }
 
   const supabaseUrl = 'https://gvcswimqaxvylgxbklbz.supabase.co';
-  // Service role key - this bypasses RLS and has full database access
-  // NEVER commit this to Git - use environment variables only
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
   
   if (!supabaseServiceKey) {
-    console.warn('⚠️ Admin client not available - SUPABASE_SERVICE_ROLE_KEY not set');
-    console.warn('   Admin operations will fail. Set this in your environment variables.');
-    // Return a dummy client that will fail operations
-    // This is safer than exposing the service key
+    console.warn('⚠️ SUPABASE_SERVICE_ROLE_KEY not set - admin operations unavailable');
+    return null;
   }
 
   adminSupabaseInstance = createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
-      persistSession: false, // Admin operations don't need session persistence
+      persistSession: false,
       autoRefreshToken: false,
     },
     global: {
@@ -94,17 +96,6 @@ function createAdminSupabaseClient(): SupabaseClient {
     },
   });
 
-  console.log(`✅ Admin Supabase client initialized with service role`);
-  console.log(`   Using service key: ${supabaseServiceKey.substring(0, 20)}...`);
-  
-  // Decode and log JWT info for debugging
-  try {
-    const payload = JSON.parse(Buffer.from(supabaseServiceKey.split('.')[1], 'base64').toString());
-    console.log(`   JWT role: ${payload.role}`);
-    console.log(`   JWT project: ${payload.ref}`);
-  } catch (e) {
-    console.log(`   Could not decode JWT: ${e}`);
-  }
   return adminSupabaseInstance;
 }
 
@@ -117,10 +108,9 @@ export function getSupabaseClient(): SupabaseClient {
 
 /**
  * Get the admin Supabase client instance
- * WARNING: This bypasses RLS and has full database access
- * Use only for verified admin operations
+ * WARNING: Returns null in browser - use Edge Functions instead
  */
-export function getAdminSupabaseClient(): SupabaseClient {
+export function getAdminSupabaseClient(): SupabaseClient | null {
   return createAdminSupabaseClient();
 }
 
@@ -145,7 +135,13 @@ export function resetSupabaseClient(): void {
 export function getClientForOperation(operationType: 'public' | 'admin' | 'auth'): SupabaseClient {
   switch (operationType) {
     case 'admin':
-      return getAdminSupabaseClient();
+      // In browser, fall back to public client with warning
+      const adminClient = getAdminSupabaseClient();
+      if (!adminClient) {
+        console.warn('Admin operations should use Edge Functions');
+        return getSupabaseClient();
+      }
+      return adminClient;
     case 'public':
     case 'auth':
     default:
