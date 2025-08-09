@@ -157,6 +157,20 @@ serve(async (req) => {
       }
     }
 
+    // Update the product with stripe_product_id
+    await supabase
+      .from('products')
+      .update({ stripe_product_id: stripeProduct.id })
+      .eq('id', body.product.id);
+
+    // Update variants with stripe_price_ids
+    for (const [variantId, priceId] of Object.entries(priceIds)) {
+      await supabase
+        .from('product_variants')
+        .update({ stripe_price_id: priceId })
+        .eq('id', variantId);
+    }
+
     // Log the sync operation
     await supabase
       .from('stripe_sync_log')
