@@ -5,9 +5,16 @@ const ALLOWED_ORIGINS = [
   'https://kctmenswear.com',
   'https://www.kctmenswear.com',
   'https://admin.kctmenswear.com',
-  'https://super-admin-ptucakswa-ibrahimayads-projects.vercel.app',
   'https://super-admin-ruby.vercel.app'
 ];
+
+// Function to check if origin matches Vercel preview URLs
+function isVercelPreview(origin: string): boolean {
+  // Allow ALL Vercel preview URLs for your project
+  // Format: https://super-admin-[hash]-ibrahimayads-projects.vercel.app
+  return origin.includes('-ibrahimayads-projects.vercel.app') || 
+         origin.includes('super-admin') && origin.includes('.vercel.app');
+}
 
 export function getCorsHeaders(origin?: string | null): Record<string, string> {
   // For webhook endpoints, typically no CORS needed
@@ -17,8 +24,8 @@ export function getCorsHeaders(origin?: string | null): Record<string, string> {
     };
   }
 
-  // Check if origin is allowed
-  const isAllowed = ALLOWED_ORIGINS.includes(origin);
+  // Check if origin is allowed (including Vercel preview URLs)
+  const isAllowed = ALLOWED_ORIGINS.includes(origin) || isVercelPreview(origin);
   
   if (isAllowed) {
     return {
