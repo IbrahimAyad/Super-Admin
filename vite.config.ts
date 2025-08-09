@@ -55,7 +55,6 @@ export default defineConfig(({ mode }) => ({
           'utils-vendor': ['clsx', 'tailwind-merge', 'class-variance-authority', 'date-fns'],
           'query-vendor': ['@tanstack/react-query'],
           'supabase-vendor': ['@supabase/supabase-js'],
-          'stripe-vendor': ['@stripe/stripe-js'],
           // Feature chunks
           'admin': [
             './src/pages/AdminDashboard.tsx',
