@@ -81,6 +81,13 @@ export function StripeSyncManager() {
   const handleSync = async () => {
     setIsSyncing(true);
     setSyncPhases([]);
+    setSyncProgress(0);
+    
+    // Show initial toast
+    toast({
+      title: "Starting Sync",
+      description: isDryRun ? "Running dry run..." : "Syncing products to Stripe...",
+    });
     
     try {
       let result;
@@ -88,7 +95,7 @@ export function StripeSyncManager() {
       if (isProgressiveSync) {
         result = await stripeSyncService.executeProgressiveSync({
           dryRun: isDryRun,
-          batchSize: 5,
+          batchSize: 3, // Reduced batch size to prevent timeouts
           skipExisting: true
         });
         
@@ -100,11 +107,15 @@ export function StripeSyncManager() {
           variant: result.overallSuccess ? "default" : "destructive"
         });
       } else {
+        // Add progress callback
         const syncResult = await stripeSyncService.syncProducts({
           dryRun: isDryRun,
-          batchSize: 5,
+          batchSize: 3, // Reduced batch size to prevent timeouts
           categories: selectedCategories.length > 0 ? selectedCategories : undefined,
-          skipExisting: true
+          skipExisting: true,
+          onProgress: (current: number, total: number) => {
+            setSyncProgress((current / total) * 100);
+          }
         });
 
         if (syncResult.success) {
@@ -116,22 +127,33 @@ export function StripeSyncManager() {
         } else {
           toast({
             title: "Sync Failed",
-            description: `Encountered ${syncResult.errors.length} errors during sync`,
+            description: `Encountered ${syncResult.errors.length} errors during sync. Check console for details.`,
             variant: "destructive"
           });
+          
+          // Log errors to console for debugging
+          console.error('Sync errors:', syncResult.errors);
         }
       }
 
       // Reload status
       await loadSyncStatus();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Sync error details:', error);
+      
+      // More detailed error message
+      const errorMessage = error.message.includes('timeout') 
+        ? 'Sync timed out. Try syncing fewer products at once.'
+        : error.message;
+      
       toast({
         title: "Sync Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
       setIsSyncing(false);
+      setSyncProgress(0);
     }
   };
 

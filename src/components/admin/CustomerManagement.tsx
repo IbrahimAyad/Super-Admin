@@ -25,6 +25,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase-client';
 import { CustomerImport } from './CustomerImport';
+import { CustomerProfileView } from './CustomerProfileView';
 
 interface Customer {
   id: string;
@@ -433,98 +434,17 @@ export function CustomerManagement() {
 
       {/* Customer Detail Dialog */}
       <Dialog open={!!selectedCustomer} onOpenChange={() => setSelectedCustomer(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Customer Details</DialogTitle>
-          </DialogHeader>
-          
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           {selectedCustomer && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarFallback className="text-lg">
-                    {getInitials(selectedCustomer.first_name, selectedCustomer.last_name)}
-                  </AvatarFallback>
-                </Avatar>
-                
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-xl font-bold">
-                      {selectedCustomer.first_name} {selectedCustomer.last_name}
-                    </h3>
-                    <Badge className={getSegmentColor(selectedCustomer.customer_segment)}>
-                      {selectedCustomer.customer_segment}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Mail className="h-4 w-4" />
-                      {selectedCustomer.email}
-                    </div>
-                    {selectedCustomer.phone && (
-                      <div className="flex items-center gap-1">
-                        <Phone className="h-4 w-4" />
-                        {selectedCustomer.phone}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Select 
-                    value={selectedCustomer.account_status} 
-                    onValueChange={(value: 'active' | 'inactive' | 'suspended') => 
-                      updateCustomer(selectedCustomer.id, { account_status: value })
-                    }
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                      <SelectItem value="suspended">Suspended</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-muted rounded-lg">
-                  <ShoppingCart className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-2xl font-bold">{selectedCustomer.total_orders}</p>
-                  <p className="text-sm text-muted-foreground">Total Orders</p>
-                </div>
-                
-                <div className="text-center p-4 bg-muted rounded-lg">
-                  <DollarSign className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-2xl font-bold">{formatCurrency(selectedCustomer.total_spent)}</p>
-                  <p className="text-sm text-muted-foreground">Total Spent</p>
-                </div>
-                
-                <div className="text-center p-4 bg-muted rounded-lg">
-                  <Crown className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-2xl font-bold">{formatCurrency(selectedCustomer.average_order_value)}</p>
-                  <p className="text-sm text-muted-foreground">Avg Order Value</p>
-                </div>
-                
-                <div className="text-center p-4 bg-muted rounded-lg">
-                  <Calendar className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-2xl font-bold">{formatDate(selectedCustomer.created_at)}</p>
-                  <p className="text-sm text-muted-foreground">Member Since</p>
-                </div>
-              </div>
-
-              {selectedCustomer.notes && (
-                <div>
-                  <h4 className="font-medium mb-2">Notes</h4>
-                  <p className="text-sm text-muted-foreground">{selectedCustomer.notes}</p>
-                </div>
-              )}
-            </div>
+            <CustomerProfileView
+              customerId={selectedCustomer.id}
+              customerEmail={selectedCustomer.email}
+              onClose={() => setSelectedCustomer(null)}
+            />
           )}
         </DialogContent>
       </Dialog>
+
 
       {/* Create Customer Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>

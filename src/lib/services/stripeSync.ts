@@ -22,6 +22,7 @@ export interface SyncOptions {
   categories?: string[];
   productIds?: string[];
   skipExisting?: boolean;
+  onProgress?: (current: number, total: number) => void;
 }
 
 export interface SyncResult {
@@ -69,6 +70,11 @@ export class StripeSyncService {
       for (let i = 0; i < products.length; i += batchSize) {
         const batch = products.slice(i, i + batchSize);
         console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(products.length / batchSize)}`);
+        
+        // Report progress
+        if (options.onProgress) {
+          options.onProgress(i, products.length);
+        }
         
         for (const product of batch) {
           if (options.dryRun) {
@@ -230,69 +236,96 @@ export class StripeSyncService {
       return;
     }
 
-    // Call Edge Function to create/update Stripe product
-    const { data: syncResult, error: syncError } = await supabase.functions.invoke('sync-stripe-product', {
-      body: {
-        product: {
-          id: product.id,
-          name: product.name,
-          description: product.description,
-          sku: product.sku,
-          metadata: {
-            supabase_id: product.id,
-            category: product.category,
-            vendor: product.vendor
-          }
+    // Call Edge Function to create/update Stripe product with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    try {
+      const { data: syncResult, error: syncError } = await supabase.functions.invoke('sync-stripe-product', {
+        body: {
+          product: {
+            id: product.id,
+            name: product.name,
+            description: product.description,
+            sku: product.sku,
+            metadata: {
+              supabase_id: product.id,
+              category: product.category,
+              vendor: product.vendor
+            }
+          },
+          variants: product.product_variants.map((variant: any) => ({
+            id: variant.id,
+            price: variant.price,
+            title: variant.title,
+            sku: variant.sku,
+            metadata: {
+              supabase_variant_id: variant.id,
+              inventory_quantity: variant.inventory_quantity
+            }
+          })),
+          mode: product.stripe_product_id ? 'update' : 'create'
         },
-        variants: product.product_variants.map((variant: any) => ({
-          id: variant.id,
-          price: variant.price,
-          title: variant.title,
-          sku: variant.sku,
-          metadata: {
-            supabase_variant_id: variant.id,
-            inventory_quantity: variant.inventory_quantity
-          }
-        })),
-        mode: product.stripe_product_id ? 'update' : 'create'
+        headers: {
+          'x-timeout': '30000' // Also send timeout hint to server
+        }
+      }, {
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (syncError) {
+        throw new Error(`Stripe sync failed: ${syncError.message}`);
       }
-    });
-
-    if (syncError) {
-      throw new Error(`Stripe sync failed: ${syncError.message}`);
-    }
-
-    // Update product with Stripe IDs
-    const { error: updateError } = await supabase
-      .from('products')
-      .update({
-        stripe_product_id: syncResult.stripe_product_id,
-        stripe_sync_status: 'synced',
-        stripe_synced_at: new Date().toISOString()
-      })
-      .eq('id', product.id);
-
-    if (updateError) {
-      throw new Error(`Failed to update product: ${updateError.message}`);
-    }
-
-    // Update variants with Stripe price IDs
-    if (syncResult.price_ids) {
-      for (const [variantId, stripePriceId] of Object.entries(syncResult.price_ids)) {
-        await supabase
-          .from('product_variants')
-          .update({ stripe_price_id: stripePriceId })
-          .eq('id', variantId);
+      
+      if (!syncResult) {
+        throw new Error('No response from sync service');
       }
+      
+      // Process the sync result
+      const processedResult = syncResult;
+      
+      // Update product with Stripe IDs
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({
+          stripe_product_id: processedResult.stripe_product_id,
+          stripe_sync_status: 'synced',
+          stripe_synced_at: new Date().toISOString()
+        })
+        .eq('id', product.id);
+
+      if (updateError) {
+        throw new Error(`Failed to update product: ${updateError.message}`);
+      }
+
+      // Update variants with Stripe price IDs
+      if (processedResult.price_ids) {
+        for (const [variantId, stripePriceId] of Object.entries(processedResult.price_ids)) {
+          await supabase
+            .from('product_variants')
+            .update({ stripe_price_id: stripePriceId })
+            .eq('id', variantId);
+        }
+      }
+
+      // Log sync
+      await this.logSync('product', product.id, 'success', {
+        stripe_product_id: processedResult.stripe_product_id,
+        variants_synced: processedResult.price_ids ? Object.keys(processedResult.price_ids).length : 0
+      });
+
+      console.log(`✓ Synced ${product.name} with ${product.product_variants.length} variants`);
+      
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      
+      if (error.name === 'AbortError') {
+        throw new Error('Sync timeout - Stripe API took too long to respond');
+      }
+      throw error;
     }
-
-    // Log sync
-    await this.logSync('product', product.id, 'success', {
-      stripe_product_id: syncResult.stripe_product_id,
-      variants_synced: syncResult.price_ids ? Object.keys(syncResult.price_ids).length : 0
-    });
-
-    console.log(`✓ Synced ${product.name} with ${product.product_variants.length} variants`);
   }
 
   /**
