@@ -4,7 +4,9 @@ const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'https://kctmenswear.com',
   'https://www.kctmenswear.com',
-  'https://admin.kctmenswear.com'
+  'https://admin.kctmenswear.com',
+  'https://super-admin-ptucakswa-ibrahimayads-projects.vercel.app',
+  'https://super-admin-ruby.vercel.app'
 ];
 
 export function getCorsHeaders(origin?: string | null): Record<string, string> {
