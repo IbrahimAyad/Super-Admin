@@ -72,10 +72,15 @@ function createAdminSupabaseClient(): SupabaseClient {
 
   const supabaseUrl = 'https://gvcswimqaxvylgxbklbz.supabase.co';
   // Service role key - this bypasses RLS and has full database access
-  // In production, this should come from environment variables
-  const supabaseServiceKey = typeof process !== 'undefined' && process.env?.SUPABASE_SERVICE_ROLE_KEY 
-    ? process.env.SUPABASE_SERVICE_ROLE_KEY
-    : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2Y3N3aW1xYXh2eWxneGJrbGJ6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcxOTg3MTc0NSwiZXhwIjoyMDM1NDQ3NzQ1fQ.dT4yoJFZXo01R0ntM10O0JshGlXIUrKoYaKAoQ9LTDY';
+  // NEVER commit this to Git - use environment variables only
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  
+  if (!supabaseServiceKey) {
+    console.warn('⚠️ Admin client not available - SUPABASE_SERVICE_ROLE_KEY not set');
+    console.warn('   Admin operations will fail. Set this in your environment variables.');
+    // Return a dummy client that will fail operations
+    // This is safer than exposing the service key
+  }
 
   adminSupabaseInstance = createClient(supabaseUrl, supabaseServiceKey, {
     auth: {

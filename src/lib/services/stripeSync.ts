@@ -10,10 +10,16 @@
  * - Dry run mode for testing
  */
 
-import { getAdminSupabaseClient } from '../supabase-client';
+import { getAdminSupabaseClient, supabase as publicSupabase } from '../supabase-client';
 
-// Use admin client for Stripe sync operations (bypasses RLS)
-const supabase = getAdminSupabaseClient();
+// Try to use admin client, fall back to public client with warning
+const adminClient = getAdminSupabaseClient();
+const supabase = adminClient || publicSupabase;
+
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.warn('⚠️ Stripe sync using public client - may encounter permission errors');
+  console.warn('   Set SUPABASE_SERVICE_ROLE_KEY in .env.local for admin operations');
+}
 
 export interface SyncOptions {
   dryRun?: boolean;
