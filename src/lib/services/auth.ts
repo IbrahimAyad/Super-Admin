@@ -4,7 +4,7 @@
  * Last updated: 2025-08-07
  */
 
-import { supabase } from '../supabase-client';
+import { supabase, getAdminSupabaseClient, getClientForOperation } from '../supabase-client';
 
 export interface UserProfile {
   id: string;
@@ -286,11 +286,14 @@ export function onAuthStateChange(callback: (event: string, session: any) => voi
 }
 
 /**
- * Admin authentication check
+ * Admin authentication check - uses admin client to bypass RLS issues
  */
 export async function checkAdminAccess(userId?: string) {
   try {
-    const { data, error } = await supabase
+    // Use admin client to bypass RLS and avoid circular dependency
+    const adminClient = getAdminSupabaseClient();
+    
+    const { data, error } = await adminClient
       .from('admin_users')
       .select('*')
       .eq('user_id', userId || 'unknown')
@@ -315,6 +318,117 @@ export async function checkAdminAccess(userId?: string) {
     };
   } catch (error) {
     console.error('checkAdminAccess error:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Get all admin users - admin operation
+ */
+export async function getAllAdminUsers() {
+  try {
+    const adminClient = getAdminSupabaseClient();
+    
+    const { data, error } = await adminClient
+      .from('admin_users')
+      .select(`
+        *,
+        auth_user:auth.users!admin_users_user_id_fkey(
+          email,
+          created_at as user_created_at
+        )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      data,
+      error: null
+    };
+  } catch (error) {
+    console.error('getAllAdminUsers error:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Create new admin user - admin operation
+ */
+export async function createAdminUser(adminData: {
+  user_id: string;
+  role: 'super_admin' | 'admin' | 'manager';
+  permissions?: string[];
+  created_by?: string;
+}) {
+  try {
+    const adminClient = getAdminSupabaseClient();
+    
+    const { data, error } = await adminClient
+      .from('admin_users')
+      .insert({
+        user_id: adminData.user_id,
+        role: adminData.role,
+        permissions: adminData.permissions || [],
+        is_active: true,
+        created_by: adminData.created_by
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      data,
+      error: null
+    };
+  } catch (error) {
+    console.error('createAdminUser error:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Update admin user - admin operation
+ */
+export async function updateAdminUser(adminId: string, updates: {
+  role?: 'super_admin' | 'admin' | 'manager';
+  permissions?: string[];
+  is_active?: boolean;
+}) {
+  try {
+    const adminClient = getAdminSupabaseClient();
+    
+    const { data, error } = await adminClient
+      .from('admin_users')
+      .update(updates)
+      .eq('id', adminId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      data,
+      error: null
+    };
+  } catch (error) {
+    console.error('updateAdminUser error:', error);
     return {
       success: false,
       data: null,

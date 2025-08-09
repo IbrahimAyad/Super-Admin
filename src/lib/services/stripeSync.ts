@@ -10,7 +10,10 @@
  * - Dry run mode for testing
  */
 
-import { supabase } from '../supabase-client';
+import { getAdminSupabaseClient } from '../supabase-client';
+
+// Use admin client for Stripe sync operations (bypasses RLS)
+const supabase = getAdminSupabaseClient();
 
 export interface SyncOptions {
   dryRun?: boolean;
