@@ -50,6 +50,7 @@ import { StripeOrderManagement } from '@/components/admin/StripeOrderManagement'
 import { DataImportExport } from '@/components/admin/DataImportExport';
 import { ProductManagementClean } from '@/components/admin/ProductManagementClean';
 import { BulkProductEditor } from '@/components/admin/BulkProductEditor';
+import { ProductEnhancements } from '@/components/admin/ProductEnhancements';
 import { CollectionManagement } from '@/components/admin/CollectionManagement';
 import { ReportsManagement } from '@/components/admin/ReportsManagement';
 import { EventsManagement } from '@/components/admin/EventsManagement';
@@ -140,15 +141,19 @@ const AdminDashboard = () => {
       case '/admin/products':
         return (
           <Tabs defaultValue="manage" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="manage">Product Management</TabsTrigger>
               <TabsTrigger value="bulk">Bulk Editor</TabsTrigger>
+              <TabsTrigger value="enhancements">Enhancements</TabsTrigger>
             </TabsList>
             <TabsContent value="manage">
               <ProductManagementClean />
             </TabsContent>
             <TabsContent value="bulk">
               <BulkProductEditor />
+            </TabsContent>
+            <TabsContent value="enhancements">
+              <ProductEnhancements />
             </TabsContent>
           </Tabs>
         );
