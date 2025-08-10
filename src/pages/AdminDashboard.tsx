@@ -49,6 +49,7 @@ import { InventoryManagement } from '@/components/admin/InventoryManagement';
 import { StripeOrderManagement } from '@/components/admin/StripeOrderManagement';
 import { DataImportExport } from '@/components/admin/DataImportExport';
 import { ProductManagementClean } from '@/components/admin/ProductManagementClean';
+import { ProductManagementEnhanced } from '@/components/admin/ProductManagementEnhanced';
 import { ProductQuickAdd } from '@/components/admin/ProductQuickAdd';
 import { BulkProductImport } from '@/components/admin/BulkProductImport';
 import { BulkProductEditor } from '@/components/admin/BulkProductEditor';
@@ -152,7 +153,7 @@ const AdminDashboard = () => {
               <TabsTrigger value="enhancements">Enhancements</TabsTrigger>
             </TabsList>
             <TabsContent value="manage">
-              <ProductManagementClean />
+              <ProductManagementEnhanced />
             </TabsContent>
             <TabsContent value="quick-add">
               <ProductQuickAdd
