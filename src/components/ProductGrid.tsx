@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 import { fetchProductsWithImages, getProductImageUrl, type Product } from '@/lib/services';
 import { useToast } from '@/hooks/use-toast';
+import { useDebounce } from '@/hooks/useDebounce';
 import { WishlistButton } from '@/components/wishlist/WishlistButton';
 
 interface ProductGridProps {
@@ -14,7 +17,9 @@ interface ProductGridProps {
 
 export function ProductGrid({ category, productType = 'all', onAddToCart }: ProductGridProps) {
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [pagination, setPagination] = useState({
     total: 0,
     limit: 20,
@@ -22,10 +27,25 @@ export function ProductGrid({ category, productType = 'all', onAddToCart }: Prod
     has_more: false,
   });
   const { toast } = useToast();
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   useEffect(() => {
     loadProducts();
   }, [category, productType]);
+
+  useEffect(() => {
+    // Filter products based on search term
+    if (debouncedSearchTerm.trim() === '') {
+      setFilteredProducts(products);
+    } else {
+      const filtered = products.filter(product =>
+        product.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        product.category.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        product.description?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+      );
+      setFilteredProducts(filtered);
+    }
+  }, [products, debouncedSearchTerm]);
 
   const loadProducts = async (offset = 0) => {
     try {
@@ -41,8 +61,10 @@ export function ProductGrid({ category, productType = 'all', onAddToCart }: Prod
       if (result.success) {
         if (offset === 0) {
           setProducts(result.data);
+          setFilteredProducts(result.data);
         } else {
           setProducts(prev => [...prev, ...result.data]);
+          setFilteredProducts(prev => [...prev, ...result.data]);
         }
         // Set pagination info
         setPagination({
@@ -73,28 +95,56 @@ export function ProductGrid({ category, productType = 'all', onAddToCart }: Prod
 
   if (loading && products.length === 0) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardContent className="p-0">
-              <div className="aspect-square bg-muted rounded-t-lg" />
-              <div className="p-4 space-y-3">
-                <div className="h-4 bg-muted rounded w-3/4" />
-                <div className="h-3 bg-muted rounded w-1/2" />
-                <div className="h-4 bg-muted rounded w-1/4" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-6">
+        {/* Search input skeleton */}
+        <div className="relative">
+          <div className="h-10 bg-muted rounded animate-pulse" />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-0">
+                <div className="aspect-square bg-muted rounded-t-lg" />
+                <div className="p-4 space-y-3">
+                  <div className="h-4 bg-muted rounded w-3/4" />
+                  <div className="h-3 bg-muted rounded w-1/2" />
+                  <div className="h-4 bg-muted rounded w-1/4" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {/* Search Input */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <Input
+          placeholder="Search products by name, category, or description..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground">
-          {pagination.total} products found
+          {searchTerm ? `${filteredProducts.length} of ${pagination.total}` : pagination.total} products found
+          {searchTerm && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSearchTerm('')}
+              className="ml-2 h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+            >
+              Clear search
+            </Button>
+          )}
         </p>
         {category && (
           <Badge variant="secondary" className="capitalize">
@@ -103,15 +153,25 @@ export function ProductGrid({ category, productType = 'all', onAddToCart }: Prod
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            onAddToCart={onAddToCart}
-          />
-        ))}
-      </div>
+      {filteredProducts.length === 0 && searchTerm ? (
+        <div className="text-center py-12">
+          <Search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold">No products found</h3>
+          <p className="text-muted-foreground">
+            Try adjusting your search terms or browse all products
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onAddToCart={onAddToCart}
+            />
+          ))}
+        </div>
+      )}
 
       {pagination.has_more && (
         <div className="flex justify-center">
@@ -163,6 +223,9 @@ function ProductCard({ product, onAddToCart }: ProductCardProps) {
             src={getProductImageUrl(product)}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
+            decoding="async"
+            crossOrigin="anonymous"
             onError={(e) => {
               // Fallback to placeholder if image fails to load
               const target = e.target as HTMLImageElement;

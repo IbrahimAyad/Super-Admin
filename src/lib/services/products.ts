@@ -5,6 +5,7 @@
  */
 
 import { supabase } from '../supabase-client';
+import { productCache } from '../cache';
 
 // Product types
 export interface Product {
@@ -98,6 +99,21 @@ export async function fetchProductsWithImages(options?: {
   };
 }) {
   try {
+    // Create cache key based on options
+    const cacheKey = `products:${JSON.stringify(options || {})}`;
+    
+    // Try to get from cache first (skip cache for search and filters to ensure freshness)
+    if (!options?.search && !options?.filters) {
+      const cached = productCache.getSearchResults(cacheKey);
+      if (cached) {
+        console.debug('Cache hit for products:', cacheKey);
+        return {
+          data: cached,
+          count: cached.length,
+          success: true
+        };
+      }
+    }
     let query = supabase
       .from('products')
       .select(`
@@ -170,6 +186,12 @@ export async function fetchProductsWithImages(options?: {
     }
 
     console.log(`✅ Fetched ${productsWithSortedImages.length} products with images (total: ${count})`);
+
+    // Cache the results (skip caching for search and filters)
+    if (!options?.search && !options?.filters) {
+      productCache.setSearchResults(cacheKey, productsWithSortedImages, 5 * 60 * 1000); // 5 minutes
+      console.debug('Cached products:', cacheKey);
+    }
 
     return {
       success: true,
