@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ImageUploadManager } from './ImageUploadManager';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase-client';
 import { Upload, X, GripVertical, Plus, Save, Trash2 } from 'lucide-react';
@@ -169,60 +170,7 @@ export function ProductEditorSimple({ productId, onSave, onCancel }: ProductEdit
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    setUploadingImage(true);
-    
-    try {
-      for (const file of Array.from(files)) {
-        const fileName = `${Date.now()}-${file.name}`;
-        
-        // Upload to Supabase storage
-        const { data, error } = await supabase.storage
-          .from('product-images')
-          .upload(fileName, file);
-
-        if (error) throw error;
-
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('product-images')
-          .getPublicUrl(fileName);
-
-        // Add to images array
-        setImages(prev => [...prev, {
-          image_url: publicUrl,
-          position: prev.length,
-        }]);
-      }
-      
-      toast.success('Images uploaded successfully');
-    } catch (error) {
-      console.error('Error uploading images:', error);
-      toast.error('Failed to upload images');
-    } finally {
-      setUploadingImage(false);
-    }
-  };
-
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const moveImage = (fromIndex: number, toIndex: number) => {
-    const newImages = [...images];
-    const [movedImage] = newImages.splice(fromIndex, 1);
-    newImages.splice(toIndex, 0, movedImage);
-    
-    // Update positions
-    newImages.forEach((img, idx) => {
-      img.position = idx;
-    });
-    
-    setImages(newImages);
-  };
+  // Image handling is now done by ImageUploadManager component
 
   const toggleSize = (index: number) => {
     const newSizes = [...sizes];
@@ -503,59 +451,12 @@ export function ProductEditorSimple({ productId, onSave, onCancel }: ProductEdit
             </div>
           </Card>
 
-          {/* Product Images */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Product Images</h3>
-            
-            <div className="space-y-4">
-              {/* Upload area */}
-              <div className="border-2 border-dashed rounded-lg p-4">
-                <input
-                  type="file"
-                  id="image-upload"
-                  multiple
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-                <label
-                  htmlFor="image-upload"
-                  className="flex flex-col items-center cursor-pointer"
-                >
-                  <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                  <span className="text-sm text-gray-600">
-                    {uploadingImage ? 'Uploading...' : 'Click to upload images'}
-                  </span>
-                </label>
-              </div>
-
-              {/* Image grid */}
-              {images.length > 0 && (
-                <div className="grid grid-cols-4 gap-2">
-                  {images.map((image, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={image.image_url}
-                        alt={`Product ${index + 1}`}
-                        className="w-full h-24 object-cover rounded border"
-                      />
-                      {index === 0 && (
-                        <span className="absolute top-1 left-1 bg-black text-white text-xs px-1 rounded">
-                          Main
-                        </span>
-                      )}
-                      <button
-                        onClick={() => removeImage(index)}
-                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </Card>
+          {/* Product Images - Using New Image Upload Manager */}
+          <ImageUploadManager
+            images={images}
+            onImagesChange={setImages}
+            maxImages={10}
+          />
         </div>
 
         {/* Right Column - Sizes & Details */}
