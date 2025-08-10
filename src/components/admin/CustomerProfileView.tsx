@@ -12,7 +12,8 @@ import { supabase } from '@/lib/supabase-client';
 import {
   User, Mail, Phone, Calendar, MapPin, CreditCard, 
   ShoppingBag, Ruler, Palette, Sparkles, Package,
-  Edit, Save, X, Send, AlertCircle
+  Edit, Save, X, Send, AlertCircle, DollarSign,
+  Clock, TrendingUp, Hash
 } from 'lucide-react';
 
 interface CustomerProfileViewProps {
@@ -56,8 +57,19 @@ interface CustomerProfile {
   updated_at?: string;
 }
 
+interface OrderSummary {
+  total_orders: number;
+  total_spent: number;
+  last_order_date?: string;
+  average_order_value?: number;
+}
+
 export function CustomerProfileView({ customerId, customerEmail, onClose }: CustomerProfileViewProps) {
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
+  const [orderSummary, setOrderSummary] = useState<OrderSummary>({
+    total_orders: 0,
+    total_spent: 0
+  });
   const [loading, setLoading] = useState(true);
   const [editingSize, setEditingSize] = useState(false);
   const [editingStyle, setEditingStyle] = useState(false);
@@ -66,6 +78,7 @@ export function CustomerProfileView({ customerId, customerEmail, onClose }: Cust
 
   useEffect(() => {
     fetchCustomerProfile();
+    fetchOrderSummary();
   }, [customerId, customerEmail]);
 
   const fetchCustomerProfile = async () => {
@@ -96,11 +109,51 @@ export function CustomerProfileView({ customerId, customerEmail, onClose }: Cust
           style_preferences: {}
         });
       }
+
+      // Also try to get customer data from customers table
+      const { data: customerData } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('email', customerEmail)
+        .single();
+
+      if (customerData && profile) {
+        setProfile(prev => ({
+          ...prev!,
+          full_name: customerData.name || prev?.full_name,
+          phone: customerData.phone || prev?.phone
+        }));
+      }
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to load customer profile');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchOrderSummary = async () => {
+    try {
+      // Fetch order history
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select('total_amount, created_at')
+        .or(`customer_email.eq.${customerEmail},guest_email.eq.${customerEmail}`)
+        .order('created_at', { ascending: false });
+
+      if (!error && orders) {
+        const totalSpent = orders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+        const avgOrderValue = orders.length > 0 ? totalSpent / orders.length : 0;
+        
+        setOrderSummary({
+          total_orders: orders.length,
+          total_spent: totalSpent,
+          last_order_date: orders[0]?.created_at,
+          average_order_value: avgOrderValue
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching order summary:', error);
     }
   };
 
@@ -190,6 +243,109 @@ export function CustomerProfileView({ customerId, customerEmail, onClose }: Cust
           </Button>
         )}
       </div>
+
+      {/* Customer Information Card */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Basic Info */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Contact Info</h3>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{profile?.full_name || 'Name not set'}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{customerEmail}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{profile?.phone || 'No phone'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Order Summary */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Order History</h3>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Hash className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{orderSummary.total_orders} orders</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">${orderSummary.total_spent.toFixed(2)} total</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">${orderSummary.average_order_value?.toFixed(2) || '0.00'} avg</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Customer Status */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Customer Status</h3>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    Last order: {orderSummary.last_order_date 
+                      ? new Date(orderSummary.last_order_date).toLocaleDateString() 
+                      : 'No orders'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant={orderSummary.total_orders > 5 ? "default" : "secondary"}>
+                    {orderSummary.total_orders > 5 ? 'VIP Customer' : 
+                     orderSummary.total_orders > 0 ? 'Active Customer' : 'New Customer'}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Profile Status</h3>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Ruler className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    Size Profile: {profile?.size_profile && Object.keys(profile.size_profile).length > 0 
+                      ? <Badge variant="success" className="ml-1">Complete</Badge>
+                      : <Badge variant="outline" className="ml-1">Incomplete</Badge>}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Palette className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    Style Prefs: {profile?.style_preferences && Object.keys(profile.style_preferences).length > 0 
+                      ? <Badge variant="success" className="ml-1">Set</Badge>
+                      : <Badge variant="outline" className="ml-1">Not Set</Badge>}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    {profile?.saved_addresses && profile.saved_addresses.length > 0 
+                      ? `${profile.saved_addresses.length} saved` 
+                      : 'No addresses'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Quick Actions */}
       <Card>
