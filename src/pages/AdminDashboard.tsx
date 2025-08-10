@@ -49,6 +49,8 @@ import { InventoryManagement } from '@/components/admin/InventoryManagement';
 import { StripeOrderManagement } from '@/components/admin/StripeOrderManagement';
 import { DataImportExport } from '@/components/admin/DataImportExport';
 import { ProductManagementClean } from '@/components/admin/ProductManagementClean';
+import { ProductQuickAdd } from '@/components/admin/ProductQuickAdd';
+import { BulkProductImport } from '@/components/admin/BulkProductImport';
 import { BulkProductEditor } from '@/components/admin/BulkProductEditor';
 import { ProductEnhancements } from '@/components/admin/ProductEnhancements';
 import { CollectionManagement } from '@/components/admin/CollectionManagement';
@@ -141,15 +143,32 @@ const AdminDashboard = () => {
       case '/admin/products':
         return (
           <Tabs defaultValue="manage" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="manage">Product Management</TabsTrigger>
-              <TabsTrigger value="bulk">Bulk Editor</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="manage">Manage Products</TabsTrigger>
+              <TabsTrigger value="quick-add">Quick Add</TabsTrigger>
+              <TabsTrigger value="bulk-import">Bulk Import</TabsTrigger>
+              <TabsTrigger value="bulk-edit">Bulk Editor</TabsTrigger>
               <TabsTrigger value="enhancements">Enhancements</TabsTrigger>
             </TabsList>
             <TabsContent value="manage">
               <ProductManagementClean />
             </TabsContent>
-            <TabsContent value="bulk">
+            <TabsContent value="quick-add">
+              <ProductQuickAdd
+                onSave={(productId) => {
+                  toast({ title: "Success", description: `Product created: ${productId}` });
+                }}
+                onCancel={() => {}}
+              />
+            </TabsContent>
+            <TabsContent value="bulk-import">
+              <BulkProductImport
+                onComplete={() => {
+                  toast({ title: "Success", description: "Bulk import completed successfully" });
+                }}
+              />
+            </TabsContent>
+            <TabsContent value="bulk-edit">
               <BulkProductEditor />
             </TabsContent>
             <TabsContent value="enhancements">
