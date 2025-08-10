@@ -169,7 +169,7 @@ export function ImageUploadManager({
   };
 
   // Add image from URL
-  const handleAddUrl = () => {
+  const handleAddUrl = async () => {
     if (!imageUrl) {
       toast.error('Please enter an image URL');
       return;
@@ -182,20 +182,37 @@ export function ImageUploadManager({
 
     // Basic URL validation
     try {
-      new URL(imageUrl);
-    } catch {
+      const url = new URL(imageUrl);
+      
+      // Check if it's an image URL
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+      const hasImageExtension = imageExtensions.some(ext => url.pathname.toLowerCase().endsWith(ext));
+      
+      if (!hasImageExtension && !url.pathname.includes('image')) {
+        toast.warning('URL might not be an image. Adding anyway...');
+      }
+      
+      // For R2/Cloudflare URLs, ensure HTTPS
+      if (url.hostname.includes('r2.dev') && url.protocol === 'http:') {
+        url.protocol = 'https:';
+        toast.info('Converted to HTTPS for Cloudflare R2');
+      }
+      
+      const finalUrl = url.toString();
+      
+      const newImages = [...images, {
+        image_url: finalUrl,
+        position: images.length
+      }];
+      
+      onImagesChange(newImages);
+      setImageUrl('');
+      toast.success('Image added from URL');
+      
+    } catch (error) {
       toast.error('Invalid URL format');
       return;
     }
-
-    const newImages = [...images, {
-      image_url: imageUrl,
-      position: images.length
-    }];
-    
-    onImagesChange(newImages);
-    setImageUrl('');
-    toast.success('Image added from URL');
   };
 
   // Remove image
@@ -355,9 +372,17 @@ export function ImageUploadManager({
         {/* Image Grid */}
         {images.length > 0 && (
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-700">
-              Drag images to reorder • First image is the main product image
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-gray-700">
+                Drag images to reorder • First image is the main product image
+              </p>
+              {images.some(img => img.image_url?.includes('r2.dev')) && (
+                <Badge variant="outline" className="text-xs">
+                  <Cloud className="h-3 w-3 mr-1" />
+                  Using Cloudflare R2
+                </Badge>
+              )}
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {images.map((image, index) => (
                 <div
@@ -376,6 +401,13 @@ export function ImageUploadManager({
                       src={image.image_url}
                       alt={`Product ${index + 1}`}
                       className="w-full h-32 object-cover"
+                      onError={(e) => {
+                        console.error('Failed to load image:', image.image_url);
+                        // Set a fallback image
+                        (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjIwMCIgeT0iMTUwIiBzdHlsZT0iZmlsbDojYWFhO2ZvbnQtd2VpZ2h0OmJvbGQ7Zm9udC1zaXplOjE5cHg7Zm9udC1mYW1pbHk6QXJpYWwsSGVsdmV0aWNhLHNhbnMtc2VyaWY7ZG9taW5hbnQtYmFzZWxpbmU6Y2VudHJhbCI+SW1hZ2UgTm90IEZvdW5kPC90ZXh0Pjwvc3ZnPg==';
+                      }}
+                      loading="lazy"
+                      crossOrigin="anonymous"
                     />
                     {index === 0 && (
                       <Badge className="absolute top-2 left-2 bg-black/75">
