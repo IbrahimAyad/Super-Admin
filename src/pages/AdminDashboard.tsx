@@ -70,6 +70,7 @@ import { RecommendationEngine } from '@/components/ai/RecommendationEngine';
 import { FinancialManagement } from '@/components/admin/FinancialManagement';
 import { StripeSyncManager } from '@/components/admin/StripeSyncManager';
 import AdminOrderManagement from './AdminOrderManagement';
+import AdminOrderManagementComplete from './AdminOrderManagementComplete';
 
 const AdminDashboard = () => {
   const { user, profile } = useAuth();
@@ -179,7 +180,7 @@ const AdminDashboard = () => {
       case '/admin/collections':
         return <CollectionManagement />;
       case '/admin/orders':
-        return <AdminOrderManagement />;
+        return <AdminOrderManagementComplete />;
       case '/admin/stripe-orders':
         return <StripeOrderManagement />;
       case '/admin/financial':
