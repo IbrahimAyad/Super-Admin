@@ -1,16 +1,9 @@
-/**
- * DEBOUNCE HOOK
- * Optimizes search and input performance
- * Created: 2025-08-07
- */
-
-import { useState, useEffect } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 
 /**
- * Debounces a value by the specified delay
- * Prevents excessive API calls and re-renders
+ * Debounce a value change
  */
-export function useDebounce<T>(value: T, delay: number = 300): T {
+export function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
@@ -27,36 +20,41 @@ export function useDebounce<T>(value: T, delay: number = 300): T {
 }
 
 /**
- * Returns a debounced callback function
- * Useful for event handlers that shouldn't fire too frequently
+ * Debounce a callback function
  */
 export function useDebouncedCallback<T extends (...args: any[]) => any>(
   callback: T,
-  delay: number = 300
-): (...args: Parameters<T>) => void {
-  const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
+  delay: number = 500
+): T {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const callbackRef = useRef(callback);
 
-  return (...args: Parameters<T>) => {
-    if (timer) clearTimeout(timer);
-    
-    const newTimer = setTimeout(() => {
-      callback(...args);
-    }, delay);
-    
-    setTimer(newTimer);
-  };
-}
+  // Update callback ref when callback changes
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
 
-/**
- * Debounced state setter
- * Combines state and debouncing in one hook
- */
-export function useDebouncedState<T>(
-  initialValue: T,
-  delay: number = 300
-): [T, T, (value: T) => void] {
-  const [value, setValue] = useState<T>(initialValue);
-  const debouncedValue = useDebounce(value, delay);
+  const debouncedCallback = useCallback(
+    (...args: Parameters<T>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
 
-  return [value, debouncedValue, setValue];
+      timeoutRef.current = setTimeout(() => {
+        callbackRef.current(...args);
+      }, delay);
+    },
+    [delay]
+  ) as T;
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return debouncedCallback;
 }
