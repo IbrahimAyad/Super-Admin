@@ -39,7 +39,7 @@ import { OrderTimeline } from '@/components/admin/OrderTimeline';
 import { FinancialDashboard } from '@/components/admin/FinancialDashboard';
 import { AnalyticsOverview } from '@/components/admin/AnalyticsOverview';
 import { OrderManagement } from '@/components/admin/OrderManagement';
-import { CustomerManagement } from '@/components/admin/CustomerManagement';
+import { CustomerManagementOptimized } from '@/components/admin/CustomerManagementOptimized';
 import { ProductAnalytics } from '@/components/admin/ProductAnalytics';
 import { SearchAnalytics } from '@/components/admin/SearchAnalytics';
 import { BundleManagement } from '@/components/admin/BundleManagement';
@@ -191,7 +191,7 @@ const AdminDashboard = () => {
       case '/admin/data-management':
         return <DataImportExport />;
       case '/admin/customers':
-        return <CustomerManagement />;
+        return <CustomerManagementOptimized />;
       case '/admin/weddings':
         return <BundleManagement />;
       case '/admin/reviews':
