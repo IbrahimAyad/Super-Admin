@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, RefreshCw, Eye, Package, Truck, CheckCircle, XCircle, Search, Download } from 'lucide-react';
 import { supabase } from '@/lib/supabase-client';
+import { logger } from '@/utils/logger';
 
 interface OrderItem {
   id: string;
@@ -62,10 +63,8 @@ export default function AdminOrderManagement() {
   }, [orders, searchTerm, statusFilter]);
 
   const loadOrders = async () => {
-    console.log('loadOrders function called, current loading state:', loading);
     
     try {
-      console.log('Setting loading to true');
       setLoading(true);
       
       const { data, error } = await supabase
@@ -76,10 +75,9 @@ export default function AdminOrderManagement() {
         `)
         .order('created_at', { ascending: false });
 
-      console.log('Orders query completed:', { data, error, dataLength: data?.length });
 
       if (error) {
-        console.error('Supabase error:', error);
+        logger.error('Supabase error:', error);
         throw error;
       }
 
@@ -95,7 +93,6 @@ export default function AdminOrderManagement() {
         customer_email: order.guest_email || ''
       }));
 
-      console.log('Setting transformed orders data');
       setOrders(transformedOrders);
       
       toast({
@@ -103,16 +100,14 @@ export default function AdminOrderManagement() {
         description: `Loaded ${transformedOrders?.length || 0} orders`,
       });
     } catch (error: any) {
-      console.error('Error loading orders:', error);
+      logger.error('Error loading orders:', error);
       toast({
         title: "Error loading orders",
         description: error.message,
         variant: "destructive",
       });
     } finally {
-      console.log('Finally block: setting loading to false');
       setLoading(false);
-      console.log('Loading state should now be false');
     }
   };
 
@@ -161,7 +156,7 @@ export default function AdminOrderManagement() {
         description: `Order status changed to ${newStatus}`,
       });
     } catch (error: any) {
-      console.error('Error updating order:', error);
+      logger.error('Error updating order:', error);
       toast({
         title: "Error updating order",
         description: error.message,

@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase, signUp, signIn, signInWithGoogle, signOut, getProfile, updateProfile, onAuthStateChange } from '@/lib/services';
 import type { UserProfile } from '@/lib/services';
 import { verifyTwoFactorLogin, getAdminSecurityStatus, handleFailedLogin, resetFailedLoginAttempts } from '@/lib/services/twoFactor';
+import { logger } from '@/utils/logger';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -34,11 +35,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [rememberMe, setRememberMe] = useState(false);
 
   useEffect(() => {
-    console.log('AuthContext: Initializing auth state check');
+    logger.debug('AuthContext: Initializing auth state check');
     
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('AuthContext: Initial session check', { session: !!session, user: session?.user?.email });
+      logger.debug('AuthContext: Initial session check', { session: !!session, user: session?.user?.email });
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -53,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('AuthContext: Auth state changed', { event, session: !!session, user: session?.user?.email });
+      logger.debug('AuthContext: Auth state changed', { event, session: !!session, user: session?.user?.email });
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -72,26 +73,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadProfile = async (userId: string) => {
     try {
-      console.log('Loading profile for user:', userId);
       const result = await getProfile(userId);
       const profileData = result.success ? result.data : null;
-      console.log('Profile loaded:', profileData);
       setProfile(profileData);
     } catch (error) {
-      console.error('Error loading profile:', error);
+      logger.error('Error loading profile:', error);
       // If profile doesn't exist, create one
       try {
-        console.log('Creating new profile for user:', userId);
         const result = await updateProfile(userId, {
           onboarding_completed: false,
           measurements: {},
           style_preferences: {}
         });
         const newProfile = result.success ? result.data : null;
-        console.log('New profile created:', newProfile);
         setProfile(newProfile);
       } catch (createError) {
-        console.error('Error creating profile:', createError);
+        logger.error('Error creating profile:', createError);
       }
     } finally {
       setLoading(false);
@@ -143,7 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           };
         }
       } catch (error) {
-        console.warn('Could not check 2FA status:', error);
+        logger.warn('Could not check 2FA status:', error);
         // Continue without 2FA for single-user system
       }
       
@@ -152,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       return result;
     } catch (error) {
-      console.error('Error during sign in:', error);
+      logger.error('Error during sign in:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Sign in failed'
@@ -179,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       toast.success('Signed out successfully');
     } catch (error) {
-      console.error('Error during sign out:', error);
+      logger.error('Error during sign out:', error);
       toast.error('Sign out failed');
     }
   };
@@ -234,7 +231,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       return { success: true };
     } catch (error) {
-      console.error('Error verifying 2FA:', error);
+      logger.error('Error verifying 2FA:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Verification failed'

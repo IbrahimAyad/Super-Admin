@@ -29,6 +29,7 @@ import {
 } from '@/lib/services';
 import { supabase } from '@/lib/supabase-client';
 import { testStorageBucket } from '@/lib/storage';
+import { logger } from '@/utils/logger';
 import styles from './ProductManagement.module.css';
 
 
@@ -83,17 +84,17 @@ export const ProductManagement = () => {
     // Test storage bucket on component mount
     testStorageBucket().then(result => {
       if (!result.success) {
-        console.error('🚨 Storage bucket test failed:', result.error);
+        logger.error('Storage bucket test failed:', result.error);
         toast({
           title: "Storage Configuration Issue",
           description: `Storage test failed: ${result.error}`,
           variant: "destructive"
         });
       } else {
-        console.log('✅ Storage bucket test passed:', result.message);
+        logger.debug('Storage bucket test passed:', result.message);
       }
     }).catch(error => {
-      console.error('Storage test error:', error);
+      logger.error('Storage test error:', error);
     });
   }, []);
 
@@ -108,7 +109,6 @@ export const ProductManagement = () => {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      console.log('🔍 Loading products with pagination...');
       
       const offset = (currentPage - 1) * pageSize;
       
@@ -126,7 +126,7 @@ export const ProductManagement = () => {
       });
 
       if (!result.success) {
-        console.error('❌ Products fetch error:', result.error);
+        logger.error('Products fetch error:', result.error);
         setProducts([]);
         setTotalCount(0);
         toast({
@@ -137,7 +137,6 @@ export const ProductManagement = () => {
         return;
       }
       
-      console.log('✅ Products loaded successfully:', result.data?.length || 0, 'items (total:', result.totalCount, ')');
       
       setProducts(result.data || []);
       setTotalCount(result.totalCount || 0);
@@ -150,7 +149,7 @@ export const ProductManagement = () => {
       }
       
     } catch (error) {
-      console.error('💥 Error loading products:', error);
+      logger.error('Error loading products:', error);
       setProducts([]);
       setTotalCount(0);
       toast({
@@ -171,7 +170,7 @@ export const ProductManagement = () => {
         setRecentProducts(result.data);
       }
     } catch (error) {
-      console.error('Error loading recent products:', error);
+      logger.error('Error loading recent products:', error);
     } finally {
       setLoadingRecent(false);
     }
@@ -191,7 +190,7 @@ export const ProductManagement = () => {
         throw new Error(result.error || 'Failed to toggle status');
       }
     } catch (error) {
-      console.error('Quick toggle error:', error);
+      logger.error('Quick toggle error:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : 'Failed to toggle product status',
@@ -214,7 +213,7 @@ export const ProductManagement = () => {
         throw new Error(result.error || 'Failed to duplicate product');
       }
     } catch (error) {
-      console.error('Quick duplicate error:', error);
+      logger.error('Quick duplicate error:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : 'Failed to duplicate product',
@@ -340,7 +339,7 @@ export const ProductManagement = () => {
       await loadProducts(); // Reload to show changes
       setSelectedProducts([]);
     } catch (error) {
-      console.error('Bulk action error:', error);
+      logger.error('Bulk action error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Error",
@@ -352,16 +351,14 @@ export const ProductManagement = () => {
 
   const handleAddProductSubmit = async (productData: Partial<Product>) => {
     try {
-      console.log('🔄 Creating product with data:', productData);
 
       const result = await createProductWithImages(productData);
 
       if (!result.success || !result.data) {
-        console.error('❌ Create failed:', result.error);
+        logger.error('Create failed:', result.error);
         throw new Error(result.error || 'Failed to create product');
       }
 
-      console.log('✅ Product created successfully:', result.data);
 
       // Add variants if any
       if (productData.variants && productData.variants.length > 0) {
@@ -387,14 +384,13 @@ export const ProductManagement = () => {
           .insert(variantsToInsert);
 
         if (variantsError) {
-          console.warn('Failed to add variants:', variantsError);
+          logger.warn('Failed to add variants:', variantsError);
           toast({
             title: "Partial Success",
             description: "Product created but some variants failed to save",
             variant: "default"
           });
         } else {
-          console.log(`✅ Created ${variantsToInsert.length} variants successfully`);
         }
       }
 
@@ -407,7 +403,7 @@ export const ProductManagement = () => {
       setEditingProduct(null);
       await loadProducts(); // Reload products to show the new one
     } catch (error) {
-      console.error('💥 Error adding product:', error);
+      logger.error('Error adding product:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Error",
@@ -421,16 +417,14 @@ export const ProductManagement = () => {
     if (!editingProduct) return;
 
     try {
-      console.log('🔄 Updating product with data:', productData);
 
       const result = await updateProductWithImages(editingProduct.id, productData);
 
       if (!result.success) {
-        console.error('❌ Update failed:', result.error);
+        logger.error('Update failed:', result.error);
         throw new Error(result.error || 'Failed to update product');
       }
 
-      console.log('✅ Product updated successfully:', result.data);
 
       toast({
         title: "Success",
@@ -441,7 +435,7 @@ export const ProductManagement = () => {
       setShowAddDialog(false);
       await loadProducts(); // Reload products to show changes
     } catch (error) {
-      console.error('💥 Error updating product:', error);
+      logger.error('Error updating product:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Error",
@@ -471,7 +465,7 @@ export const ProductManagement = () => {
 
       loadProducts();
     } catch (error) {
-      console.error('Error deleting product:', error);
+      logger.error('Error deleting product:', error);
       toast({
         title: "Error",
         description: "Failed to delete product",

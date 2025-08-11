@@ -233,7 +233,6 @@ export function useSettingsSubscription(settingKeys?: string[]) {
   useEffect(() => {
     const channel = settingsService.subscribeToSettings(
       (payload) => {
-        console.log('Settings change received:', payload);
         
         // Invalidate affected queries based on the change
         if (payload.new?.key) {
