@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -177,7 +177,7 @@ export const ProductManagement = () => {
   };
 
   // Quick action handlers
-  const handleQuickToggle = async (productId: string) => {
+  const handleQuickToggle = useCallback(async (productId: string) => {
     try {
       const result = await toggleProductStatus(productId);
       if (result.success) {
@@ -197,9 +197,9 @@ export const ProductManagement = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [toast]);
 
-  const handleQuickDuplicate = async (productId: string) => {
+  const handleQuickDuplicate = useCallback(async (productId: string) => {
     try {
       const result = await duplicateProduct(productId);
       if (result.success) {
@@ -220,10 +220,10 @@ export const ProductManagement = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [toast]);
 
-  // Pagination handlers
-  const totalPages = Math.ceil(totalCount / pageSize);
+  // Pagination handlers - memoize expensive calculation
+  const totalPages = useMemo(() => Math.ceil(totalCount / pageSize), [totalCount, pageSize]);
   
   const handlePrevPage = () => {
     if (currentPage > 1) {
@@ -242,13 +242,13 @@ export const ProductManagement = () => {
   };
 
   // Smart filter handlers
-  const handleSmartFilterToggle = (filterKey: keyof typeof smartFilters) => {
+  const handleSmartFilterToggle = useCallback((filterKey: keyof typeof smartFilters) => {
     setSmartFilters(prev => ({
       ...prev,
       [filterKey]: !prev[filterKey]
     }));
     setCurrentPage(1); // Reset to first page when filtering
-  };
+  }, [smartFilters]);
 
   // Calculate smart filter counts (for display)
   const smartFilterCounts = useMemo(() => {
@@ -264,21 +264,26 @@ export const ProductManagement = () => {
     };
   }, [products]);
 
-  const handleSelectProduct = (productId: string) => {
+  // Memoize filtered products by status for performance
+  const activeProductsCount = useMemo(() => {
+    return products.filter(p => p.status === 'active').length;
+  }, [products]);
+
+  const handleSelectProduct = useCallback((productId: string) => {
     setSelectedProducts(prev =>
       prev.includes(productId)
         ? prev.filter(id => id !== productId)
         : [...prev, productId]
     );
-  };
+  }, []);
 
-  const handleSelectAll = () => {
+  const handleSelectAll = useCallback(() => {
     if (selectedProducts.length === products.length) {
       setSelectedProducts([]);
     } else {
       setSelectedProducts(products.map(p => p.id));
     }
-  };
+  }, [selectedProducts.length, products]);
 
   const handleBulkAction = async (action: 'activate' | 'deactivate' | 'delete' | 'feature' | 'unfeature') => {
     if (selectedProducts.length === 0) {
@@ -349,7 +354,7 @@ export const ProductManagement = () => {
     }
   };
 
-  const handleAddProductSubmit = async (productData: Partial<Product>) => {
+  const handleAddProductSubmit = useCallback(async (productData: Partial<Product>) => {
     try {
 
       const result = await createProductWithImages(productData);
@@ -411,9 +416,9 @@ export const ProductManagement = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [toast, loadProducts]);
 
-  const handleEditProductSubmit = async (productData: Partial<Product>) => {
+  const handleEditProductSubmit = useCallback(async (productData: Partial<Product>) => {
     if (!editingProduct) return;
 
     try {
@@ -443,7 +448,7 @@ export const ProductManagement = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [editingProduct, toast, loadProducts]);
 
   const handleDeleteProduct = async (productId: string) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
@@ -474,10 +479,10 @@ export const ProductManagement = () => {
     }
   };
 
-  const openEditDialog = (product: Product) => {
+  const openEditDialog = useCallback((product: Product) => {
     setEditingProduct(product);
     setShowAddDialog(true);
-  };
+  }, []);
 
 
   // Loading skeleton component for product rows
@@ -802,7 +807,7 @@ export const ProductManagement = () => {
             <CardTitle className="text-sm font-medium">Active Products</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{products.filter(p => p.status === 'active').length}</div>
+            <div className="text-2xl font-bold">{activeProductsCount}</div>
           </CardContent>
         </Card>
         <Card>

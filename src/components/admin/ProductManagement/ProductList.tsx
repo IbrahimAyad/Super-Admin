@@ -1,3 +1,4 @@
+import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -19,7 +20,7 @@ interface ProductListProps {
   loading?: boolean;
 }
 
-export function ProductList({
+export const ProductList = React.memo(function ProductList({
   products,
   viewMode,
   selectedProducts,
@@ -301,4 +302,18 @@ export function ProductList({
       </div>
     </>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison for React.memo optimization
+  return (
+    prevProps.products === nextProps.products &&
+    prevProps.viewMode === nextProps.viewMode &&
+    prevProps.selectedProducts === nextProps.selectedProducts &&
+    prevProps.loading === nextProps.loading &&
+    // Compare callback functions by reference (parent should memoize them)
+    prevProps.onProductSelect === nextProps.onProductSelect &&
+    prevProps.onSelectAll === nextProps.onSelectAll &&
+    prevProps.onProductEdit === nextProps.onProductEdit &&
+    prevProps.onProductToggle === nextProps.onProductToggle &&
+    prevProps.onProductDuplicate === nextProps.onProductDuplicate
+  );
+});

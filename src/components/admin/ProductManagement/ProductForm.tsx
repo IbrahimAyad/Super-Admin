@@ -131,7 +131,7 @@ const commonFeatures = [
   'Breathable', 'Stain Resistant', 'Non-Iron', 'Quick Dry'
 ];
 
-export function ProductForm({ product, isOpen, onClose, onSubmit, categories }: ProductFormProps) {
+export const ProductForm = React.memo(function ProductForm({ product, isOpen, onClose, onSubmit, categories }: ProductFormProps) {
   const { toast } = useToast();
   const [formData, setFormData] = React.useState<ProductFormData>({
     sku: '',
@@ -1356,4 +1356,14 @@ export function ProductForm({ product, isOpen, onClose, onSubmit, categories }: 
       </div>
     </Tabs>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison for React.memo optimization
+  return (
+    prevProps.product === nextProps.product &&
+    prevProps.isOpen === nextProps.isOpen &&
+    prevProps.categories === nextProps.categories &&
+    // Compare callback functions by reference (parent should memoize them)
+    prevProps.onClose === nextProps.onClose &&
+    prevProps.onSubmit === nextProps.onSubmit
+  );
+});

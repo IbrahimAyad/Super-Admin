@@ -1,3 +1,4 @@
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -50,7 +51,7 @@ interface ProductFiltersProps {
   };
 }
 
-export function ProductFilters({
+export const ProductFilters = React.memo(function ProductFilters({
   searchTerm,
   onSearchChange,
   categoryFilter,
@@ -152,4 +153,21 @@ export function ProductFilters({
       </div>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison for React.memo optimization
+  return (
+    prevProps.searchTerm === nextProps.searchTerm &&
+    prevProps.categoryFilter === nextProps.categoryFilter &&
+    prevProps.viewMode === nextProps.viewMode &&
+    prevProps.categories === nextProps.categories &&
+    // Deep compare smartFilters object
+    JSON.stringify(prevProps.smartFilters) === JSON.stringify(nextProps.smartFilters) &&
+    // Deep compare smartFilterCounts object  
+    JSON.stringify(prevProps.smartFilterCounts) === JSON.stringify(nextProps.smartFilterCounts) &&
+    // Compare callback functions by reference (parent should memoize them)
+    prevProps.onSearchChange === nextProps.onSearchChange &&
+    prevProps.onCategoryChange === nextProps.onCategoryChange &&
+    prevProps.onViewModeChange === nextProps.onViewModeChange &&
+    prevProps.onSmartFilterToggle === nextProps.onSmartFilterToggle
+  );
+});
