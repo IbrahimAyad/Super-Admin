@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ProductFilters } from './ProductManagement/ProductFilters';
+import { ProductList } from './ProductManagement/ProductList';
 import { 
   fetchProductsWithImages, 
   getProductImageUrl, 
@@ -2113,240 +2114,6 @@ export const ProductManagement = () => {
     </Card>
   );
 
-  const ProductTableView = () => (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-12">
-              <Checkbox
-                checked={selectedProducts.length === products.length && products.length > 0}
-                onCheckedChange={handleSelectAll}
-              />
-            </TableHead>
-            <TableHead className="w-20">Image</TableHead>
-            <TableHead>Product</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Stock</TableHead>
-            <TableHead className="w-32">Quick Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {products.map((product) => (
-            <TableRow key={product.id}>
-              <TableCell>
-                <Checkbox
-                  checked={selectedProducts.includes(product.id)}
-                  onCheckedChange={() => handleSelectProduct(product.id)}
-                />
-              </TableCell>
-              <TableCell>
-                <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-100">
-                  <img
-                    src={getProductImageUrl(product)}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = '/placeholder.svg';
-                    }}
-                  />
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  <p className="font-medium">{product.name}</p>
-                  <p className="text-sm text-muted-foreground">{product.description?.slice(0, 60)}...</p>
-                </div>
-              </TableCell>
-              <TableCell>{product.category}</TableCell>
-              <TableCell>${product.base_price}</TableCell>
-              <TableCell>
-                <Badge variant={product.status === 'active' ? "default" : "secondary"}>
-                  {product.status}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline">
-                  {(product as any).total_inventory || 0}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleQuickToggle(product.id)}
-                    title={product.status === 'active' ? 'Deactivate' : 'Activate'}
-                  >
-                    {product.status === 'active' ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleQuickDuplicate(product.id)}
-                    title="Duplicate"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openEditDialog(product)}
-                    title="Edit"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  );
-
-  const ProductGridView = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {products.map((product) => (
-        <Card key={product.id} className="group hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
-            <div className="relative">
-              <div className="aspect-square rounded-md overflow-hidden bg-gray-100 mb-3">
-                <img
-                  src={getProductImageUrl(product)}
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  loading="lazy"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/placeholder.svg';
-                  }}
-                />
-              </div>
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Checkbox
-                  checked={selectedProducts.includes(product.id)}
-                  onCheckedChange={() => handleSelectProduct(product.id)}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-medium text-sm line-clamp-2">{product.name}</h3>
-              <div className="flex items-center justify-between">
-                <p className="text-lg font-bold">${product.base_price}</p>
-                <Badge variant={product.status === 'active' ? "default" : "secondary"} className="text-xs">
-                  {product.status}
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground">{product.category}</p>
-              <div className="flex justify-between items-center pt-2">
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleQuickToggle(product.id)}
-                  >
-                    {product.status === 'active' ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleQuickDuplicate(product.id)}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openEditDialog(product)}
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                </div>
-                <Badge variant="outline" className="text-xs">
-                  Stock: {(product as any).total_inventory || 0}
-                </Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-
-  const MobileCardsView = () => (
-    <div className={styles.mobileCards}>
-      {products.map((product) => (
-        <div key={product.id} className={styles.mobileCard}>
-          <div className={styles.mobileCardHeader}>
-            <Checkbox
-              checked={selectedProducts.includes(product.id)}
-              onCheckedChange={() => handleSelectProduct(product.id)}
-            />
-            <div className={styles.mobileCardImage}>
-              <img
-                src={getProductImageUrl(product)}
-                alt={product.name}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = '/placeholder.svg';
-                }}
-              />
-            </div>
-            <div className={styles.mobileCardInfo}>
-              <h3 className={styles.mobileCardTitle}>{product.name}</h3>
-              <p className={styles.mobileCardDescription}>
-                {product.description?.slice(0, 50)}...
-              </p>
-              <div className={styles.mobileCardMeta}>
-                <span className={`${styles.mobileCardBadge} text-xs px-2 py-1 rounded ${product.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                  {product.status}
-                </span>
-                <span className={`${styles.mobileCardBadge} text-xs px-2 py-1 rounded bg-blue-100 text-blue-800`}>
-                  {product.category}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className={styles.mobileCardActions}>
-            <div className={styles.mobilePrice}>${product.base_price}</div>
-            <div className={styles.mobileActionButtons}>
-              <button
-                className={styles.mobileActionButton}
-                onClick={() => handleQuickToggle(product.id)}
-                title={product.status === 'active' ? 'Deactivate' : 'Activate'}
-              >
-                {product.status === 'active' ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-              <button
-                className={styles.mobileActionButton}
-                onClick={() => handleQuickDuplicate(product.id)}
-                title="Duplicate"
-              >
-                <Copy size={16} />
-              </button>
-              <button
-                className={styles.mobileActionButton}
-                onClick={() => openEditDialog(product)}
-                title="Edit"
-              >
-                <Edit2 size={16} />
-              </button>
-            </div>
-          </div>
-          <div className="text-xs text-gray-500 mt-2 flex justify-between">
-            <span>Stock: {(product as any).total_inventory || 0}</span>
-            <span>Updated: {new Date(product.updated_at).toLocaleDateString()}</span>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -2568,15 +2335,17 @@ export const ProductManagement = () => {
               </div>
             ) : (
               <>
-                {/* Desktop/Tablet Views */}
-                <div className="hidden sm:block">
-                  {viewMode === 'table' ? <ProductTableView /> : <ProductGridView />}
-                </div>
-                
-                {/* Mobile View - Always use cards */}
-                <div className="sm:hidden">
-                  <MobileCardsView />
-                </div>
+                <ProductList
+                  products={products}
+                  viewMode={viewMode}
+                  selectedProducts={selectedProducts}
+                  onProductSelect={handleSelectProduct}
+                  onSelectAll={handleSelectAll}
+                  onProductEdit={openEditDialog}
+                  onProductToggle={handleQuickToggle}
+                  onProductDuplicate={handleQuickDuplicate}
+                  loading={isLoading}
+                />
                 
                 <div className={`pt-4 ${styles.paginationMobile || ''}`}>
                   <PaginationControls />
