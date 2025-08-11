@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Edit, Trash2, Receipt, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLoadingState } from '@/hooks/useLoadingState';
 
 export function TaxConfiguration() {
   const [showTaxDialog, setShowTaxDialog] = useState(false);
@@ -20,6 +21,11 @@ export function TaxConfiguration() {
   const [jurisdiction, setJurisdiction] = useState('');
   const [taxRate, setTaxRate] = useState('');
   const [taxType, setTaxType] = useState('');
+
+  const { loading, error, execute } = useLoadingState({
+    context: 'tax-configuration',
+    errorTitle: 'Failed to save tax rate'
+  });
 
   // Mock data - replace with real data
   const taxRates = [
@@ -69,15 +75,13 @@ export function TaxConfiguration() {
   };
 
   const saveTaxRate = async () => {
-    try {
+    await execute(async () => {
       // Mock API call - replace with actual tax rate saving
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       toast.success(selectedTaxRate ? 'Tax rate updated' : 'Tax rate added');
       setShowTaxDialog(false);
-    } catch (error) {
-      toast.error('Failed to save tax rate');
-    }
+    });
   };
 
   return (
@@ -304,8 +308,8 @@ export function TaxConfiguration() {
             <Button variant="outline" onClick={() => setShowTaxDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={saveTaxRate}>
-              {selectedTaxRate ? 'Update' : 'Add'} Tax Rate
+            <Button onClick={saveTaxRate} disabled={loading}>
+              {loading ? 'Saving...' : selectedTaxRate ? 'Update' : 'Add'} Tax Rate
             </Button>
           </DialogFooter>
         </DialogContent>
