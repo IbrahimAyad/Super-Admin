@@ -27,6 +27,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useLoadingState } from '@/hooks/useLoadingState';
 import { supabase } from '@/lib/supabase-client';
 import { sendLowStockAlert } from '@/lib/services/emailService';
 
@@ -75,7 +76,6 @@ interface InventoryStats {
 
 export function LowStockAlerts() {
   const [activeTab, setActiveTab] = useState('alerts');
-  const [loading, setLoading] = useState(true);
   const [lowStockItems, setLowStockItems] = useState<InventoryItem[]>([]);
   const [alerts, setAlerts] = useState<LowStockAlert[]>([]);
   const [stats, setStats] = useState<InventoryStats>({
@@ -100,6 +100,10 @@ export function LowStockAlerts() {
     notes: ''
   });
   const { toast } = useToast();
+  const { loading, error, execute } = useLoadingState({
+    context: 'low-stock-alerts',
+    errorTitle: 'Failed to load inventory data'
+  });
 
   useEffect(() => {
     loadInventoryData();
@@ -112,9 +116,7 @@ export function LowStockAlerts() {
   }, []);
 
   const loadInventoryData = async () => {
-    try {
-      setLoading(true);
-      
+    await execute(async () => {
       // Get inventory items with low stock
       const { data: inventory, error: invError } = await supabase
         .from('inventory')
@@ -168,16 +170,7 @@ export function LowStockAlerts() {
       if (!statsError && statsData && statsData.length > 0) {
         setStats(statsData[0]);
       }
-    } catch (error) {
-      console.error('Error loading inventory data:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load inventory data',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const loadAlerts = async () => {
