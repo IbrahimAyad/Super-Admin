@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase-client';
 import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { requestPasswordReset as requestReset, resetPasswordWithToken } from '@/lib/services/authService';
 
 interface PasswordResetState {
   isLoading: boolean;
@@ -28,37 +29,22 @@ export function usePasswordReset(): PasswordResetState {
         throw new Error('Please enter a valid email address');
       }
 
-      // Request password reset via Supabase Auth
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      // Use the enhanced authentication service
+      const success = await requestReset({
+        email,
+        ipAddress: undefined, // Could be added with a service to detect IP
+        userAgent: navigator.userAgent
       });
 
-      if (resetError) {
-        throw resetError;
+      if (success) {
+        toast({
+          title: "Reset email sent",
+          description: "Check your email for password reset instructions.",
+        });
+        return true;
+      } else {
+        throw new Error('Failed to send reset email');
       }
-
-      // Also trigger custom password reset email for better branding
-      const { error: functionError } = await supabase.functions.invoke(
-        'send-password-reset',
-        {
-          body: {
-            email,
-            resetUrl: `${window.location.origin}/reset-password`
-          }
-        }
-      );
-
-      if (functionError) {
-        console.error('Custom email function error:', functionError);
-        // Don't throw - Supabase email was still sent
-      }
-
-      toast({
-        title: "Reset email sent",
-        description: "Check your email for password reset instructions.",
-      });
-
-      return true;
     } catch (err) {
       console.error('Password reset request error:', err);
       const message = err instanceof Error ? err.message : 'Failed to send reset email';
@@ -88,26 +74,29 @@ export function usePasswordReset(): PasswordResetState {
         throw new Error('Password must contain uppercase, lowercase, and numbers');
       }
 
-      // Update password using the token
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword
-      });
+      // Use the enhanced authentication service
+      const result = await resetPasswordWithToken(
+        token,
+        newPassword,
+        undefined, // ipAddress
+        navigator.userAgent
+      );
 
-      if (updateError) {
-        throw updateError;
+      if (result.success) {
+        toast({
+          title: "Password updated",
+          description: "Your password has been successfully reset.",
+        });
+
+        // Redirect to login page after successful reset
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+
+        return true;
+      } else {
+        throw new Error(result.error || 'Failed to reset password');
       }
-
-      toast({
-        title: "Password updated",
-        description: "Your password has been successfully reset.",
-      });
-
-      // Redirect to dashboard after successful reset
-      setTimeout(() => {
-        navigate('/admin');
-      }, 2000);
-
-      return true;
     } catch (err) {
       console.error('Password reset error:', err);
       const message = err instanceof Error ? err.message : 'Failed to reset password';

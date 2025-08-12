@@ -203,22 +203,120 @@ async function handleCheckoutCompleted(
 
   console.log(`Processing checkout session: ${session.id}`);
 
-  // Use database transaction for consistency
-  const { data, error } = await supabase.rpc("process_stripe_checkout", {
-    session_id: session.id,
-    session_data: session,
-  });
-
-  if (error) {
-    throw new Error(`Failed to process checkout: ${error.message}`);
-  }
-
-  // Send order confirmation email
   try {
-    await sendOrderConfirmationEmail(supabase, session);
-  } catch (emailError) {
-    // Log but don't fail the webhook
-    console.error("Failed to send confirmation email:", emailError);
+    // Get checkout session data from our database
+    const { data: checkoutSession } = await supabase
+      .from("checkout_sessions")
+      .select("*")
+      .eq("stripe_session_id", session.id)
+      .single();
+
+    // Extract user profile ID from metadata
+    const userId = session.metadata?.user_id || checkoutSession?.user_id;
+    const sessionId = session.metadata?.session_id || checkoutSession?.session_id;
+
+    // Create or update customer record
+    let customerId;
+    if (session.customer) {
+      customerId = await handleCustomerFromSession(supabase, session, userId);
+    }
+
+    // Create order record
+    const orderData = {
+      order_number: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+      stripe_checkout_session_id: session.id,
+      stripe_payment_intent_id: session.payment_intent,
+      customer_id: customerId,
+      user_id: userId,
+      guest_email: !userId ? session.customer_details?.email : null,
+      total_amount: (session.amount_total || 0) / 100,
+      currency: session.currency || 'usd',
+      status: 'processing',
+      payment_status: 'paid',
+      payment_received_at: new Date().toISOString(),
+      shipping_address: session.shipping_details?.address ? {
+        name: session.shipping_details.name,
+        address: session.shipping_details.address,
+      } : null,
+      billing_address: session.customer_details?.address,
+      metadata: {
+        stripe_session_id: session.id,
+        checkout_session_id: sessionId,
+        custom_fields: session.custom_fields,
+      },
+    };
+
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .insert(orderData)
+      .select()
+      .single();
+
+    if (orderError) {
+      throw new Error(`Failed to create order: ${orderError.message}`);
+    }
+
+    // Process order items
+    if (checkoutSession?.items) {
+      await processOrderItems(supabase, order.id, checkoutSession.items);
+    }
+
+    // Update user profile with purchase data
+    if (userId) {
+      await updateUserProfileAfterPurchase(supabase, userId, order);
+    }
+
+    // Release inventory reservations and update stock
+    if (sessionId) {
+      await finalizeInventoryUpdates(supabase, sessionId, checkoutSession?.items);
+    }
+
+    // Clear cart items
+    if (userId || sessionId) {
+      await clearCartAfterCheckout(supabase, userId, sessionId);
+    }
+
+    // Update checkout session status
+    await supabase
+      .from("checkout_sessions")
+      .update({ 
+        status: "completed",
+        order_id: order.id,
+        completed_at: new Date().toISOString()
+      })
+      .eq("stripe_session_id", session.id);
+
+    // Send order confirmation email
+    try {
+      await sendOrderConfirmationEmail(supabase, session, order);
+    } catch (emailError) {
+      // Log but don't fail the webhook
+      console.error("Failed to send confirmation email:", emailError);
+    }
+
+    // Trigger fulfillment workflow
+    try {
+      await triggerFulfillmentWorkflow(supabase, order);
+    } catch (fulfillmentError) {
+      console.error("Failed to trigger fulfillment:", fulfillmentError);
+    }
+
+    console.log(`Successfully processed order ${order.order_number}`);
+
+  } catch (error) {
+    console.error("Error in checkout completion:", error);
+    
+    // Update checkout session with error
+    await supabase
+      .from("checkout_sessions")
+      .update({ 
+        status: "failed",
+        error_message: error.message,
+        failed_at: new Date().toISOString()
+      })
+      .eq("stripe_session_id", session.id);
+
+    throw error;
   }
 }
 
@@ -321,19 +419,216 @@ async function handleDisputeCreated(supabase: any, dispute: Stripe.Dispute) {
   // Could trigger an alert email to admins here
 }
 
-async function sendOrderConfirmationEmail(supabase: any, session: Stripe.Checkout.Session) {
+// Enhanced helper functions for webhook processing
+
+async function handleCustomerFromSession(
+  supabase: any, 
+  session: Stripe.Checkout.Session, 
+  userId?: string
+): Promise<string | null> {
+  if (!session.customer || typeof session.customer === 'object') {
+    return null;
+  }
+
+  const customerId = session.customer as string;
+  const customerEmail = session.customer_details?.email;
+
+  if (!customerEmail) return customerId;
+
+  try {
+    // Check if customer exists in our database
+    const { data: existingCustomer } = await supabase
+      .from("customers")
+      .select("id")
+      .eq("stripe_customer_id", customerId)
+      .single();
+
+    if (existingCustomer) {
+      // Update customer with user ID if available
+      if (userId) {
+        await supabase
+          .from("customers")
+          .update({ auth_user_id: userId })
+          .eq("id", existingCustomer.id);
+      }
+      return existingCustomer.id;
+    }
+
+    // Create new customer record
+    const customerData = {
+      email: customerEmail,
+      first_name: session.customer_details?.name?.split(' ')[0] || '',
+      last_name: session.customer_details?.name?.split(' ').slice(1).join(' ') || '',
+      phone: session.customer_details?.phone,
+      stripe_customer_id: customerId,
+      auth_user_id: userId,
+      billing_address: session.customer_details?.address,
+      created_at: new Date().toISOString(),
+    };
+
+    const { data: newCustomer, error } = await supabase
+      .from("customers")
+      .insert(customerData)
+      .select("id")
+      .single();
+
+    if (error) {
+      console.error("Failed to create customer:", error);
+      return null;
+    }
+
+    return newCustomer.id;
+  } catch (error) {
+    console.error("Error handling customer from session:", error);
+    return null;
+  }
+}
+
+async function processOrderItems(supabase: any, orderId: string, items: any[]) {
+  const orderItems = items.map(item => ({
+    order_id: orderId,
+    product_id: item.product_id,
+    variant_id: item.variant_id,
+    quantity: item.quantity,
+    unit_price: item.price || 0,
+    total_price: (item.price || 0) * item.quantity,
+    customizations: item.customization || {},
+    stripe_price_id: item.price_id,
+    created_at: new Date().toISOString(),
+  }));
+
+  const { error } = await supabase
+    .from("order_items")
+    .insert(orderItems);
+
+  if (error) {
+    throw new Error(`Failed to create order items: ${error.message}`);
+  }
+}
+
+async function updateUserProfileAfterPurchase(supabase: any, userId: string, order: any) {
+  try {
+    // Get current user profile
+    const { data: profile } = await supabase
+      .from("user_profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    if (!profile) return;
+
+    // Calculate lifetime value update
+    const currentLifetimeValue = profile.lifetime_value || 0;
+    const newLifetimeValue = currentLifetimeValue + order.total_amount;
+
+    // Update profile with purchase data
+    await supabase
+      .from("user_profiles")
+      .update({
+        lifetime_value: newLifetimeValue,
+        last_purchase_at: new Date().toISOString(),
+        total_orders: (profile.total_orders || 0) + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", userId);
+
+    // Update customer segment based on lifetime value
+    let customerSegment = 'bronze';
+    if (newLifetimeValue >= 1000) customerSegment = 'gold';
+    else if (newLifetimeValue >= 500) customerSegment = 'silver';
+
+    await supabase
+      .from("customers")
+      .update({ 
+        customer_segment: customerSegment,
+        lifetime_value: newLifetimeValue,
+        last_order_at: new Date().toISOString(),
+      })
+      .eq("auth_user_id", userId);
+
+  } catch (error) {
+    console.error("Error updating user profile after purchase:", error);
+  }
+}
+
+async function finalizeInventoryUpdates(supabase: any, sessionId: string, items: any[]) {
+  try {
+    // Release reservations and update inventory
+    for (const item of items) {
+      if (item.variant_id && item.quantity) {
+        // Remove from inventory
+        await supabase.rpc("update_inventory_after_sale", {
+          variant_uuid: item.variant_id,
+          quantity_sold: item.quantity,
+          order_reference: sessionId,
+        });
+      }
+    }
+
+    // Remove reservations
+    await supabase
+      .from("stock_reservations")
+      .delete()
+      .eq("session_id", sessionId);
+
+  } catch (error) {
+    console.error("Error finalizing inventory updates:", error);
+  }
+}
+
+async function clearCartAfterCheckout(supabase: any, userId?: string, sessionId?: string) {
+  try {
+    let query = supabase.from("cart_items").delete();
+
+    if (userId) {
+      query = query.eq("user_id", userId);
+    } else if (sessionId) {
+      query = query.eq("session_id", sessionId);
+    } else {
+      return; // Can't clear without identifier
+    }
+
+    await query;
+  } catch (error) {
+    console.error("Error clearing cart after checkout:", error);
+  }
+}
+
+async function triggerFulfillmentWorkflow(supabase: any, order: any) {
+  try {
+    // Create fulfillment record
+    await supabase
+      .from("order_fulfillment")
+      .insert({
+        order_id: order.id,
+        status: "pending",
+        fulfillment_method: "standard_shipping",
+        estimated_ship_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days
+        created_at: new Date().toISOString(),
+      });
+
+    // Could trigger external fulfillment API here
+    
+  } catch (error) {
+    console.error("Error triggering fulfillment workflow:", error);
+  }
+}
+
+async function sendOrderConfirmationEmail(supabase: any, session: Stripe.Checkout.Session, order?: any) {
   const customerEmail = session.customer_email || session.customer_details?.email;
   if (!customerEmail) return;
 
   const orderData = {
-    orderId: session.metadata?.order_id || session.id,
+    orderId: order?.order_number || session.id,
     customerEmail,
     customerName: session.customer_details?.name || "Valued Customer",
     total: (session.amount_total || 0) / 100,
     currency: session.currency || "usd",
+    orderDetails: order || null,
+    shippingAddress: session.shipping_details?.address,
   };
 
-  const response = await fetch(`${SUPABASE_URL}/functions/v1/send-order-confirmation`, {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/send-order-confirmation-secure`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

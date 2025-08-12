@@ -291,10 +291,29 @@ export async function createCheckout(items: CartItem[], options?: {
   success_url?: string;
   cancel_url?: string;
   customer_email?: string;
+  customer_details?: {
+    name?: string;
+    phone?: string;
+    address?: {
+      line1: string;
+      line2?: string;
+      city: string;
+      state: string;
+      postal_code: string;
+      country: string;
+    };
+  };
 }) {
   try {
-    const { data, error } = await supabase.functions.invoke('create-checkout', {
+    // Use the secure checkout Edge Function for all checkout operations
+    const { data, error } = await supabase.functions.invoke('create-checkout-secure', {
       body: { items, ...options },
+      headers: {
+        // Include auth token if user is logged in
+        Authorization: (await supabase.auth.getSession()).data.session?.access_token 
+          ? `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+          : undefined
+      }
     });
 
     if (error) throw error;

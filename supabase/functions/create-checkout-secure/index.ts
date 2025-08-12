@@ -37,6 +37,18 @@ interface CheckoutRequest {
   success_url?: string;
   cancel_url?: string;
   customer_email?: string;
+  customer_details?: {
+    name?: string;
+    phone?: string;
+    address?: {
+      line1: string;
+      line2?: string;
+      city: string;
+      state: string;
+      postal_code: string;
+      country: string;
+    };
+  };
 }
 
 /**
@@ -67,7 +79,7 @@ async function handleCreateCheckout(req: Request): Promise<Response> {
       throw new Error("Invalid JSON payload");
     }
 
-    const { items, success_url, cancel_url, customer_email } = body;
+    const { items, success_url, cancel_url, customer_email, customer_details } = body;
 
     // Validate required fields
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -262,8 +274,9 @@ async function handleCreateCheckout(req: Request): Promise<Response> {
       throw new Error("Order total exceeds maximum allowed amount");
     }
 
-    // Get customer if authenticated
+    // Get customer and user profile if authenticated
     let customerId;
+    let userProfile;
     const authHeader = req.headers.get("Authorization");
     if (authHeader && validatedEmail) {
       try {
@@ -271,6 +284,18 @@ async function handleCreateCheckout(req: Request): Promise<Response> {
         const { data: { user } } = await supabase.auth.getUser(token);
         
         if (user) {
+          // Get user profile for enhanced checkout experience
+          const { data: profile } = await supabase
+            .from("user_profiles")
+            .select("*")
+            .eq("id", user.id)
+            .single();
+
+          if (profile) {
+            userProfile = profile;
+          }
+
+          // Check for existing Stripe customer
           const { data: existingCustomer } = await supabase
             .from("customers")
             .select("stripe_customer_id")
@@ -279,6 +304,23 @@ async function handleCreateCheckout(req: Request): Promise<Response> {
 
           if (existingCustomer?.stripe_customer_id) {
             customerId = existingCustomer.stripe_customer_id;
+          } else {
+            // Create or find customer by email
+            const { data: emailCustomer } = await supabase
+              .from("customers")
+              .select("stripe_customer_id")
+              .eq("email", validatedEmail)
+              .single();
+
+            if (emailCustomer?.stripe_customer_id) {
+              customerId = emailCustomer.stripe_customer_id;
+              
+              // Link the customer to the user
+              await supabase
+                .from("customers")
+                .update({ auth_user_id: user.id })
+                .eq("email", validatedEmail);
+            }
           }
         }
       } catch {
@@ -286,33 +328,132 @@ async function handleCreateCheckout(req: Request): Promise<Response> {
       }
     }
 
+    // Prepare session metadata
+    const sessionMetadata = {
+      order_details: JSON.stringify(orderDetails),
+      session_id: sessionId,
+      user_id: userProfile?.id || "",
+      customer_details: customer_details ? JSON.stringify(customer_details) : "",
+    };
+
+    // Prepare customer creation data if needed
+    let customerCreateData;
+    if (!customerId && validatedEmail) {
+      customerCreateData = {
+        email: validatedEmail,
+        name: customer_details?.name || userProfile?.full_name,
+        phone: customer_details?.phone || userProfile?.phone,
+        address: customer_details?.address ? {
+          line1: customer_details.address.line1,
+          line2: customer_details.address.line2,
+          city: customer_details.address.city,
+          state: customer_details.address.state,
+          postal_code: customer_details.address.postal_code,
+          country: customer_details.address.country,
+        } : undefined,
+        metadata: {
+          supabase_user_id: userProfile?.id || "",
+          source: "checkout",
+        }
+      };
+    }
+
+    // Enhanced payment method configuration
+    const paymentMethodTypes = ["card"];
+    
+    // Add additional payment methods based on region and eligibility
+    if (validatedEmail && !validatedEmail.includes("+test")) {
+      // Only add these for real emails, not test emails
+      // paymentMethodTypes.push("us_bank_account"); // Enable if needed
+    }
+
     // Create checkout session with validated data
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : validatedEmail,
+      customer_creation: !customerId ? "always" : undefined,
       line_items: lineItems,
       mode: "payment",
       success_url: validatedSuccessUrl || `${origin || "https://kctmenswear.com"}/order-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: validatedCancelUrl || `${origin || "https://kctmenswear.com"}/cart`,
-      metadata: {
-        order_details: JSON.stringify(orderDetails),
-        session_id: sessionId,
-      },
+      metadata: sessionMetadata,
       expires_at: Math.floor(Date.now() / 1000) + (15 * 60), // 15 minutes
+      
+      // Address collection
       shipping_address_collection: {
         allowed_countries: ["US", "CA"],
       },
       billing_address_collection: "required",
+      
+      // Contact collection
       phone_number_collection: {
         enabled: true,
       },
-      payment_method_types: ["card"],
+      
+      // Payment configuration
+      payment_method_types: paymentMethodTypes,
+      payment_method_options: {
+        card: {
+          request_three_d_secure: "automatic", // Enhanced security
+        },
+      },
+      
       // Security features
       submit_type: "pay",
       allow_promotion_codes: false, // Prevent discount abuse
+      
+      // Fraud prevention
+      customer_update: customerId ? {
+        address: "auto",
+        name: "auto",
+        shipping: "auto",
+      } : undefined,
+      
+      // Invoice creation for record keeping
+      invoice_creation: {
+        enabled: true,
+        invoice_data: {
+          description: `Order for ${validatedEmail}`,
+          metadata: {
+            session_id: sessionId,
+            user_id: userProfile?.id || "",
+          },
+          footer: "Thank you for your business!",
+        },
+      },
+      
+      // Automatic tax calculation (if configured)
+      automatic_tax: {
+        enabled: false, // Enable when tax settings are configured
+      },
+      
+      // Custom fields for additional data collection
+      custom_fields: userProfile ? [] : [
+        {
+          key: "marketing_opt_in",
+          label: {
+            type: "text",
+            text: "Subscribe to marketing emails",
+          },
+          type: "dropdown",
+          dropdown: {
+            options: [
+              { label: "Yes", value: "yes" },
+              { label: "No", value: "no" },
+            ],
+          },
+          optional: true,
+        },
+      ],
+      
+      // Consent collection
+      consent_collection: {
+        terms_of_service: "required",
+        privacy_policy: "required",
+      },
     });
 
-    // Log checkout creation
+    // Log checkout creation with enhanced data
     await supabase
       .from("checkout_sessions")
       .insert({
@@ -323,7 +464,26 @@ async function handleCreateCheckout(req: Request): Promise<Response> {
         items: orderDetails.items,
         status: "created",
         expires_at: new Date(session.expires_at * 1000).toISOString(),
+        user_id: userProfile?.id || null,
+        customer_details: customer_details || null,
+        metadata: {
+          user_profile_id: userProfile?.id,
+          has_saved_addresses: userProfile?.saved_addresses?.length > 0,
+          payment_methods_available: paymentMethodTypes,
+          origin: origin,
+        },
       });
+
+    // Update user profile last activity if authenticated
+    if (userProfile?.id) {
+      await supabase
+        .from("user_profiles")
+        .update({ 
+          last_login_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", userProfile.id);
+    }
 
     return new Response(JSON.stringify({ 
       url: session.url,

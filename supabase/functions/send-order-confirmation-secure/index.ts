@@ -5,8 +5,9 @@ import { validateEmail, validateAmount, sanitizeString, validateAddress } from '
 import { createRateLimitedEndpoint } from '../_shared/rate-limit-middleware.ts';
 import { sanitizeErrorMessage } from '../_shared/webhook-security.ts';
 
-// Environment validation
+// Environment validation - Support both SendGrid and Resend
 const SENDGRID_API_KEY = Deno.env.get('KCT-Email-Key') || Deno.env.get('SENDGRID_API_KEY');
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const VERIFIED_SENDER_EMAIL = Deno.env.get('VERIFIED_SENDER_EMAIL') || 'orders@kctmenswear.com';
@@ -14,7 +15,10 @@ const SENDER_NAME = Deno.env.get('SENDER_NAME') || 'KCT Menswear';
 const SUPPORT_EMAIL = Deno.env.get('SUPPORT_EMAIL') || 'support@kctmenswear.com';
 const ORDER_TRACKING_URL = Deno.env.get('ORDER_TRACKING_URL') || 'https://kctmenswear.com/track-order';
 
-if (!SENDGRID_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+// Prefer Resend, fallback to SendGrid
+const EMAIL_PROVIDER = RESEND_API_KEY ? 'resend' : (SENDGRID_API_KEY ? 'sendgrid' : null);
+
+if (!EMAIL_PROVIDER || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error("Missing required environment variables");
   throw new Error("Server configuration error");
 }
@@ -396,35 +400,68 @@ serve(async (req) => {
     const emailHtml = generateSecureOrderConfirmationHTML(sanitizedOrder);
     const emailText = generateSecureOrderConfirmationText(sanitizedOrder);
 
-    // Send email via SendGrid
-    const emailPayload = {
-      personalizations: [{
-        to: [{ email: sanitizedOrder.customerEmail }],
-        subject: `Order Confirmation #${sanitizedOrder.orderId} - Thank you for your purchase!`
-      }],
-      from: {
-        email: VERIFIED_SENDER_EMAIL,
-        name: SENDER_NAME
-      },
-      content: [
-        { type: "text/plain", value: emailText },
-        { type: "text/html", value: emailHtml }
-      ],
-      categories: ['order_confirmation', 'transactional'],
-      custom_args: {
-        order_id: sanitizedOrder.orderId,
-        customer_email: sanitizedOrder.customerEmail
-      }
-    };
+    // Send email via appropriate provider
+    let response: Response;
+    let emailId: string | null = null;
 
-    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${SENDGRID_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(emailPayload)
-    });
+    if (EMAIL_PROVIDER === 'resend') {
+      // Send via Resend
+      const resendPayload = {
+        from: `${SENDER_NAME} <${VERIFIED_SENDER_EMAIL}>`,
+        to: [sanitizedOrder.customerEmail],
+        subject: `Order Confirmation #${sanitizedOrder.orderId} - Thank you for your purchase!`,
+        html: emailHtml,
+        text: emailText,
+        tags: [
+          { name: "category", value: "order_confirmation" },
+          { name: "order_id", value: sanitizedOrder.orderId },
+        ],
+      };
+
+      response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(resendPayload),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        emailId = result.id;
+      }
+    } else {
+      // Send via SendGrid (legacy fallback)
+      const emailPayload = {
+        personalizations: [{
+          to: [{ email: sanitizedOrder.customerEmail }],
+          subject: `Order Confirmation #${sanitizedOrder.orderId} - Thank you for your purchase!`
+        }],
+        from: {
+          email: VERIFIED_SENDER_EMAIL,
+          name: SENDER_NAME
+        },
+        content: [
+          { type: "text/plain", value: emailText },
+          { type: "text/html", value: emailHtml }
+        ],
+        categories: ['order_confirmation', 'transactional'],
+        custom_args: {
+          order_id: sanitizedOrder.orderId,
+          customer_email: sanitizedOrder.customerEmail
+        }
+      };
+
+      response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${SENDGRID_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(emailPayload)
+      });
+    }
 
     const success = response.ok;
 
@@ -436,18 +473,20 @@ serve(async (req) => {
         email_type: 'order_confirmation',
         template_id: 'order-confirmation',
         status: success ? 'sent' : 'failed',
-        error_message: success ? null : `SendGrid error: ${response.status}`,
+        error_message: success ? null : `${EMAIL_PROVIDER} error: ${response.status}`,
         sent_at: success ? new Date().toISOString() : null,
+        external_id: emailId,
         metadata: {
           order_id: sanitizedOrder.orderId,
           order_total: sanitizedOrder.total,
-          item_count: sanitizedOrder.items.length
+          item_count: sanitizedOrder.items.length,
+          email_provider: EMAIL_PROVIDER
         }
       });
 
     if (!success) {
       const error = await response.text();
-      console.error('SendGrid error:', error);
+      console.error(`${EMAIL_PROVIDER} error:`, error);
       throw new Error('Failed to send order confirmation email');
     }
 

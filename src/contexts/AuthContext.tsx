@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase, signUp, signIn, signInWithGoogle, signOut, getProfile, updateProfile, onAuthStateChange } from '@/lib/services';
 import type { UserProfile } from '@/lib/services';
 import { verifyTwoFactorLogin, getAdminSecurityStatus, handleFailedLogin, resetFailedLoginAttempts } from '@/lib/services/twoFactor';
+import { authenticateUser, getUserSecurityStatus, sendEmailVerificationToken } from '@/lib/services/authService';
 import { logger } from '@/utils/logger';
 import { toast } from 'sonner';
 
@@ -13,6 +14,8 @@ interface AuthContextType {
   loading: boolean;
   twoFactorRequired: boolean;
   pendingUserId: string | null;
+  emailVerificationRequired: boolean;
+  accountLocked: boolean;
   signUp: (email: string, password: string, userData?: Partial<UserProfile>) => Promise<any>;
   signIn: (email: string, password: string, rememberMe?: boolean) => Promise<any>;
   signInWithGoogle: () => Promise<any>;
@@ -21,6 +24,9 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
   verifyTwoFactor: (token: string) => Promise<{ success: boolean; error?: string }>;
   clearTwoFactorState: () => void;
+  sendEmailVerification: () => Promise<boolean>;
+  refreshSecurityStatus: () => Promise<void>;
+  getSecurityStatus: () => Promise<any>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,7 +38,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [twoFactorRequired, setTwoFactorRequired] = useState(false);
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+  const [emailVerificationRequired, setEmailVerificationRequired] = useState(false);
+  const [accountLocked, setAccountLocked] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [securityStatus, setSecurityStatus] = useState<any>(null);
 
   useEffect(() => {
     logger.debug('AuthContext: Initializing auth state check');
@@ -105,47 +114,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRememberMe(rememberMeOption);
     setLoading(true);
     
+    // Reset states
+    setEmailVerificationRequired(false);
+    setAccountLocked(false);
+    setTwoFactorRequired(false);
+    setPendingUserId(null);
+    
     try {
-      const result = await signIn(email, password);
+      // Use enhanced authentication service
+      const result = await authenticateUser(
+        email, 
+        password,
+        undefined, // ipAddress - could be added with a service
+        navigator.userAgent,
+        rememberMeOption
+      );
       
       if (!result.success) {
-        // Handle failed login attempt
-        if (result.data?.user?.id) {
-          await handleFailedLogin(result.data.user.id);
+        // Handle specific error types
+        if (result.requiresVerification) {
+          setEmailVerificationRequired(true);
+        } else if (result.accountLocked) {
+          setAccountLocked(true);
+        } else if (result.twoFactorRequired) {
+          setTwoFactorRequired(true);
+          setPendingUserId(result.user?.id || null);
         }
+        
         return result;
       }
 
-      const userId = result.data?.user?.id;
-      if (!userId) {
-        return { success: false, error: 'Invalid user data' };
-      }
-
-      // For single-user system, skip complex 2FA and session management
-      // Just check if 2FA is enabled for this user
-      try {
-        const securityStatus = await getAdminSecurityStatus(userId);
-        if (securityStatus.success && securityStatus.data?.two_factor_enabled) {
-          // Store pending user ID and require 2FA
-          setPendingUserId(userId);
-          setTwoFactorRequired(true);
-          
-          // Sign out from Supabase auth temporarily
-          await supabase.auth.signOut();
-          
-          return {
-            success: true,
-            requiresTwoFactor: true,
-            message: 'Two-factor authentication required'
-          };
-        }
-      } catch (error) {
-        logger.warn('Could not check 2FA status:', error);
-        // Continue without 2FA for single-user system
+      // Handle 2FA requirement
+      if (result.twoFactorRequired) {
+        setTwoFactorRequired(true);
+        setPendingUserId(result.user?.id || null);
+        return {
+          success: true,
+          requiresTwoFactor: true,
+          message: 'Two-factor authentication required'
+        };
       }
       
-      // Reset failed login attempts on successful login
-      await resetFailedLoginAttempts(userId);
+      // Successful login - load security status
+      if (result.user?.id) {
+        await loadSecurityStatus(result.user.id);
+      }
       
       return result;
     } catch (error) {
@@ -246,6 +259,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setPendingUserId(null);
   };
 
+  const loadSecurityStatus = async (userId: string) => {
+    try {
+      const status = await getUserSecurityStatus(userId);
+      setSecurityStatus(status);
+    } catch (error) {
+      logger.error('Error loading security status:', error);
+    }
+  };
+
+  const handleSendEmailVerification = async (): Promise<boolean> => {
+    if (!user) {
+      logger.error('No user found for email verification');
+      return false;
+    }
+
+    try {
+      const success = await sendEmailVerificationToken(
+        user.id,
+        user.email || '',
+        user.user_metadata?.full_name || 'Admin'
+      );
+
+      if (success) {
+        toast.success('Verification email sent successfully');
+      } else {
+        toast.error('Failed to send verification email');
+      }
+
+      return success;
+    } catch (error) {
+      logger.error('Error sending email verification:', error);
+      toast.error('Failed to send verification email');
+      return false;
+    }
+  };
+
+  const refreshSecurityStatus = async () => {
+    if (user?.id) {
+      await loadSecurityStatus(user.id);
+    }
+  };
+
+  const getSecurityStatus = async () => {
+    if (!user?.id) return null;
+    return await getUserSecurityStatus(user.id);
+  };
+
 
   const value = {
     user,
@@ -254,6 +314,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     twoFactorRequired,
     pendingUserId,
+    emailVerificationRequired,
+    accountLocked,
     signUp: handleSignUp,
     signIn: handleSignIn,
     signInWithGoogle: handleSignInWithGoogle,
@@ -262,6 +324,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshProfile,
     verifyTwoFactor,
     clearTwoFactorState,
+    sendEmailVerification: handleSendEmailVerification,
+    refreshSecurityStatus,
+    getSecurityStatus,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
