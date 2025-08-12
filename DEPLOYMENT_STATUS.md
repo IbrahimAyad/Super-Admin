@@ -77,7 +77,7 @@ This will fix all 400/404 errors immediately.
 - **Checkout**: Secure Edge Functions deployed ✅
 
 ### Email Service
-- **Resend API Key**: `re_2P3zWsMq_8gLFuPBBg62yT7wAt9NBpoLP`
+- **Resend API Key**: Configured in environment variables (never commit keys!)
 - **Status**: Awaiting domain verification
 - **Templates**: Order confirmation, password reset ready
 
