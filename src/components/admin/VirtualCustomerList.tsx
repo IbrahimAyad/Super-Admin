@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react';
+import { useRef, useMemo, memo } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -38,7 +38,7 @@ interface VirtualCustomerListProps {
   searchTerm?: string;
 }
 
-export const VirtualCustomerList = React.memo<VirtualCustomerListProps>(({
+export const VirtualCustomerList = memo<VirtualCustomerListProps>(({
   customers,
   selectedCustomers,
   onCustomerSelect,
