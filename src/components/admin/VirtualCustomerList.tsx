@@ -1,4 +1,4 @@
-import { useRef, useMemo, memo } from 'react';
+import React, { useRef, useMemo, memo } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
