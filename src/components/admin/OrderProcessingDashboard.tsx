@@ -42,12 +42,28 @@ import {
   updateOrderStatus,
   updateTrackingInfo,
   generateShippingLabel,
+  generateShippingLabelEnhanced,
   getOrderDetails,
   getOrderTimeline,
+  getOrders,
   bulkUpdateOrderStatus,
   exportOrdersToCSV,
+  createOrderFulfillment,
+  updateFulfillmentStatus,
+  addOrderNote,
+  getOrderNotes,
+  createRefund,
+  createOrderNotification,
   ORDER_STATUS_FLOW,
-  ORDER_STATUS_DESCRIPTIONS
+  ORDER_STATUS_DESCRIPTIONS,
+  FULFILLMENT_STATUS_DESCRIPTIONS,
+  CARRIER_NAMES,
+  type Order,
+  type OrderNote,
+  type OrderRefund,
+  type FulfillmentStatus,
+  type Carrier,
+  type Priority
 } from '@/lib/services/orderService';
 
 interface Order {
@@ -70,13 +86,24 @@ export function OrderProcessingDashboard() {
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderTimeline, setOrderTimeline] = useState<any[]>([]);
+  const [orderNotes, setOrderNotes] = useState<OrderNote[]>([]);
   const [loading, setLoading] = useState(false);
   const [processingOrder, setProcessingOrder] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
-  const [showBulkActions, setShowBulkActions] = useState(false);
+  const [fulfillmentFilter, setFulfillmentFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  
+  // Dialog states
   const [showTrackingDialog, setShowTrackingDialog] = useState(false);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [showShippingDialog, setShowShippingDialog] = useState(false);
+  const [showNotesDialog, setShowNotesDialog] = useState(false);
+  const [showRefundDialog, setShowRefundDialog] = useState(false);
+  const [showFulfillmentDialog, setShowFulfillmentDialog] = useState(false);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
   
   // Form states
   const [trackingForm, setTrackingForm] = useState({
@@ -99,37 +126,75 @@ export function OrderProcessingDashboard() {
     height: 6
   });
 
+  const [noteForm, setNoteForm] = useState({
+    noteType: 'internal' as const,
+    content: '',
+    isCustomerVisible: false,
+    isUrgent: false
+  });
+
+  const [refundForm, setRefundForm] = useState({
+    refundType: 'full_refund' as const,
+    reason: '',
+    reasonCategory: 'customer_request' as const,
+    refundAmount: 0,
+    refundMethod: 'original_payment' as const,
+    customerNotes: '',
+    internalNotes: ''
+  });
+
+  const [fulfillmentForm, setFulfillmentForm] = useState({
+    warehouseLocation: 'main_warehouse',
+    assignedPicker: '',
+    assignedPacker: '',
+    notes: ''
+  });
+
   const { toast } = useToast();
 
   useEffect(() => {
     loadOrders();
-  }, [statusFilter]);
+  }, [statusFilter, fulfillmentFilter, priorityFilter, searchTerm, currentPage]);
+
+  // Debounced search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchTerm || statusFilter !== 'all' || fulfillmentFilter !== 'all' || priorityFilter !== 'all') {
+        setCurrentPage(1);
+        loadOrders();
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
 
   const loadOrders = async () => {
     try {
       setLoading(true);
-      let query = supabase
-        .from('orders')
-        .select(`
-          *,
-          customers!left(
-            id,
-            first_name,
-            last_name,
-            email,
-            phone
-          )
-        `)
-        .order('created_at', { ascending: false });
+      
+      const filters: any = {
+        page: currentPage,
+        limit: 50,
+        searchTerm: searchTerm || undefined
+      };
 
       if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
+        filters.status = statusFilter;
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
+      if (fulfillmentFilter !== 'all') {
+        filters.fulfillmentStatus = fulfillmentFilter;
+      }
 
-      setOrders(data || []);
+      if (priorityFilter !== 'all') {
+        filters.priority = priorityFilter;
+      }
+
+      const result = await getOrders(filters);
+      
+      setOrders(result.orders);
+      setTotalPages(result.totalPages);
+      
     } catch (error) {
       console.error('Error loading orders:', error);
       toast({
@@ -222,16 +287,17 @@ export function OrderProcessingDashboard() {
     try {
       setProcessingOrder(selectedOrder.id);
       
-      const label = await generateShippingLabel({
+      const label = await generateShippingLabelEnhanced({
         orderId: selectedOrder.id,
-        carrier: shippingForm.carrier as any,
+        carrier: shippingForm.carrier as Carrier,
         serviceType: shippingForm.serviceType,
         weight: shippingForm.weight,
         dimensions: {
           length: shippingForm.length,
           width: shippingForm.width,
           height: shippingForm.height
-        }
+        },
+        insuranceAmount: selectedOrder.total_amount > 10000 ? selectedOrder.total_amount : undefined
       });
 
       toast({
@@ -280,15 +346,132 @@ export function OrderProcessingDashboard() {
 
   const loadOrderDetails = async (orderId: string) => {
     try {
-      const [details, timeline] = await Promise.all([
+      const [details, timeline, notes] = await Promise.all([
         getOrderDetails(orderId),
-        getOrderTimeline(orderId)
+        getOrderTimeline(orderId),
+        getOrderNotes(orderId)
       ]);
       
       setSelectedOrder(details);
       setOrderTimeline(timeline);
+      setOrderNotes(notes);
     } catch (error) {
       console.error('Error loading order details:', error);
+    }
+  };
+
+  // New handler functions
+  const handleAddNote = async () => {
+    if (!selectedOrder || !noteForm.content.trim()) return;
+
+    try {
+      await addOrderNote({
+        orderId: selectedOrder.id,
+        noteType: noteForm.noteType,
+        content: noteForm.content,
+        isCustomerVisible: noteForm.isCustomerVisible,
+        isUrgent: noteForm.isUrgent
+      });
+
+      toast({
+        title: 'Success',
+        description: 'Note added successfully'
+      });
+
+      setNoteForm({
+        noteType: 'internal',
+        content: '',
+        isCustomerVisible: false,
+        isUrgent: false
+      });
+
+      // Reload notes
+      const notes = await getOrderNotes(selectedOrder.id);
+      setOrderNotes(notes);
+      
+      setShowNotesDialog(false);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to add note',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleCreateRefund = async () => {
+    if (!selectedOrder || !refundForm.reason.trim()) return;
+
+    try {
+      await createRefund({
+        orderId: selectedOrder.id,
+        refundType: refundForm.refundType,
+        reason: refundForm.reason,
+        reasonCategory: refundForm.reasonCategory,
+        refundAmount: refundForm.refundAmount || selectedOrder.total_amount,
+        refundMethod: refundForm.refundMethod,
+        customerNotes: refundForm.customerNotes,
+        internalNotes: refundForm.internalNotes
+      });
+
+      toast({
+        title: 'Success',
+        description: 'Refund request created successfully'
+      });
+
+      setRefundForm({
+        refundType: 'full_refund',
+        reason: '',
+        reasonCategory: 'customer_request',
+        refundAmount: 0,
+        refundMethod: 'original_payment',
+        customerNotes: '',
+        internalNotes: ''
+      });
+
+      setShowRefundDialog(false);
+      loadOrders();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create refund',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleCreateFulfillment = async () => {
+    if (!selectedOrder) return;
+
+    try {
+      await createOrderFulfillment({
+        orderId: selectedOrder.id,
+        warehouseLocation: fulfillmentForm.warehouseLocation,
+        assignedPicker: fulfillmentForm.assignedPicker || undefined,
+        assignedPacker: fulfillmentForm.assignedPacker || undefined,
+        notes: fulfillmentForm.notes
+      });
+
+      toast({
+        title: 'Success',
+        description: 'Fulfillment record created successfully'
+      });
+
+      setFulfillmentForm({
+        warehouseLocation: 'main_warehouse',
+        assignedPicker: '',
+        assignedPacker: '',
+        notes: ''
+      });
+
+      setShowFulfillmentDialog(false);
+      loadOrders();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create fulfillment record',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -334,43 +517,96 @@ export function OrderProcessingDashboard() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Order Processing</h2>
-          <p className="text-muted-foreground">Manage order fulfillment and shipping</p>
+          <h2 className="text-2xl font-bold">Order Processing Dashboard</h2>
+          <p className="text-muted-foreground">Comprehensive order fulfillment and shipping management</p>
         </div>
         <div className="flex gap-2">
           <Button
             variant="outline"
             onClick={() => exportOrdersToCSV(orders)}
+            disabled={orders.length === 0}
           >
             <Download className="h-4 w-4 mr-2" />
-            Export
+            Export CSV
           </Button>
-          <Button onClick={loadOrders}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+          <Button onClick={loadOrders} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
         </div>
       </div>
 
-      {/* Status Filters */}
-      <div className="flex gap-2 flex-wrap">
-        <Button
-          variant={statusFilter === 'all' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setStatusFilter('all')}
-        >
-          All Orders
-        </Button>
-        {['pending', 'confirmed', 'processing', 'shipped', 'delivered'].map(status => (
-          <Button
-            key={status}
-            variant={statusFilter === status ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setStatusFilter(status)}
-          >
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Button>
-        ))}
+      {/* Search and Filters */}
+      <div className="space-y-4">
+        {/* Search Bar */}
+        <div className="flex gap-4 items-center">
+          <div className="flex-1 relative">
+            <Input
+              placeholder="Search by order number, customer email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </div>
+        </div>
+
+        {/* Status Filters */}
+        <div className="flex gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Status:</span>
+            <Button
+              variant={statusFilter === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setStatusFilter('all')}
+            >
+              All
+            </Button>
+            {['pending', 'confirmed', 'processing', 'shipped', 'delivered'].map(status => (
+              <Button
+                key={status}
+                variant={statusFilter === status ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStatusFilter(status)}
+              >
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Fulfillment and Priority Filters */}
+        <div className="flex gap-6 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Fulfillment:</span>
+            {['all', 'pending', 'processing', 'shipped', 'delivered'].map(status => (
+              <Button
+                key={status}
+                variant={fulfillmentFilter === status ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFulfillmentFilter(status)}
+              >
+                {status === 'all' ? 'All' : status.charAt(0).toUpperCase() + status.slice(1)}
+              </Button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Priority:</span>
+            {['all', 'urgent', 'high', 'normal', 'low'].map(priority => (
+              <Button
+                key={priority}
+                variant={priorityFilter === priority ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setPriorityFilter(priority)}
+              >
+                {priority === 'all' ? 'All' : priority.charAt(0).toUpperCase() + priority.slice(1)}
+              </Button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Bulk Actions */}
@@ -479,7 +715,23 @@ export function OrderProcessingDashboard() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
+                    {/* Fulfillment Actions */}
+                    {order.status === 'confirmed' && !order.fulfillment_status && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedOrder(order);
+                          setShowFulfillmentDialog(true);
+                        }}
+                        disabled={processingOrder === order.id}
+                      >
+                        <Package className="h-4 w-4 mr-1" />
+                        Start Fulfillment
+                      </Button>
+                    )}
+                    
                     {order.status === 'confirmed' && (
                       <Button
                         size="sm"
@@ -494,6 +746,7 @@ export function OrderProcessingDashboard() {
                         Generate Label
                       </Button>
                     )}
+                    
                     {['confirmed', 'processing'].includes(order.status) && (
                       <Button
                         size="sm"
@@ -508,6 +761,36 @@ export function OrderProcessingDashboard() {
                         Add Tracking
                       </Button>
                     )}
+
+                    {/* Order Management Actions */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedOrder(order);
+                        loadOrderDetails(order.id);
+                        setShowOrderDetails(true);
+                      }}
+                      disabled={processingOrder === order.id}
+                    >
+                      <FileText className="h-4 w-4 mr-1" />
+                      View Details
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedOrder(order);
+                        setShowNotesDialog(true);
+                      }}
+                      disabled={processingOrder === order.id}
+                    >
+                      <FileText className="h-4 w-4 mr-1" />
+                      Add Note
+                    </Button>
+
+                    {/* Status Update */}
                     <Button
                       size="sm"
                       variant="outline"
@@ -527,6 +810,26 @@ export function OrderProcessingDashboard() {
                         </>
                       )}
                     </Button>
+
+                    {/* Refund Option */}
+                    {['delivered', 'shipped'].includes(order.status) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedOrder(order);
+                          setRefundForm(prev => ({
+                            ...prev,
+                            refundAmount: order.total_amount
+                          }));
+                          setShowRefundDialog(true);
+                        }}
+                        disabled={processingOrder === order.id}
+                      >
+                        <CreditCard className="h-4 w-4 mr-1" />
+                        Process Refund
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -789,6 +1092,400 @@ export function OrderProcessingDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Order Details Dialog */}
+      <Dialog open={showOrderDetails} onOpenChange={setShowOrderDetails}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Order Details</DialogTitle>
+            <DialogDescription>
+              {selectedOrder?.order_number} - Comprehensive order information
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedOrder && (
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="items">Items</TabsTrigger>
+                <TabsTrigger value="timeline">Timeline</TabsTrigger>
+                <TabsTrigger value="notes">Notes</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="overview" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Customer Information</h4>
+                    <p>{selectedOrder.customer?.first_name} {selectedOrder.customer?.last_name}</p>
+                    <p className="text-sm text-muted-foreground">{selectedOrder.customer?.email}</p>
+                    <p className="text-sm text-muted-foreground">{selectedOrder.customer?.phone}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Order Information</h4>
+                    <p>Status: <Badge className={getStatusColor(selectedOrder.status)}>{selectedOrder.status}</Badge></p>
+                    <p>Priority: <Badge variant={getPriorityColor(selectedOrder.priority || 'normal') as any}>{selectedOrder.priority || 'normal'}</Badge></p>
+                    <p>Total: ${(selectedOrder.total_amount / 100).toFixed(2)}</p>
+                  </div>
+                </div>
+                
+                {selectedOrder.shipping_address && (
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Shipping Address</h4>
+                    <div className="p-3 bg-muted rounded-lg text-sm">
+                      <p>{selectedOrder.shipping_address.line1}</p>
+                      {selectedOrder.shipping_address.line2 && <p>{selectedOrder.shipping_address.line2}</p>}
+                      <p>{selectedOrder.shipping_address.city}, {selectedOrder.shipping_address.state} {selectedOrder.shipping_address.postal_code}</p>
+                      <p>{selectedOrder.shipping_address.country}</p>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="items" className="space-y-4">
+                {selectedOrder.items?.map((item: any, index: number) => (
+                  <div key={index} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-medium">{item.product_name}</h4>
+                        {item.variant_name && (
+                          <p className="text-sm text-muted-foreground">{item.variant_name}</p>
+                        )}
+                        <p className="text-sm">Quantity: {item.quantity}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">${(item.total_price / 100).toFixed(2)}</p>
+                        <p className="text-sm text-muted-foreground">${(item.price / 100).toFixed(2)} each</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </TabsContent>
+              
+              <TabsContent value="timeline" className="space-y-4">
+                <ScrollArea className="h-96">
+                  <div className="space-y-4">
+                    {orderTimeline.map((event: any, index: number) => (
+                      <div key={event.id} className="flex items-start gap-3">
+                        <div className={`w-2 h-2 rounded-full mt-2 ${index === 0 ? 'bg-primary' : 'bg-muted-foreground'}`} />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{event.title}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(event.created_at).toLocaleString()}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{event.description}</p>
+                          {event.notes && (
+                            <p className="text-sm mt-1">{event.notes}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+              
+              <TabsContent value="notes" className="space-y-4">
+                <ScrollArea className="h-96">
+                  <div className="space-y-4">
+                    {orderNotes.map((note: OrderNote) => (
+                      <div key={note.id} className="border rounded-lg p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">{note.note_type}</Badge>
+                            {note.is_urgent && <Badge variant="destructive">Urgent</Badge>}
+                            {note.is_customer_visible && <Badge variant="secondary">Customer Visible</Badge>}
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(note.created_at).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-sm">{note.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            </Tabs>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Note Dialog */}
+      <Dialog open={showNotesDialog} onOpenChange={setShowNotesDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Order Note</DialogTitle>
+            <DialogDescription>
+              Add a note to order #{selectedOrder?.order_number}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Note Type</Label>
+              <Select
+                value={noteForm.noteType}
+                onValueChange={(value: any) => setNoteForm({ ...noteForm, noteType: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="internal">Internal</SelectItem>
+                  <SelectItem value="customer_service">Customer Service</SelectItem>
+                  <SelectItem value="fulfillment">Fulfillment</SelectItem>
+                  <SelectItem value="shipping">Shipping</SelectItem>
+                  <SelectItem value="accounting">Accounting</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Note Content</Label>
+              <Textarea
+                value={noteForm.content}
+                onChange={(e) => setNoteForm({ ...noteForm, content: e.target.value })}
+                placeholder="Enter your note here..."
+                rows={4}
+              />
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="customer-visible"
+                  checked={noteForm.isCustomerVisible}
+                  onCheckedChange={(checked) => setNoteForm({ ...noteForm, isCustomerVisible: !!checked })}
+                />
+                <Label htmlFor="customer-visible">Customer Visible</Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="urgent"
+                  checked={noteForm.isUrgent}
+                  onCheckedChange={(checked) => setNoteForm({ ...noteForm, isUrgent: !!checked })}
+                />
+                <Label htmlFor="urgent">Urgent</Label>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNotesDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddNote} disabled={!noteForm.content.trim()}>
+              Add Note
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Refund Dialog */}
+      <Dialog open={showRefundDialog} onOpenChange={setShowRefundDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Process Refund</DialogTitle>
+            <DialogDescription>
+              Create a refund for order #{selectedOrder?.order_number}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Refund Type</Label>
+              <Select
+                value={refundForm.refundType}
+                onValueChange={(value: any) => setRefundForm({ ...refundForm, refundType: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full_refund">Full Refund</SelectItem>
+                  <SelectItem value="partial_refund">Partial Refund</SelectItem>
+                  <SelectItem value="return">Return</SelectItem>
+                  <SelectItem value="exchange">Exchange</SelectItem>
+                  <SelectItem value="store_credit">Store Credit</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Reason Category</Label>
+              <Select
+                value={refundForm.reasonCategory}
+                onValueChange={(value: any) => setRefundForm({ ...refundForm, reasonCategory: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="customer_request">Customer Request</SelectItem>
+                  <SelectItem value="defective">Defective Item</SelectItem>
+                  <SelectItem value="wrong_item">Wrong Item</SelectItem>
+                  <SelectItem value="damaged_shipping">Damaged in Shipping</SelectItem>
+                  <SelectItem value="quality_issue">Quality Issue</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Reason</Label>
+              <Textarea
+                value={refundForm.reason}
+                onChange={(e) => setRefundForm({ ...refundForm, reason: e.target.value })}
+                placeholder="Detailed reason for refund..."
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Refund Amount</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={refundForm.refundAmount / 100}
+                onChange={(e) => setRefundForm({ ...refundForm, refundAmount: parseFloat(e.target.value) * 100 })}
+                placeholder="0.00"
+              />
+              <p className="text-xs text-muted-foreground">
+                Original amount: ${selectedOrder ? (selectedOrder.total_amount / 100).toFixed(2) : '0.00'}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Internal Notes</Label>
+              <Textarea
+                value={refundForm.internalNotes}
+                onChange={(e) => setRefundForm({ ...refundForm, internalNotes: e.target.value })}
+                placeholder="Internal notes (not visible to customer)..."
+                rows={2}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRefundDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateRefund} disabled={!refundForm.reason.trim()}>
+              Create Refund Request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Fulfillment Dialog */}
+      <Dialog open={showFulfillmentDialog} onOpenChange={setShowFulfillmentDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Start Order Fulfillment</DialogTitle>
+            <DialogDescription>
+              Initialize fulfillment process for order #{selectedOrder?.order_number}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Warehouse Location</Label>
+              <Select
+                value={fulfillmentForm.warehouseLocation}
+                onValueChange={(value) => setFulfillmentForm({ ...fulfillmentForm, warehouseLocation: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="main_warehouse">Main Warehouse</SelectItem>
+                  <SelectItem value="secondary_warehouse">Secondary Warehouse</SelectItem>
+                  <SelectItem value="dropship_vendor">Dropship Vendor</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Assigned Picker (Optional)</Label>
+              <Input
+                value={fulfillmentForm.assignedPicker}
+                onChange={(e) => setFulfillmentForm({ ...fulfillmentForm, assignedPicker: e.target.value })}
+                placeholder="Staff member assigned to pick items"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Assigned Packer (Optional)</Label>
+              <Input
+                value={fulfillmentForm.assignedPacker}
+                onChange={(e) => setFulfillmentForm({ ...fulfillmentForm, assignedPacker: e.target.value })}
+                placeholder="Staff member assigned to pack order"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Notes</Label>
+              <Textarea
+                value={fulfillmentForm.notes}
+                onChange={(e) => setFulfillmentForm({ ...fulfillmentForm, notes: e.target.value })}
+                placeholder="Special instructions or notes for fulfillment..."
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowFulfillmentDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateFulfillment}>
+              Start Fulfillment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1 || loading}
+          >
+            Previous
+          </Button>
+          
+          <div className="flex items-center gap-2">
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              const page = i + 1;
+              return (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCurrentPage(page)}
+                  disabled={loading}
+                >
+                  {page}
+                </Button>
+              );
+            })}
+          </div>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages || loading}
+          >
+            Next
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

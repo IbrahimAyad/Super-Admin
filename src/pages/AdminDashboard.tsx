@@ -122,7 +122,6 @@ const AdminDashboard = () => {
   // Render content based on current route
   const renderContent = () => {
     const path = location.pathname;
-    console.log('Current admin path:', path);
     switch (path) {
       case '/admin/analytics':
         return <RealTimeAnalytics />;

@@ -5,6 +5,7 @@
  */
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { logger } from '@/utils/logger';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { 
@@ -104,17 +105,13 @@ function InternalSettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isInitialized && !isLoading && !error) {
       setIsInitialized(true);
-      console.log('Settings initialized:', {
-        settingsCount: settings.length,
-        publicSettingsCount: Object.keys(publicSettings).length
-      });
     }
   }, [isInitialized, isLoading, error, settings.length, publicSettings]);
 
   // Error handling
   useEffect(() => {
     if (error && isInitialized) {
-      console.error('Settings error:', error);
+      logger.error('Settings error:', error);
       toast({
         title: 'Settings Error',
         description: 'Failed to load settings. Some features may not work correctly.',

@@ -1,50 +1,22 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Plus, 
-  Search, 
-  Filter, 
-  Edit2, 
   Trash2, 
-  Upload,
-  Download,
   Package,
-  Eye,
-  Copy,
-  MoreHorizontal,
-  AlertTriangle,
-  Image,
-  Palette,
-  Ruler,
-  Shirt,
-  DollarSign,
-  Globe,
-  Tag,
-  X,
-  GripVertical,
-  Grid,
-  List,
   ChevronLeft,
-  ChevronRight,
-  EyeOff,
-  Clock,
-  ImageOff
+  ChevronRight
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ProductFilters } from './ProductManagement/ProductFilters';
+import { ProductList } from './ProductManagement/ProductList';
+import { ProductForm } from './ProductManagement/ProductForm';
 import { 
   fetchProductsWithImages, 
   getProductImageUrl, 
@@ -55,72 +27,11 @@ import {
   getRecentlyUpdatedProducts,
   Product 
 } from '@/lib/services';
-import { fashionClip, type ImageAnalysisResult } from '@/lib/services/fashionClip';
-import { kctIntelligence } from '@/lib/services/kctIntelligence';
-import { DraggableImageGallery } from './DraggableImageGallery';
 import { supabase } from '@/lib/supabase-client';
 import { testStorageBucket } from '@/lib/storage';
+import { logger } from '@/utils/logger';
 import styles from './ProductManagement.module.css';
 
-interface ProductFormData {
-  // Basic Info
-  sku: string;
-  name: string;
-  description: string;
-  category: string;
-  product_type: 'core' | 'catalog';
-  base_price: number;
-  stripe_product_id?: string;
-  status: 'active' | 'inactive' | 'archived';
-  is_bundleable: boolean;
-  
-  // Images
-  images: ProductImage[];
-  
-  // Colors & Sizes
-  available_colors: string[];
-  variants: ProductVariant[];
-  
-  // Materials & Attributes
-  materials: string;
-  care_instructions: string;
-  fit_type: string;
-  occasion: string;
-  features: string[];
-  
-  // SEO
-  meta_title: string;
-  meta_description: string;
-  url_slug: string;
-}
-
-interface ProductVariant {
-  id?: string;
-  size: string;
-  color: string;
-  sku: string;
-  price: number;
-  stock_quantity: number;
-  image_url?: string;
-  barcode?: string;
-  weight?: number;
-  cost_price?: number;
-  compare_at_price?: number;
-  inventory_policy?: 'deny' | 'continue';
-  status?: 'active' | 'inactive' | 'archived';
-  position?: number;
-}
-
-interface ProductImage {
-  id?: string;
-  url: string;
-  alt_text?: string;
-  position: number;
-  is_primary?: boolean;
-  image_type?: 'primary' | 'gallery' | 'thumbnail' | 'detail';
-  loading?: boolean;
-  error?: boolean;
-}
 
 const categories = [
   'Suits & Blazers',
@@ -132,37 +43,6 @@ const categories = [
   'Casual Wear'
 ];
 
-const productTypes = [
-  '3-piece-suit',
-  '2-piece-suit',
-  'blazer',
-  'dress-shirt',
-  'casual-shirt',
-  'trousers',
-  'vest',
-  'tie',
-  'pocket-square',
-  'cufflinks',
-  'shoes'
-];
-
-const availableColors = [
-  'Navy', 'Black', 'Charcoal', 'Grey', 'Brown', 'White', 'Blue', 
-  'Burgundy', 'Green', 'Beige', 'Tan', 'Cream', 'Silver'
-];
-
-const fitTypes = [
-  'Slim Fit', 'Classic Fit', 'Regular Fit', 'Tailored Fit', 'Modern Fit'
-];
-
-const occasions = [
-  'Business', 'Formal', 'Wedding', 'Casual', 'Evening', 'Special Events'
-];
-
-const commonFeatures = [
-  'Wrinkle Resistant', 'Moisture Wicking', 'Stretch Fabric', 'Easy Care',
-  'Breathable', 'Stain Resistant', 'Non-Iron', 'Quick Dry'
-];
 
 export const ProductManagement = () => {
   const { toast } = useToast();
@@ -196,42 +76,6 @@ export const ProductManagement = () => {
   const [recentProducts, setRecentProducts] = useState<any[]>([]);
   const [loadingRecent, setLoadingRecent] = useState(false);
 
-  // AI Analysis state
-  const [aiAnalyzing, setAiAnalyzing] = useState(false);
-  const [analysisResults, setAnalysisResults] = useState<ImageAnalysisResult | null>(null);
-  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
-
-  // Variant management
-  const [editingVariant, setEditingVariant] = useState<ProductVariant | null>(null);
-  const [showVariantDialog, setShowVariantDialog] = useState(false);
-  const [bulkVariantOperation, setBulkVariantOperation] = useState<'update_prices' | 'update_inventory' | 'create_sizes' | null>(null);
-
-  // Enhanced features state
-  const [showAdvancedFeatures, setShowAdvancedFeatures] = useState(false);
-  const [validationResults, setValidationResults] = useState<any>(null);
-  const [generatingContent, setGeneratingContent] = useState(false);
-  const [formData, setFormData] = useState<ProductFormData>({
-    sku: '',
-    name: '',
-    description: '',
-    category: '',
-    product_type: 'catalog',
-    base_price: 0,
-    stripe_product_id: '',
-    status: 'active',
-    is_bundleable: true,
-    images: [],
-    available_colors: [],
-    variants: [],
-    materials: '',
-    care_instructions: '',
-    fit_type: '',
-    occasion: '',
-    features: [],
-    meta_title: '',
-    meta_description: '',
-    url_slug: ''
-  });
 
   useEffect(() => {
     loadProducts();
@@ -240,17 +84,17 @@ export const ProductManagement = () => {
     // Test storage bucket on component mount
     testStorageBucket().then(result => {
       if (!result.success) {
-        console.error('🚨 Storage bucket test failed:', result.error);
+        logger.error('Storage bucket test failed:', result.error);
         toast({
           title: "Storage Configuration Issue",
           description: `Storage test failed: ${result.error}`,
           variant: "destructive"
         });
       } else {
-        console.log('✅ Storage bucket test passed:', result.message);
+        logger.debug('Storage bucket test passed:', result.message);
       }
     }).catch(error => {
-      console.error('Storage test error:', error);
+      logger.error('Storage test error:', error);
     });
   }, []);
 
@@ -265,7 +109,6 @@ export const ProductManagement = () => {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      console.log('🔍 Loading products with pagination...');
       
       const offset = (currentPage - 1) * pageSize;
       
@@ -283,7 +126,7 @@ export const ProductManagement = () => {
       });
 
       if (!result.success) {
-        console.error('❌ Products fetch error:', result.error);
+        logger.error('Products fetch error:', result.error);
         setProducts([]);
         setTotalCount(0);
         toast({
@@ -294,7 +137,6 @@ export const ProductManagement = () => {
         return;
       }
       
-      console.log('✅ Products loaded successfully:', result.data?.length || 0, 'items (total:', result.totalCount, ')');
       
       setProducts(result.data || []);
       setTotalCount(result.totalCount || 0);
@@ -307,7 +149,7 @@ export const ProductManagement = () => {
       }
       
     } catch (error) {
-      console.error('💥 Error loading products:', error);
+      logger.error('Error loading products:', error);
       setProducts([]);
       setTotalCount(0);
       toast({
@@ -328,14 +170,14 @@ export const ProductManagement = () => {
         setRecentProducts(result.data);
       }
     } catch (error) {
-      console.error('Error loading recent products:', error);
+      logger.error('Error loading recent products:', error);
     } finally {
       setLoadingRecent(false);
     }
   };
 
   // Quick action handlers
-  const handleQuickToggle = async (productId: string) => {
+  const handleQuickToggle = useCallback(async (productId: string) => {
     try {
       const result = await toggleProductStatus(productId);
       if (result.success) {
@@ -348,16 +190,16 @@ export const ProductManagement = () => {
         throw new Error(result.error || 'Failed to toggle status');
       }
     } catch (error) {
-      console.error('Quick toggle error:', error);
+      logger.error('Quick toggle error:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : 'Failed to toggle product status',
         variant: "destructive"
       });
     }
-  };
+  }, [toast]);
 
-  const handleQuickDuplicate = async (productId: string) => {
+  const handleQuickDuplicate = useCallback(async (productId: string) => {
     try {
       const result = await duplicateProduct(productId);
       if (result.success) {
@@ -371,17 +213,17 @@ export const ProductManagement = () => {
         throw new Error(result.error || 'Failed to duplicate product');
       }
     } catch (error) {
-      console.error('Quick duplicate error:', error);
+      logger.error('Quick duplicate error:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : 'Failed to duplicate product',
         variant: "destructive"
       });
     }
-  };
+  }, [toast]);
 
-  // Pagination handlers
-  const totalPages = Math.ceil(totalCount / pageSize);
+  // Pagination handlers - memoize expensive calculation
+  const totalPages = useMemo(() => Math.ceil(totalCount / pageSize), [totalCount, pageSize]);
   
   const handlePrevPage = () => {
     if (currentPage > 1) {
@@ -400,13 +242,13 @@ export const ProductManagement = () => {
   };
 
   // Smart filter handlers
-  const handleSmartFilterToggle = (filterKey: keyof typeof smartFilters) => {
+  const handleSmartFilterToggle = useCallback((filterKey: keyof typeof smartFilters) => {
     setSmartFilters(prev => ({
       ...prev,
       [filterKey]: !prev[filterKey]
     }));
     setCurrentPage(1); // Reset to first page when filtering
-  };
+  }, [smartFilters]);
 
   // Calculate smart filter counts (for display)
   const smartFilterCounts = useMemo(() => {
@@ -422,21 +264,26 @@ export const ProductManagement = () => {
     };
   }, [products]);
 
-  const handleSelectProduct = (productId: string) => {
+  // Memoize filtered products by status for performance
+  const activeProductsCount = useMemo(() => {
+    return products.filter(p => p.status === 'active').length;
+  }, [products]);
+
+  const handleSelectProduct = useCallback((productId: string) => {
     setSelectedProducts(prev =>
       prev.includes(productId)
         ? prev.filter(id => id !== productId)
         : [...prev, productId]
     );
-  };
+  }, []);
 
-  const handleSelectAll = () => {
+  const handleSelectAll = useCallback(() => {
     if (selectedProducts.length === products.length) {
       setSelectedProducts([]);
     } else {
       setSelectedProducts(products.map(p => p.id));
     }
-  };
+  }, [selectedProducts.length, products]);
 
   const handleBulkAction = async (action: 'activate' | 'deactivate' | 'delete' | 'feature' | 'unfeature') => {
     if (selectedProducts.length === 0) {
@@ -497,7 +344,7 @@ export const ProductManagement = () => {
       await loadProducts(); // Reload to show changes
       setSelectedProducts([]);
     } catch (error) {
-      console.error('Bulk action error:', error);
+      logger.error('Bulk action error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Error",
@@ -507,70 +354,20 @@ export const ProductManagement = () => {
     }
   };
 
-  const handleAddProduct = async () => {
-    // Validation with null checks
-    if (!formData.name || typeof formData.name !== 'string' || !formData.name.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Product name is required",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!formData.category || typeof formData.category !== 'string' || !formData.category.trim()) {
-      toast({
-        title: "Validation Error", 
-        description: "Product category is required",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!formData.base_price || formData.base_price <= 0) {
-      toast({
-        title: "Validation Error",
-        description: "Base price must be greater than 0",
-        variant: "destructive"
-      });
-      return;
-    }
-
+  const handleAddProductSubmit = useCallback(async (productData: Partial<Product>) => {
     try {
-      // Prepare product data with proper field mapping and null checks
-      const productData = {
-        sku: formData.sku || `SKU-${Date.now()}`,
-        name: formData.name && typeof formData.name === 'string' ? formData.name.trim() : '',
-        description: formData.description && typeof formData.description === 'string' ? formData.description.trim() : null,
-        category: formData.category && typeof formData.category === 'string' ? formData.category.trim() : '',
-        // Map product_type to correct field - use subcategory if it exists in schema
-        ...(formData.product_type && { subcategory: formData.product_type }),
-        base_price: formData.base_price,
-        status: formData.status || 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        images: formData.images.map((img, index) => ({
-          url: img.url,
-          position: img.position ?? index,
-          alt_text: img.alt_text || '',
-          image_type: img.is_primary ? 'primary' : 'gallery'
-        }))
-      };
-
-      console.log('🔄 Creating product with data:', productData);
 
       const result = await createProductWithImages(productData);
 
       if (!result.success || !result.data) {
-        console.error('❌ Create failed:', result.error);
+        logger.error('Create failed:', result.error);
         throw new Error(result.error || 'Failed to create product');
       }
 
-      console.log('✅ Product created successfully:', result.data);
 
       // Add variants if any
-      if (formData.variants && formData.variants.length > 0) {
-        const variantsToInsert = formData.variants.map(variant => ({
+      if (productData.variants && productData.variants.length > 0) {
+        const variantsToInsert = productData.variants.map(variant => ({
           product_id: result.data.id,
           size: variant.size,
           color: variant.color,
@@ -592,27 +389,26 @@ export const ProductManagement = () => {
           .insert(variantsToInsert);
 
         if (variantsError) {
-          console.warn('Failed to add variants:', variantsError);
+          logger.warn('Failed to add variants:', variantsError);
           toast({
             title: "Partial Success",
             description: "Product created but some variants failed to save",
             variant: "default"
           });
         } else {
-          console.log(`✅ Created ${variantsToInsert.length} variants successfully`);
         }
       }
 
       toast({
         title: "Success",
-        description: `Product "${formData.name}" added successfully`
+        description: `Product "${productData.name}" added successfully`
       });
 
       setShowAddDialog(false);
-      resetForm();
+      setEditingProduct(null);
       await loadProducts(); // Reload products to show the new one
     } catch (error) {
-      console.error('💥 Error adding product:', error);
+      logger.error('Error adding product:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Error",
@@ -620,81 +416,31 @@ export const ProductManagement = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [toast, loadProducts]);
 
-  const handleEditProduct = async () => {
+  const handleEditProductSubmit = useCallback(async (productData: Partial<Product>) => {
     if (!editingProduct) return;
 
-    // Validation with null checks
-    if (!formData.name || typeof formData.name !== 'string' || !formData.name.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Product name is required",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!formData.category || typeof formData.category !== 'string' || !formData.category.trim()) {
-      toast({
-        title: "Validation Error", 
-        description: "Product category is required",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!formData.base_price || formData.base_price <= 0) {
-      toast({
-        title: "Validation Error",
-        description: "Base price must be greater than 0",
-        variant: "destructive"
-      });
-      return;
-    }
-
     try {
-      // Prepare update data with null checks and proper field mapping
-      const updateData = {
-        name: formData.name && typeof formData.name === 'string' ? formData.name.trim() : '',
-        description: formData.description && typeof formData.description === 'string' ? formData.description.trim() : null,
-        category: formData.category && typeof formData.category === 'string' ? formData.category.trim() : '',
-        // Map product_type to correct field - use subcategory if it exists in schema
-        ...(formData.product_type && { subcategory: formData.product_type }),
-        base_price: formData.base_price,
-        status: formData.status || 'active',
-        sku: formData.sku || editingProduct.sku,
-        updated_at: new Date().toISOString(),
-        images: formData.images.map((img, index) => ({
-          url: img.url,
-          position: img.position ?? index,
-          alt_text: img.alt_text || '',
-          image_type: img.is_primary ? 'primary' : 'gallery'
-        }))
-      };
 
-      console.log('🔄 Updating product with data:', updateData);
-
-      const result = await updateProductWithImages(editingProduct.id, updateData);
+      const result = await updateProductWithImages(editingProduct.id, productData);
 
       if (!result.success) {
-        console.error('❌ Update failed:', result.error);
+        logger.error('Update failed:', result.error);
         throw new Error(result.error || 'Failed to update product');
       }
 
-      console.log('✅ Product updated successfully:', result.data);
 
       toast({
         title: "Success",
-        description: `Product "${formData.name}" updated successfully`
+        description: `Product "${productData.name}" updated successfully`
       });
 
       setEditingProduct(null);
-      resetForm();
       setShowAddDialog(false);
       await loadProducts(); // Reload products to show changes
     } catch (error) {
-      console.error('💥 Error updating product:', error);
+      logger.error('Error updating product:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Error",
@@ -702,7 +448,7 @@ export const ProductManagement = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [editingProduct, toast, loadProducts]);
 
   const handleDeleteProduct = async (productId: string) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
@@ -724,7 +470,7 @@ export const ProductManagement = () => {
 
       loadProducts();
     } catch (error) {
-      console.error('Error deleting product:', error);
+      logger.error('Error deleting product:', error);
       toast({
         title: "Error",
         description: "Failed to delete product",
@@ -733,1192 +479,11 @@ export const ProductManagement = () => {
     }
   };
 
-  // Size templates for different product types
-  const generateSizeTemplate = (productType: string) => {
-    const templates: Record<string, ProductVariant[]> = {
-      '3-piece-suit': generateSuitSizes(true),
-      '2-piece-suit': generateSuitSizes(false),
-      'blazer': generateBlazerSizes(),
-      'dress-shirt': generateDressShirtSizes()
-    };
-    
-    return templates[productType] || [];
-  };
-
-  const generateSuitSizes = (isThreePiece: boolean): ProductVariant[] => {
-    const jacketSizes = [34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54];
-    const lengths = ['S', 'R', 'L'];
-    const variants: ProductVariant[] = [];
-
-    jacketSizes.forEach(size => {
-      lengths.forEach(length => {
-        // Check availability based on length restrictions
-        if (length === 'S' && size > 50) return;
-        if (length === 'L' && size < 38) return;
-
-        const jacketSize = `${size}${length}`;
-        const pantSize = `${size - 6}W`; // 6 drop for pants
-        
-        // Jacket variant
-        variants.push({
-          size: jacketSize,
-          color: 'Navy', // Default color
-          sku: `JACKET-${jacketSize}-NAV`,
-          price: formData.base_price,
-          stock_quantity: 0
-        });
-
-        // Pants variant
-        variants.push({
-          size: `${jacketSize} + ${pantSize}`,
-          color: 'Navy',
-          sku: `PANTS-${pantSize}-NAV`,
-          price: 0, // Usually included with jacket
-          stock_quantity: 0
-        });
-
-        // Vest variant for 3-piece suits
-        if (isThreePiece) {
-          variants.push({
-            size: jacketSize,
-            color: 'Navy',
-            sku: `VEST-${jacketSize}-NAV`,
-            price: 0, // Usually included
-            stock_quantity: 0
-          });
-        }
-      });
-    });
-
-    return variants;
-  };
-
-  const generateBlazerSizes = (): ProductVariant[] => {
-    const jacketSizes = [34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54];
-    const lengths = ['S', 'R', 'L'];
-    const variants: ProductVariant[] = [];
-
-    jacketSizes.forEach(size => {
-      lengths.forEach(length => {
-        // Check availability based on length restrictions
-        if (length === 'S' && size > 50) return;
-        if (length === 'L' && size < 38) return;
-
-        const blazerSize = `${size}${length}`;
-        
-        variants.push({
-          size: blazerSize,
-          color: 'Navy', // Default color
-          sku: `BLAZER-${blazerSize}-NAV`,
-          price: formData.base_price,
-          stock_quantity: 0
-        });
-      });
-    });
-
-    return variants;
-  };
-
-  const generateDressShirtSizes = (): ProductVariant[] => {
-    const variants: ProductVariant[] = [];
-    
-    // Slim Fit Sizes
-    const slimFitSizes = [
-      { neck: '15"', size: 'S' },
-      { neck: '15.5"', size: 'M' },
-      { neck: '16"', size: 'L' },
-      { neck: '16.5"', size: 'XL' },
-      { neck: '17"', size: 'XXL' }
-    ];
-
-    slimFitSizes.forEach(({ neck, size }) => {
-      variants.push({
-        size: `${neck} Slim ${size}`,
-        color: 'White', // Default color
-        sku: `SHIRT-SLIM-${neck.replace('"', '')}-WHT`,
-        price: formData.base_price,
-        stock_quantity: 0
-      });
-    });
-
-    // Classic Fit Sizes
-    const classicFitNecks = ['15"', '15.5"', '16"', '16.5"', '17"', '17.5"', '18"', '18.5"', '19"', '19.5"', '20"', '22"'];
-    const sleeveLengths = ['32-33', '34-35', '36-37'];
-
-    classicFitNecks.forEach(neck => {
-      sleeveLengths.forEach(sleeve => {
-        variants.push({
-          size: `${neck} ${sleeve} Classic`,
-          color: 'White',
-          sku: `SHIRT-CLASSIC-${neck.replace('"', '')}-${sleeve.replace('-', '')}-WHT`,
-          price: formData.base_price,
-          stock_quantity: 0
-        });
-      });
-    });
-
-    return variants;
-  };
-
-  const handleApplySizeTemplate = () => {
-    const templateVariants = generateSizeTemplate(formData.product_type);
-    setFormData(prev => ({
-      ...prev,
-      variants: templateVariants
-    }));
-    
-    toast({
-      title: "Size Template Applied",
-      description: `Added ${templateVariants.length} size variants for ${formData.product_type}`
-    });
-  };
-
-  // Generate variants from colors and sizes (enhanced version)
-  const generateVariants = () => {
-    if (formData.available_colors.length === 0) {
-      toast({
-        title: "No Colors Selected",
-        description: "Please select colors before generating variants",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Get base sizes from existing variants or generate standard sizes
-    const baseSizes = formData.variants.length > 0 
-      ? [...new Set(formData.variants.map(v => v.size))]
-      : ['S', 'M', 'L', 'XL', 'XXL']; // Default sizes if none exist
-    
-    bulkCreateSizes(baseSizes, formData.available_colors);
-  };
-
-  // Auto-generate URL slug from product name
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-  };
-
-  // Handle color selection
-  const handleColorChange = (color: string, checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      available_colors: checked 
-        ? [...prev.available_colors, color]
-        : prev.available_colors.filter(c => c !== color)
-    }));
-  };
-
-  // Handle features selection
-  const handleFeatureChange = (feature: string, checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      features: checked 
-        ? [...prev.features, feature]
-        : prev.features.filter(f => f !== feature)
-    }));
-  };
-
-  // === AI ANALYSIS FUNCTIONS ===
-
-  const analyzeProductImages = async () => {
-    if (!formData.images || formData.images.length === 0) {
-      toast({
-        title: "No Images",
-        description: "Please add product images before analyzing",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      setAiAnalyzing(true);
-      const primaryImage = formData.images.find(img => img.is_primary) || formData.images[0];
-      
-      const result = await fashionClip.analyzeImage(primaryImage.url, {
-        includeDescription: true,
-        includeSuggestions: true,
-        category: formData.category
-      });
-
-      if (result.success && result.data) {
-        setAnalysisResults(result.data);
-        setShowAnalysisModal(true);
-        
-        toast({
-          title: "Analysis Complete",
-          description: "AI analysis completed successfully. Review the suggestions.",
-        });
-      } else {
-        throw new Error(result.error || 'Analysis failed');
-      }
-    } catch (error) {
-      console.error('AI analysis failed:', error);
-      toast({
-        title: "Analysis Failed",
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-        variant: "destructive"
-      });
-    } finally {
-      setAiAnalyzing(false);
-    }
-  };
-
-  const applyAIAnalysis = () => {
-    if (!analysisResults) return;
-
-    // Auto-fill based on analysis
-    setFormData(prev => ({
-      ...prev,
-      category: analysisResults.category || prev.category,
-      product_type: analysisResults.product_type as any || prev.product_type,
-      available_colors: analysisResults.colors.all_colors || prev.available_colors,
-      materials: analysisResults.materials.primary || prev.materials,
-      fit_type: analysisResults.style.fit_type || prev.fit_type,
-      occasion: analysisResults.occasions.join(', ') || prev.occasion,
-      features: [...prev.features, ...analysisResults.features],
-      description: analysisResults.suggested_description || prev.description,
-      meta_title: prev.meta_title || `${analysisResults.suggested_name} | KCT Menswear`,
-      meta_description: prev.meta_description || analysisResults.suggested_description?.substring(0, 160)
-    }));
-
-    setShowAnalysisModal(false);
-    toast({
-      title: "Applied Analysis",
-      description: "Product information has been updated with AI suggestions",
-    });
-  };
-
-  const generateProductContent = async () => {
-    if (!formData.name || !formData.category) {
-      toast({
-        title: "Missing Information",
-        description: "Please enter product name and category first",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      setGeneratingContent(true);
-      
-      const result = await kctIntelligence.generateDescriptionEnhanced({
-        name: formData.name,
-        category: formData.category,
-        materials: formData.materials ? [formData.materials] : undefined,
-        fit_type: formData.fit_type,
-        price: formData.base_price,
-        images: formData.images.map(img => img.url)
-      });
-
-      if (result.success && result.data) {
-        setFormData(prev => ({
-          ...prev,
-          description: result.data.description || prev.description,
-          meta_description: result.data.seo_description || prev.meta_description,
-          features: [...prev.features, ...result.data.key_features],
-        }));
-
-        toast({
-          title: "Content Generated",
-          description: `AI-generated content applied (${result.data.generated_by}, ${Math.round(result.data.confidence * 100)}% confidence)`,
-        });
-      }
-    } catch (error) {
-      console.error('Content generation failed:', error);
-      toast({
-        title: "Generation Failed",
-        description: "Failed to generate content. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setGeneratingContent(false);
-    }
-  };
-
-  const validateProduct = async () => {
-    try {
-      const result = await kctIntelligence.validateProductEnhanced(formData);
-      if (result.success) {
-        setValidationResults(result.data);
-        toast({
-          title: "Validation Complete",
-          description: `Quality score: ${result.data.quality_score}% (${result.data.completeness * 100}% complete)`,
-          variant: result.data.isValid ? "default" : "destructive"
-        });
-      }
-    } catch (error) {
-      console.error('Validation failed:', error);
-    }
-  };
-
-  // === VARIANT MANAGEMENT FUNCTIONS ===
-
-  const createVariant = (variant: Partial<ProductVariant>) => {
-    const newVariant: ProductVariant = {
-      size: variant.size || '',
-      color: variant.color || 'Default',
-      sku: variant.sku || `${formData.sku}-${variant.size}-${variant.color}`,
-      price: variant.price || formData.base_price,
-      stock_quantity: variant.stock_quantity || 0,
-      inventory_policy: 'deny',
-      status: 'active',
-      position: formData.variants.length,
-      ...variant
-    };
-
-    setFormData(prev => ({
-      ...prev,
-      variants: [...prev.variants, newVariant]
-    }));
-  };
-
-  const updateVariant = (index: number, updates: Partial<ProductVariant>) => {
-    setFormData(prev => ({
-      ...prev,
-      variants: prev.variants.map((variant, i) => 
-        i === index ? { ...variant, ...updates } : variant
-      )
-    }));
-  };
-
-  const deleteVariant = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      variants: prev.variants.filter((_, i) => i !== index)
-    }));
-  };
-
-  const bulkCreateSizes = (sizes: string[], colors: string[]) => {
-    const newVariants: ProductVariant[] = [];
-    
-    sizes.forEach(size => {
-      colors.forEach(color => {
-        // Check if variant already exists
-        const exists = formData.variants.some(v => v.size === size && v.color === color);
-        if (!exists) {
-          newVariants.push({
-            size,
-            color,
-            sku: `${formData.sku}-${size.replace(/\s+/g, '')}-${color.substring(0, 3).toUpperCase()}`,
-            price: formData.base_price,
-            stock_quantity: 0,
-            inventory_policy: 'deny',
-            status: 'active',
-            position: formData.variants.length + newVariants.length
-          });
-        }
-      });
-    });
-
-    setFormData(prev => ({
-      ...prev,
-      variants: [...prev.variants, ...newVariants]
-    }));
-
-    toast({
-      title: "Bulk Variants Created",
-      description: `Created ${newVariants.length} new variants`,
-    });
-  };
-
-  const bulkUpdateVariantPrices = (newPrice: number, applyMarkup?: number) => {
-    setFormData(prev => ({
-      ...prev,
-      variants: prev.variants.map(variant => ({
-        ...variant,
-        price: applyMarkup ? newPrice * (1 + applyMarkup / 100) : newPrice
-      }))
-    }));
-  };
-
-  const bulkUpdateInventory = (quantity: number) => {
-    setFormData(prev => ({
-      ...prev,
-      variants: prev.variants.map(variant => ({
-        ...variant,
-        stock_quantity: quantity
-      }))
-    }));
-  };
-
-  const importVariantsFromCSV = async (file: File) => {
-    // This would implement CSV parsing for bulk variant import
-    toast({
-      title: "Feature Coming Soon",
-      description: "CSV import functionality will be available soon",
-    });
-  };
-
-  // Bulk edit variant prices
-  const bulkEditVariantPrices = (newPrice: number) => {
-    setFormData(prev => ({
-      ...prev,
-      variants: prev.variants.map(variant => ({
-        ...variant,
-        price: newPrice
-      }))
-    }));
-  };
-
-  // Handle image changes from the draggable gallery
-  const handleImagesChange = (newImages: ProductImage[]) => {
-    setFormData(prev => ({
-      ...prev,
-      images: newImages
-    }));
-  };
-
-  const resetForm = () => {
-    setFormData({
-      sku: '',
-      name: '',
-      description: '',
-      category: '',
-      product_type: 'catalog',
-      base_price: 0,
-      stripe_product_id: '',
-      status: 'active',
-      is_bundleable: true,
-      images: [],
-      available_colors: [],
-      variants: [],
-      materials: '',
-      care_instructions: '',
-      fit_type: '',
-      occasion: '',
-      features: [],
-      meta_title: '',
-      meta_description: '',
-      url_slug: ''
-    });
-  };
-
-  const openEditDialog = (product: Product) => {
+  const openEditDialog = useCallback((product: Product) => {
     setEditingProduct(product);
-    
-    // Convert product images to form format
-    const productImages: ProductImage[] = product.images?.map((img: any, index: number) => ({
-      id: img.id,
-      url: img.image_url || img.url || '',
-      alt_text: img.alt_text || '',
-      position: img.position || index,
-      is_primary: img.image_type === 'primary' || index === 0,
-      image_type: img.image_type || (index === 0 ? 'primary' : 'gallery')
-    })) || [];
-
-    setFormData({
-      sku: product.sku || '',
-      name: product.name,
-      description: product.description || '',
-      category: product.category,
-      product_type: product.product_type,
-      base_price: product.base_price,
-      stripe_product_id: product.stripe_product_id || '',
-      status: product.status,
-      is_bundleable: product.is_bundleable,
-      images: productImages,
-      available_colors: [],
-      variants: [],
-      materials: '',
-      care_instructions: '',
-      fit_type: '',
-      occasion: '',
-      features: [],
-      meta_title: '',
-      meta_description: '',
-      url_slug: ''
-    });
     setShowAddDialog(true);
-  };
+  }, []);
 
-  const ProductForm = () => (
-    <Tabs defaultValue="basic" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-6">
-        <TabsTrigger value="basic" className="flex items-center gap-2">
-          <Package className="h-4 w-4" />
-          Basic
-        </TabsTrigger>
-        <TabsTrigger value="images" className="flex items-center gap-2">
-          <Image className="h-4 w-4" />
-          Images
-        </TabsTrigger>
-        <TabsTrigger value="variants" className="flex items-center gap-2">
-          <Ruler className="h-4 w-4" />
-          Variants
-        </TabsTrigger>
-        <TabsTrigger value="attributes" className="flex items-center gap-2">
-          <Shirt className="h-4 w-4" />
-          Details
-        </TabsTrigger>
-        <TabsTrigger value="seo" className="flex items-center gap-2">
-          <Globe className="h-4 w-4" />
-          SEO
-        </TabsTrigger>
-        <TabsTrigger value="preview" className="flex items-center gap-2">
-          <Eye className="h-4 w-4" />
-          Preview
-        </TabsTrigger>
-      </TabsList>
-
-      {/* Basic Information Tab */}
-      <TabsContent value="basic" className="space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="sku">SKU *</Label>
-            <Input
-              id="sku"
-              type="text"
-              value={formData.sku}
-              onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
-              placeholder="Enter unique SKU"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="name">Product Name *</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => {
-                const name = e.target.value;
-                setFormData(prev => ({ 
-                  ...prev, 
-                  name,
-                  meta_title: prev.meta_title || name,
-                  url_slug: prev.url_slug || generateSlug(name)
-                }));
-              }}
-              placeholder="Enter product name"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="category">Category *</Label>
-            <Select
-              value={formData.category}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category}>{category}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="product_type">Product Type *</Label>
-            <Select
-              value={formData.product_type}
-              onValueChange={(value: any) => setFormData(prev => ({ ...prev, product_type: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                {productTypes.map(type => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="base_price">Base Price ($) *</Label>
-            <Input
-              id="base_price"
-              type="number"
-              step="0.01"
-              value={formData.base_price}
-              onChange={(e) => setFormData(prev => ({ ...prev, base_price: parseFloat(e.target.value) || 0 }))}
-              placeholder="0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="stripe_product_id">Stripe Product ID</Label>
-            <Input
-              id="stripe_product_id"
-              value={formData.stripe_product_id}
-              onChange={(e) => setFormData(prev => ({ ...prev, stripe_product_id: e.target.value }))}
-              placeholder="prod_1234567890"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            value={formData.description}
-            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            placeholder="Enter detailed product description"
-            rows={4}
-          />
-        </div>
-
-        <div className="flex items-center space-x-6">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="is_bundleable"
-              checked={formData.is_bundleable}
-              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_bundleable: checked as boolean }))}
-            />
-            <Label htmlFor="is_bundleable">Bundleable</Label>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value: 'active' | 'inactive' | 'archived') => setFormData(prev => ({ ...prev, status: value }))}
-            >
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </TabsContent>
-
-      {/* Images Tab */}
-      <TabsContent value="images" className="space-y-6">
-        <DraggableImageGallery
-          images={formData.images}
-          onImagesChange={handleImagesChange}
-          productId={editingProduct?.id}
-          maxImages={10}
-          allowUpload={true}
-        />
-      </TabsContent>
-
-      {/* Enhanced Variants Tab */}
-      <TabsContent value="variants" className="space-y-6">
-        <div className="space-y-6">
-          {/* AI-Powered Analysis Section */}
-          <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-medium flex items-center gap-2">
-                  <Palette className="h-5 w-5" />
-                  AI-Powered Product Analysis
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Let AI analyze your product images to suggest colors, materials, and features
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={analyzeProductImages}
-                  disabled={aiAnalyzing || formData.images.length === 0}
-                >
-                  {aiAnalyzing ? <Clock className="h-4 w-4 mr-2 animate-spin" /> : <Eye className="h-4 w-4 mr-2" />}
-                  {aiAnalyzing ? 'Analyzing...' : 'Analyze Images'}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={generateProductContent}
-                  disabled={generatingContent || !formData.name}
-                >
-                  {generatingContent ? <Clock className="h-4 w-4 mr-2 animate-spin" /> : <Tag className="h-4 w-4 mr-2" />}
-                  {generatingContent ? 'Generating...' : 'Generate Content'}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={validateProduct}
-                >
-                  <AlertTriangle className="h-4 w-4 mr-2" />
-                  Validate
-                </Button>
-              </div>
-            </div>
-            
-            {validationResults && (
-              <div className="bg-white rounded p-3 border">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium">Quality Score: {validationResults.quality_score}%</span>
-                  <Badge variant={validationResults.isValid ? "default" : "destructive"}>
-                    {Math.round(validationResults.completeness * 100)}% Complete
-                  </Badge>
-                </div>
-                {validationResults.recommendations?.length > 0 && (
-                  <div className="text-sm text-muted-foreground">
-                    <strong>Recommendations:</strong>
-                    <ul className="list-disc list-inside mt-1">
-                      {validationResults.recommendations.slice(0, 3).map((rec: string, idx: number) => (
-                        <li key={idx}>{rec}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Color Selection */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-medium">Available Colors</h3>
-                <p className="text-sm text-muted-foreground">Select colors available for this product</p>
-              </div>
-              {analysisResults && (
-                <Button variant="outline" size="sm" onClick={() => {
-                  setFormData(prev => ({
-                    ...prev,
-                    available_colors: [...new Set([...prev.available_colors, ...analysisResults.colors.all_colors])]
-                  }));
-                }}>
-                  Apply AI Colors
-                </Button>
-              )}
-            </div>
-            
-            <div className="grid grid-cols-4 gap-3">
-              {availableColors.map(color => (
-                <div key={color} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`color-${color}`}
-                    checked={formData.available_colors.includes(color)}
-                    onCheckedChange={(checked) => handleColorChange(color, checked as boolean)}
-                  />
-                  <Label htmlFor={`color-${color}`} className="flex items-center space-x-2">
-                    <div className={`w-4 h-4 rounded-full border ${color === 'White' ? 'border-gray-300' : 'border-gray-200'}`} 
-                         style={{backgroundColor: color.toLowerCase()}} />
-                    <span>{color}</span>
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Size Templates and Bulk Operations */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Size Templates */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Size Templates</h3>
-              {['3-piece-suit', '2-piece-suit', 'blazer', 'dress-shirt'].includes(formData.product_type) ? (
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    Apply pre-configured sizes for {formData.product_type.replace('-', ' ')}
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleApplySizeTemplate}
-                    disabled={!formData.base_price}
-                    size="sm"
-                  >
-                    <Package className="h-4 w-4 mr-2" />
-                    Apply Size Template
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Manual size entry for {formData.product_type}</p>
-                  <div className="flex gap-2">
-                    <Input placeholder="Enter size (e.g., S, M, L)" className="flex-1" />
-                    <Button size="sm" onClick={() => {
-                      // This would add a custom size
-                      toast({ title: "Custom sizes", description: "Feature coming soon" });
-                    }}>
-                      Add
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Bulk Operations */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Bulk Operations</h3>
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <Input 
-                    type="number" 
-                    placeholder="Price" 
-                    className="w-24" 
-                    step="0.01"
-                  />
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={(e) => {
-                      const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                      const price = parseFloat(input.value);
-                      if (price > 0) {
-                        bulkUpdateVariantPrices(price);
-                        toast({ title: "Updated", description: "All variant prices updated" });
-                      }
-                    }}
-                  >
-                    Update All Prices
-                  </Button>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Input 
-                    type="number" 
-                    placeholder="Inventory" 
-                    className="w-24" 
-                  />
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={(e) => {
-                      const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                      const qty = parseInt(input.value);
-                      if (qty >= 0) {
-                        bulkUpdateInventory(qty);
-                        toast({ title: "Updated", description: "All variant inventory updated" });
-                      }
-                    }}
-                  >
-                    Update All Inventory
-                  </Button>
-                </div>
-
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={generateVariants}
-                  disabled={formData.available_colors.length === 0}
-                >
-                  <DollarSign className="h-4 w-4 mr-2" />
-                  Generate All Variants
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Enhanced Variants List */}
-          {formData.variants.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium">Product Variants ({formData.variants.length})</h4>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setFormData(prev => ({ ...prev, variants: [] }))}
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Clear All
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="max-h-80 overflow-y-auto border rounded-md">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-white">
-                    <TableRow>
-                      <TableHead>Size</TableHead>
-                      <TableHead>Color</TableHead>
-                      <TableHead>SKU</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Cost</TableHead>
-                      <TableHead>Inventory</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {formData.variants.map((variant, index) => (
-                      <TableRow key={index} className="hover:bg-muted/50">
-                        <TableCell className="font-medium">{variant.size}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className="w-4 h-4 rounded-full border" 
-                              style={{backgroundColor: variant.color.toLowerCase()}} 
-                            />
-                            {variant.color}
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">{variant.sku}</TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={variant.price}
-                            onChange={(e) => updateVariant(index, { price: parseFloat(e.target.value) || 0 })}
-                            className="w-20"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={variant.cost_price || ''}
-                            onChange={(e) => updateVariant(index, { cost_price: parseFloat(e.target.value) || undefined })}
-                            className="w-20"
-                            placeholder="Cost"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={variant.stock_quantity}
-                            onChange={(e) => updateVariant(index, { stock_quantity: parseInt(e.target.value) || 0 })}
-                            className="w-20"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Select 
-                            value={variant.status || 'active'} 
-                            onValueChange={(value: 'active' | 'inactive' | 'archived') => updateVariant(index, { status: value })}
-                          >
-                            <SelectTrigger className="w-24">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="active">Active</SelectItem>
-                              <SelectItem value="inactive">Inactive</SelectItem>
-                              <SelectItem value="archived">Archived</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deleteVariant(index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          )}
-        </div>
-      </TabsContent>
-
-      {/* Details Tab */}
-      <TabsContent value="attributes" className="space-y-6">
-        <div className="grid grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="materials">Materials & Fabric</Label>
-              <Textarea
-                id="materials"
-                value={formData.materials}
-                onChange={(e) => setFormData(prev => ({ ...prev, materials: e.target.value }))}
-                placeholder="e.g., 100% Wool, Super 120s"
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="care_instructions">Care Instructions</Label>
-              <Textarea
-                id="care_instructions"
-                value={formData.care_instructions}
-                onChange={(e) => setFormData(prev => ({ ...prev, care_instructions: e.target.value }))}
-                placeholder="e.g., Dry clean only"
-                rows={3}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="fit_type">Fit Type</Label>
-              <Select
-                value={formData.fit_type}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, fit_type: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select fit type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {fitTypes.map(fit => (
-                    <SelectItem key={fit} value={fit}>{fit}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="occasion">Occasion</Label>
-              <Select
-                value={formData.occasion}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, occasion: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select occasion" />
-                </SelectTrigger>
-                <SelectContent>
-                  {occasions.map(occasion => (
-                    <SelectItem key={occasion} value={occasion}>{occasion}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Features</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {commonFeatures.map(feature => (
-                  <div key={feature} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`feature-${feature}`}
-                      checked={formData.features.includes(feature)}
-                      onCheckedChange={(checked) => handleFeatureChange(feature, checked as boolean)}
-                    />
-                    <Label htmlFor={`feature-${feature}`} className="text-sm">{feature}</Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </TabsContent>
-
-      {/* SEO Tab */}
-      <TabsContent value="seo" className="space-y-6">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="meta_title">Meta Title (0-60 characters)</Label>
-            <Input
-              id="meta_title"
-              value={formData.meta_title}
-              onChange={(e) => setFormData(prev => ({ ...prev, meta_title: e.target.value }))}
-              placeholder="SEO optimized title"
-              maxLength={60}
-            />
-            <div className="text-xs text-muted-foreground">
-              {formData.meta_title.length}/60 characters
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="meta_description">Meta Description (0-160 characters)</Label>
-            <Textarea
-              id="meta_description"
-              value={formData.meta_description}
-              onChange={(e) => setFormData(prev => ({ ...prev, meta_description: e.target.value }))}
-              placeholder="Brief description for search engines"
-              maxLength={160}
-              rows={3}
-            />
-            <div className="text-xs text-muted-foreground">
-              {formData.meta_description.length}/160 characters
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="url_slug">URL Slug</Label>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-muted-foreground">/products/</span>
-              <Input
-                id="url_slug"
-                value={formData.url_slug}
-                onChange={(e) => setFormData(prev => ({ ...prev, url_slug: e.target.value }))}
-                placeholder="product-url-slug"
-              />
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm"
-                onClick={() => setFormData(prev => ({ ...prev, url_slug: generateSlug(formData.name) }))}
-              >
-                Generate
-              </Button>
-            </div>
-          </div>
-        </div>
-      </TabsContent>
-
-      {/* Preview Tab */}
-      <TabsContent value="preview" className="space-y-6">
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Product Preview</h3>
-          <Card className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <h4 className="text-xl font-semibold">{formData.name || 'Product Name'}</h4>
-                  <Badge variant="outline">{formData.category}</Badge>
-                  <p className="text-2xl font-bold">${formData.base_price}</p>
-                </div>
-                <div className="w-32 h-32 bg-muted rounded-lg flex items-center justify-center">
-                  <Image className="h-8 w-8 text-muted-foreground" />
-                </div>
-              </div>
-
-              <p className="text-muted-foreground">{formData.description || 'Product description will appear here'}</p>
-
-              {formData.available_colors.length > 0 && (
-                <div className="space-y-2">
-                  <Label>Available Colors:</Label>
-                  <div className="flex gap-2">
-                    {formData.available_colors.map(color => (
-                      <div key={color} className="flex items-center space-x-1">
-                        <div className={`w-4 h-4 rounded-full border`} 
-                             style={{backgroundColor: color.toLowerCase()}} />
-                        <span className="text-sm">{color}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {formData.features.length > 0 && (
-                <div className="space-y-2">
-                  <Label>Features:</Label>
-                  <div className="flex flex-wrap gap-1">
-                    {formData.features.map(feature => (
-                      <Badge key={feature} variant="secondary">{feature}</Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {formData.variants.length > 0 && (
-                <div className="space-y-2">
-                  <Label>Available Sizes:</Label>
-                  <div className="text-sm text-muted-foreground">
-                    {formData.variants.length} variants available
-                  </div>
-                </div>
-              )}
-            </div>
-          </Card>
-        </div>
-      </TabsContent>
-
-      {/* Form Actions */}
-      <div className="flex justify-end space-x-2 pt-6 border-t">
-        <Button variant="outline" onClick={() => { setShowAddDialog(false); setEditingProduct(null); resetForm(); }}>
-          Cancel
-        </Button>
-        <Button onClick={editingProduct ? handleEditProduct : handleAddProduct}>
-          {editingProduct ? 'Update Product' : 'Add Product'}
-        </Button>
-      </div>
-    </Tabs>
-  );
 
   // Loading skeleton component for product rows
   const ProductRowSkeleton = () => (
@@ -2064,42 +629,6 @@ export const ProductManagement = () => {
     </div>
   );
 
-  const SmartFiltersBar = () => (
-    <div className="flex flex-wrap gap-2">
-      <Button
-        variant={smartFilters.lowStock ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleSmartFilterToggle('lowStock')}
-      >
-        <AlertTriangle className="h-4 w-4 mr-1" />
-        Low Stock ({smartFilterCounts.lowStock})
-      </Button>
-      <Button
-        variant={smartFilters.noImages ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleSmartFilterToggle('noImages')}
-      >
-        <ImageOff className="h-4 w-4 mr-1" />
-        No Images ({smartFilterCounts.noImages})
-      </Button>
-      <Button
-        variant={smartFilters.inactive ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleSmartFilterToggle('inactive')}
-      >
-        <EyeOff className="h-4 w-4 mr-1" />
-        Inactive ({smartFilterCounts.inactive})
-      </Button>
-      <Button
-        variant={smartFilters.recentlyUpdated ? "default" : "outline"}
-        size="sm"
-        onClick={() => handleSmartFilterToggle('recentlyUpdated')}
-      >
-        <Clock className="h-4 w-4 mr-1" />
-        Recent ({smartFilterCounts.recentlyUpdated})
-      </Button>
-    </div>
-  );
 
   const RecentProductsSection = () => (
     <Card>
@@ -2148,240 +677,6 @@ export const ProductManagement = () => {
     </Card>
   );
 
-  const ProductTableView = () => (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-12">
-              <Checkbox
-                checked={selectedProducts.length === products.length && products.length > 0}
-                onCheckedChange={handleSelectAll}
-              />
-            </TableHead>
-            <TableHead className="w-20">Image</TableHead>
-            <TableHead>Product</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Stock</TableHead>
-            <TableHead className="w-32">Quick Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {products.map((product) => (
-            <TableRow key={product.id}>
-              <TableCell>
-                <Checkbox
-                  checked={selectedProducts.includes(product.id)}
-                  onCheckedChange={() => handleSelectProduct(product.id)}
-                />
-              </TableCell>
-              <TableCell>
-                <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-100">
-                  <img
-                    src={getProductImageUrl(product)}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = '/placeholder.svg';
-                    }}
-                  />
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  <p className="font-medium">{product.name}</p>
-                  <p className="text-sm text-muted-foreground">{product.description?.slice(0, 60)}...</p>
-                </div>
-              </TableCell>
-              <TableCell>{product.category}</TableCell>
-              <TableCell>${product.base_price}</TableCell>
-              <TableCell>
-                <Badge variant={product.status === 'active' ? "default" : "secondary"}>
-                  {product.status}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline">
-                  {(product as any).total_inventory || 0}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleQuickToggle(product.id)}
-                    title={product.status === 'active' ? 'Deactivate' : 'Activate'}
-                  >
-                    {product.status === 'active' ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleQuickDuplicate(product.id)}
-                    title="Duplicate"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openEditDialog(product)}
-                    title="Edit"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  );
-
-  const ProductGridView = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {products.map((product) => (
-        <Card key={product.id} className="group hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
-            <div className="relative">
-              <div className="aspect-square rounded-md overflow-hidden bg-gray-100 mb-3">
-                <img
-                  src={getProductImageUrl(product)}
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  loading="lazy"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/placeholder.svg';
-                  }}
-                />
-              </div>
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Checkbox
-                  checked={selectedProducts.includes(product.id)}
-                  onCheckedChange={() => handleSelectProduct(product.id)}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-medium text-sm line-clamp-2">{product.name}</h3>
-              <div className="flex items-center justify-between">
-                <p className="text-lg font-bold">${product.base_price}</p>
-                <Badge variant={product.status === 'active' ? "default" : "secondary"} className="text-xs">
-                  {product.status}
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground">{product.category}</p>
-              <div className="flex justify-between items-center pt-2">
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleQuickToggle(product.id)}
-                  >
-                    {product.status === 'active' ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleQuickDuplicate(product.id)}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openEditDialog(product)}
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                </div>
-                <Badge variant="outline" className="text-xs">
-                  Stock: {(product as any).total_inventory || 0}
-                </Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-
-  const MobileCardsView = () => (
-    <div className={styles.mobileCards}>
-      {products.map((product) => (
-        <div key={product.id} className={styles.mobileCard}>
-          <div className={styles.mobileCardHeader}>
-            <Checkbox
-              checked={selectedProducts.includes(product.id)}
-              onCheckedChange={() => handleSelectProduct(product.id)}
-            />
-            <div className={styles.mobileCardImage}>
-              <img
-                src={getProductImageUrl(product)}
-                alt={product.name}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = '/placeholder.svg';
-                }}
-              />
-            </div>
-            <div className={styles.mobileCardInfo}>
-              <h3 className={styles.mobileCardTitle}>{product.name}</h3>
-              <p className={styles.mobileCardDescription}>
-                {product.description?.slice(0, 50)}...
-              </p>
-              <div className={styles.mobileCardMeta}>
-                <span className={`${styles.mobileCardBadge} text-xs px-2 py-1 rounded ${product.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                  {product.status}
-                </span>
-                <span className={`${styles.mobileCardBadge} text-xs px-2 py-1 rounded bg-blue-100 text-blue-800`}>
-                  {product.category}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className={styles.mobileCardActions}>
-            <div className={styles.mobilePrice}>${product.base_price}</div>
-            <div className={styles.mobileActionButtons}>
-              <button
-                className={styles.mobileActionButton}
-                onClick={() => handleQuickToggle(product.id)}
-                title={product.status === 'active' ? 'Deactivate' : 'Activate'}
-              >
-                {product.status === 'active' ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-              <button
-                className={styles.mobileActionButton}
-                onClick={() => handleQuickDuplicate(product.id)}
-                title="Duplicate"
-              >
-                <Copy size={16} />
-              </button>
-              <button
-                className={styles.mobileActionButton}
-                onClick={() => openEditDialog(product)}
-                title="Edit"
-              >
-                <Edit2 size={16} />
-              </button>
-            </div>
-          </div>
-          <div className="text-xs text-gray-500 mt-2 flex justify-between">
-            <span>Stock: {(product as any).total_inventory || 0}</span>
-            <span>Updated: {new Date(product.updated_at).toLocaleDateString()}</span>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -2392,7 +687,7 @@ export const ProductManagement = () => {
         </div>
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
           <DialogTrigger asChild>
-            <Button onClick={() => { resetForm(); setEditingProduct(null); }}>
+            <Button onClick={() => { setEditingProduct(null); }}>
               <Plus className="h-4 w-4 mr-2" />
               Add Product
             </Button>
@@ -2401,143 +696,16 @@ export const ProductManagement = () => {
             <DialogHeader>
               <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
             </DialogHeader>
-            <ProductForm />
+            <ProductForm 
+              product={editingProduct}
+              isOpen={showAddDialog}
+              onClose={() => { setShowAddDialog(false); setEditingProduct(null); }}
+              onSubmit={editingProduct ? handleEditProductSubmit : handleAddProductSubmit}
+              categories={categories}
+            />
           </DialogContent>
         </Dialog>
       </div>
-
-      {/* AI Analysis Results Modal */}
-      <Dialog open={showAnalysisModal} onOpenChange={setShowAnalysisModal}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>AI Product Analysis Results</DialogTitle>
-          </DialogHeader>
-          {analysisResults && (
-            <div className="space-y-6">
-              {/* Analysis Overview */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium">Detected Category</Label>
-                  <p className="text-lg">{analysisResults.category}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {Math.round(analysisResults.confidence * 100)}% confidence
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Product Type</Label>
-                  <p className="text-lg">{analysisResults.product_type}</p>
-                </div>
-              </div>
-
-              {/* Colors */}
-              <div>
-                <Label className="text-sm font-medium">Detected Colors</Label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {analysisResults.colors.all_colors.map((color, idx) => (
-                    <div key={idx} className="flex items-center gap-2 px-3 py-1 bg-muted rounded-full">
-                      <div 
-                        className="w-4 h-4 rounded-full border" 
-                        style={{ backgroundColor: color.toLowerCase() }} 
-                      />
-                      <span className="text-sm">{color}</span>
-                      {color === analysisResults.colors.primary && (
-                        <Badge variant="secondary" className="text-xs">Primary</Badge>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Style Analysis */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium">Style Details</Label>
-                  <div className="space-y-1 mt-1">
-                    <p><span className="text-sm text-muted-foreground">Formality:</span> {analysisResults.style.formality}</p>
-                    <p><span className="text-sm text-muted-foreground">Fit:</span> {analysisResults.style.fit_type}</p>
-                    <p><span className="text-sm text-muted-foreground">Pattern:</span> {analysisResults.style.pattern}</p>
-                    <p><span className="text-sm text-muted-foreground">Season:</span> {analysisResults.style.season}</p>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Materials</Label>
-                  <div className="space-y-1 mt-1">
-                    <p><span className="text-sm text-muted-foreground">Primary:</span> {analysisResults.materials.primary}</p>
-                    <p><span className="text-sm text-muted-foreground">Texture:</span> {analysisResults.materials.texture}</p>
-                    <p><span className="text-sm text-muted-foreground">Weight:</span> {analysisResults.materials.weight}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Occasions */}
-              <div>
-                <Label className="text-sm font-medium">Suitable Occasions</Label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {analysisResults.occasions.map((occasion, idx) => (
-                    <Badge key={idx} variant="outline">{occasion}</Badge>
-                  ))}
-                </div>
-              </div>
-
-              {/* Features */}
-              {analysisResults.features.length > 0 && (
-                <div>
-                  <Label className="text-sm font-medium">Detected Features</Label>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {analysisResults.features.map((feature, idx) => (
-                      <Badge key={idx} variant="secondary">{feature}</Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Suggested Content */}
-              {analysisResults.suggested_name && (
-                <div>
-                  <Label className="text-sm font-medium">Suggested Product Name</Label>
-                  <p className="mt-1 p-2 bg-muted rounded">{analysisResults.suggested_name}</p>
-                </div>
-              )}
-
-              {analysisResults.suggested_description && (
-                <div>
-                  <Label className="text-sm font-medium">Suggested Description</Label>
-                  <p className="mt-1 p-2 bg-muted rounded text-sm">{analysisResults.suggested_description}</p>
-                </div>
-              )}
-
-              {/* Image Quality */}
-              <div>
-                <Label className="text-sm font-medium">Image Quality Analysis</Label>
-                <div className="mt-2 p-3 bg-muted rounded">
-                  <div className="flex items-center justify-between mb-2">
-                    <span>Overall Score</span>
-                    <Badge variant={analysisResults.image_quality.score > 70 ? "default" : "destructive"}>
-                      {analysisResults.image_quality.score}%
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>Lighting: {analysisResults.image_quality.lighting}</div>
-                    <div>Clarity: {analysisResults.image_quality.clarity}</div>
-                    <div>Background: {analysisResults.image_quality.background}</div>
-                    <div>Resolution: {analysisResults.image_quality.resolution.width}×{analysisResults.image_quality.resolution.height}</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex justify-end gap-2 pt-4 border-t">
-                <Button variant="outline" onClick={() => setShowAnalysisModal(false)}>
-                  Close
-                </Button>
-                <Button onClick={applyAIAnalysis}>
-                  Apply Analysis
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* Recent Products Section - Only show on desktop */}
       <div className="hidden lg:block">
@@ -2548,54 +716,20 @@ export const ProductManagement = () => {
       <Card>
         <CardContent className="p-6">
           <div className="space-y-4">
-            {/* Search and Filters */}
-            <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search products..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-full sm:w-48">
-                    <SelectValue placeholder="All Categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map(category => (
-                      <SelectItem key={category} value={category}>{category}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant={viewMode === 'table' ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode('table')}
-                    className="hidden sm:flex"
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === 'grid' ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode('grid')}
-                    className="hidden sm:flex"
-                  >
-                    <Grid className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Smart Filters */}
-            <div className={`${styles.smartFiltersWrap || ''}`}>
-              <SmartFiltersBar />
-            </div>
+            {/* Filters */}
+            <ProductFilters
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              categoryFilter={categoryFilter}
+              onCategoryChange={setCategoryFilter}
+              categories={categories}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              smartFilters={smartFilters}
+              onSmartFilterToggle={handleSmartFilterToggle}
+              smartFilterCounts={smartFilterCounts}
+              styles={styles}
+            />
 
             {/* Bulk Actions */}
             {selectedProducts.length > 0 && (
@@ -2637,15 +771,17 @@ export const ProductManagement = () => {
               </div>
             ) : (
               <>
-                {/* Desktop/Tablet Views */}
-                <div className="hidden sm:block">
-                  {viewMode === 'table' ? <ProductTableView /> : <ProductGridView />}
-                </div>
-                
-                {/* Mobile View - Always use cards */}
-                <div className="sm:hidden">
-                  <MobileCardsView />
-                </div>
+                <ProductList
+                  products={products}
+                  viewMode={viewMode}
+                  selectedProducts={selectedProducts}
+                  onProductSelect={handleSelectProduct}
+                  onSelectAll={handleSelectAll}
+                  onProductEdit={openEditDialog}
+                  onProductToggle={handleQuickToggle}
+                  onProductDuplicate={handleQuickDuplicate}
+                  loading={loading}
+                />
                 
                 <div className={`pt-4 ${styles.paginationMobile || ''}`}>
                   <PaginationControls />
@@ -2671,7 +807,7 @@ export const ProductManagement = () => {
             <CardTitle className="text-sm font-medium">Active Products</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{products.filter(p => p.status === 'active').length}</div>
+            <div className="text-2xl font-bold">{activeProductsCount}</div>
           </CardContent>
         </Card>
         <Card>

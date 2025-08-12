@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { createCheckout, type CartItem } from '@/lib/services';
-import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface CheckoutButtonProps {
   items: CartItem[];
@@ -17,23 +18,20 @@ export function CheckoutButton({
   children = "Checkout"
 }: CheckoutButtonProps) {
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleCheckout = async () => {
     if (items.length === 0) {
-      toast({
-        title: "Cart Empty",
-        description: "Please add items to your cart before checkout.",
-        variant: "destructive",
-      });
+      toast.error("Please add items to your cart before checkout.");
       return;
     }
 
     try {
       setLoading(true);
       
+      // Use the secure checkout service which calls create-checkout-secure Edge Function
       const result = await createCheckout(items, {
-        customer_email: customerEmail,
+        customer_email: customerEmail || user?.email,
         success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${window.location.origin}/cart`,
       });
@@ -42,17 +40,13 @@ export function CheckoutButton({
         throw new Error(result.error || 'Failed to create checkout');
       }
 
-      // Open Stripe checkout in a new tab
+      // Redirect to Stripe checkout (same window for better UX)
       if (result.data.url) {
-        window.open(result.data.url, '_blank');
+        window.location.href = result.data.url;
       }
     } catch (error: any) {
       console.error('Checkout error:', error);
-      toast({
-        title: "Checkout Error",
-        description: error.message || "Failed to create checkout session. Please try again.",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to create checkout session. Please try again.");
     } finally {
       setLoading(false);
     }

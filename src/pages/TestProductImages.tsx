@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchProductsWithImages, getProductImageUrl } from '@/lib/services';
+import { logger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function TestProductImages() {
@@ -13,7 +14,6 @@ export default function TestProductImages() {
         const result = await fetchProductsWithImages({ limit: 20 });
         if (result.success) {
           setProducts(result.data);
-          console.log('Loaded products:', result.data);
         } else {
           setError(result.error || 'Failed to load products');
         }
@@ -43,12 +43,11 @@ export default function TestProductImages() {
                 alt={product.name}
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  console.error(`Failed to load image for ${product.name}:`, e);
+                  logger.error(`Failed to load image for ${product.name}:`, e);
                   const target = e.target as HTMLImageElement;
                   target.src = '/placeholder.svg';
                 }}
                 onLoad={() => {
-                  console.log(`Successfully loaded image for ${product.name}`);
                 }}
               />
             </div>

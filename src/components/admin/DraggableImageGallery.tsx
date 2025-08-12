@@ -278,7 +278,7 @@ const SortableImage: React.FC<SortableImageProps> = ({
 };
 
 // Main draggable image gallery component
-export const DraggableImageGallery: React.FC<DraggableImageGalleryProps> = ({
+export const DraggableImageGallery = React.memo<DraggableImageGalleryProps>(({
   images = [],
   onImagesChange,
   productId,
@@ -558,7 +558,7 @@ export const DraggableImageGallery: React.FC<DraggableImageGalleryProps> = ({
   };
 
   // Handle remove image
-  const handleRemoveImage = async (index: number) => {
+  const handleRemoveImage = useCallback(async (index: number) => {
     const imageToRemove = images[index];
     const newImages = images.filter((_, i) => i !== index);
     
@@ -605,10 +605,10 @@ export const DraggableImageGallery: React.FC<DraggableImageGalleryProps> = ({
     if (imageToRemove.url.startsWith('blob:')) {
       URL.revokeObjectURL(imageToRemove.url);
     }
-  };
+  }, [images, productId]);
 
   // Handle alt text change
-  const handleAltTextChange = async (index: number, altText: string) => {
+  const handleAltTextChange = useCallback(async (index: number, altText: string) => {
     const updatedImages = [...images];
     updatedImages[index] = { ...updatedImages[index], alt_text: altText };
     onImagesChange(updatedImages);
@@ -637,7 +637,7 @@ export const DraggableImageGallery: React.FC<DraggableImageGalleryProps> = ({
         });
       }
     }
-  };
+  }, [images, onImagesChange]);
 
   return (
     <div className="space-y-4">
@@ -755,6 +755,16 @@ export const DraggableImageGallery: React.FC<DraggableImageGalleryProps> = ({
       )}
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison for React.memo optimization
+  return (
+    prevProps.images === nextProps.images &&
+    prevProps.productId === nextProps.productId &&
+    prevProps.maxImages === nextProps.maxImages &&
+    prevProps.allowUpload === nextProps.allowUpload &&
+    // Compare callback functions by reference (parent should memoize them)
+    prevProps.onImagesChange === nextProps.onImagesChange
+  );
+});
 
 export default DraggableImageGallery;

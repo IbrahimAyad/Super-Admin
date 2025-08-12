@@ -25,6 +25,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useLoadingState } from '@/hooks/useLoadingState';
 import { supabase } from '@/lib/supabase-client';
 
 interface CustomerSegment {
@@ -65,11 +66,14 @@ interface SegmentCriteria {
 
 export function CustomerSegmentation() {
   const [segments, setSegments] = useState<CustomerSegment[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedSegment, setSelectedSegment] = useState<CustomerSegment | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const { toast } = useToast();
+  const { loading, error, execute } = useLoadingState({
+    context: 'customer-segmentation',
+    errorTitle: 'Failed to load customer segments'
+  });
 
   // Mock data for segments
   const mockSegments: CustomerSegment[] = [
@@ -160,8 +164,7 @@ export function CustomerSegmentation() {
   }, []);
 
   const loadSegments = async () => {
-    setLoading(true);
-    try {
+    await execute(async () => {
       // Get customer data for analysis
       const { data: customers } = await supabase
         .from('customers')
@@ -279,16 +282,7 @@ export function CustomerSegmentation() {
       ];
 
       setSegments(realSegments);
-    } catch (error) {
-      console.error('Error loading segments:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load customer segments",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const getStatusColor = (status: string) => {

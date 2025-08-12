@@ -4,6 +4,7 @@
  */
 
 import { getSupabaseClient } from '../supabase/client';
+import { logger } from '../../utils/logger';
 
 // Types for analytics data
 export interface RevenueMetrics {
@@ -139,13 +140,13 @@ export class DashboardAnalytics {
         });
 
       if (error) {
-        console.error('Error fetching revenue metrics:', error);
+        logger.error('Error fetching revenue metrics:', error);
         return null;
       }
 
       return data?.[0] || null;
     } catch (error) {
-      console.error('Failed to fetch revenue metrics:', error);
+      logger.error('Failed to fetch revenue metrics:', error);
       return null;
     }
   }
@@ -161,13 +162,13 @@ export class DashboardAnalytics {
         .rpc('get_hourly_revenue_trend');
 
       if (error) {
-        console.error('Error fetching hourly revenue trend:', error);
+        logger.error('Error fetching hourly revenue trend:', error);
         return null;
       }
 
       return data || [];
     } catch (error) {
-      console.error('Failed to fetch hourly revenue trend:', error);
+      logger.error('Failed to fetch hourly revenue trend:', error);
       return null;
     }
   }
@@ -204,7 +205,7 @@ export class DashboardAnalytics {
         }
       };
     } catch (error) {
-      console.error('Failed to fetch revenue comparison:', error);
+      logger.error('Failed to fetch revenue comparison:', error);
       return null;
     }
   }
@@ -219,13 +220,13 @@ export class DashboardAnalytics {
         .rpc('get_order_analytics', { days_back: daysBack });
 
       if (error) {
-        console.error('Error fetching order analytics:', error);
+        logger.error('Error fetching order analytics:', error);
         return null;
       }
 
       return data?.[0] || null;
     } catch (error) {
-      console.error('Failed to fetch order analytics:', error);
+      logger.error('Failed to fetch order analytics:', error);
       return null;
     }
   }
@@ -248,13 +249,13 @@ export class DashboardAnalytics {
         });
 
       if (error) {
-        console.error('Error fetching top products:', error);
+        logger.error('Error fetching top products:', error);
         return null;
       }
 
       return data || [];
     } catch (error) {
-      console.error('Failed to fetch top products:', error);
+      logger.error('Failed to fetch top products:', error);
       return null;
     }
   }
@@ -282,13 +283,13 @@ export class DashboardAnalytics {
         });
 
       if (error) {
-        console.error('Error fetching product conversion funnel:', error);
+        logger.error('Error fetching product conversion funnel:', error);
         return null;
       }
 
       return data?.[0] || null;
     } catch (error) {
-      console.error('Failed to fetch product conversion funnel:', error);
+      logger.error('Failed to fetch product conversion funnel:', error);
       return null;
     }
   }
@@ -302,13 +303,13 @@ export class DashboardAnalytics {
         .limit(20);
 
       if (error) {
-        console.error('Error fetching product performance from view:', error);
+        logger.error('Error fetching product performance from view:', error);
         return null;
       }
 
       return data || [];
     } catch (error) {
-      console.error('Failed to fetch product performance from view:', error);
+      logger.error('Failed to fetch product performance from view:', error);
       return null;
     }
   }
@@ -323,13 +324,13 @@ export class DashboardAnalytics {
         .rpc('get_customer_ltv_analytics');
 
       if (error) {
-        console.error('Error fetching customer LTV analytics:', error);
+        logger.error('Error fetching customer LTV analytics:', error);
         return null;
       }
 
       return data?.[0] || null;
     } catch (error) {
-      console.error('Failed to fetch customer LTV analytics:', error);
+      logger.error('Failed to fetch customer LTV analytics:', error);
       return null;
     }
   }
@@ -342,13 +343,13 @@ export class DashboardAnalytics {
         .single();
 
       if (error) {
-        console.error('Error fetching customer behavior from view:', error);
+        logger.error('Error fetching customer behavior from view:', error);
         return null;
       }
 
       return data?.metrics || null;
     } catch (error) {
-      console.error('Failed to fetch customer behavior from view:', error);
+      logger.error('Failed to fetch customer behavior from view:', error);
       return null;
     }
   }
@@ -367,13 +368,13 @@ export class DashboardAnalytics {
         });
 
       if (error) {
-        console.error('Error fetching real-time customer activity:', error);
+        logger.error('Error fetching real-time customer activity:', error);
         return null;
       }
 
       return data?.[0] || null;
     } catch (error) {
-      console.error('Failed to fetch real-time customer activity:', error);
+      logger.error('Failed to fetch real-time customer activity:', error);
       return null;
     }
   }
@@ -390,13 +391,13 @@ export class DashboardAnalytics {
         });
 
       if (error) {
-        console.error('Error fetching traffic source performance:', error);
+        logger.error('Error fetching traffic source performance:', error);
         return null;
       }
 
       return data || [];
     } catch (error) {
-      console.error('Failed to fetch traffic source performance:', error);
+      logger.error('Failed to fetch traffic source performance:', error);
       return null;
     }
   }
@@ -407,13 +408,13 @@ export class DashboardAnalytics {
         .rpc('get_realtime_website_metrics');
 
       if (error) {
-        console.error('Error fetching real-time website metrics:', error);
+        logger.error('Error fetching real-time website metrics:', error);
         return null;
       }
 
       return data?.[0] || null;
     } catch (error) {
-      console.error('Failed to fetch real-time website metrics:', error);
+      logger.error('Failed to fetch real-time website metrics:', error);
       return null;
     }
   }
@@ -426,13 +427,13 @@ export class DashboardAnalytics {
         .single();
 
       if (error) {
-        console.error('Error fetching traffic metrics from view:', error);
+        logger.error('Error fetching traffic metrics from view:', error);
         return null;
       }
 
       return data?.traffic_data || null;
     } catch (error) {
-      console.error('Failed to fetch traffic metrics from view:', error);
+      logger.error('Failed to fetch traffic metrics from view:', error);
       return null;
     }
   }
@@ -449,13 +450,13 @@ export class DashboardAnalytics {
         });
 
       if (error) {
-        console.error('Error fetching admin activity analytics:', error);
+        logger.error('Error fetching admin activity analytics:', error);
         return null;
       }
 
       return data?.[0] || null;
     } catch (error) {
-      console.error('Failed to fetch admin activity analytics:', error);
+      logger.error('Failed to fetch admin activity analytics:', error);
       return null;
     }
   }
@@ -473,13 +474,13 @@ export class DashboardAnalytics {
         .order('date', { ascending: false });
 
       if (error) {
-        console.error('Error fetching daily summary:', error);
+        logger.error('Error fetching daily summary:', error);
         return null;
       }
 
       return data || [];
     } catch (error) {
-      console.error('Failed to fetch daily summary:', error);
+      logger.error('Failed to fetch daily summary:', error);
       return null;
     }
   }
@@ -494,13 +495,13 @@ export class DashboardAnalytics {
         .rpc('refresh_analytics_views');
 
       if (error) {
-        console.error('Error refreshing analytics views:', error);
+        logger.error('Error refreshing analytics views:', error);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('Failed to refresh analytics views:', error);
+      logger.error('Failed to refresh analytics views:', error);
       return false;
     }
   }
@@ -534,7 +535,7 @@ export class DashboardAnalytics {
         customerActivity
       };
     } catch (error) {
-      console.error('Failed to fetch dashboard overview:', error);
+      logger.error('Failed to fetch dashboard overview:', error);
       return {
         revenue: null,
         orders: null,
@@ -591,13 +592,13 @@ export class DashboardAnalytics {
       const { data, error } = await query;
 
       if (error) {
-        console.error('Error searching analytics events:', error);
+        logger.error('Error searching analytics events:', error);
         return null;
       }
 
       return data || [];
     } catch (error) {
-      console.error('Failed to search analytics events:', error);
+      logger.error('Failed to search analytics events:', error);
       return null;
     }
   }

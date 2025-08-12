@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { CartItemDB, getCart, addToCart, updateCartItem, removeFromCart, clearCart as clearCartService, transferGuestCart } from '@/lib/services';
+import { cartValidationService, CartValidationResult, CartExpirationInfo } from '@/lib/services/cartValidation';
 import { useAuth } from './AuthContext';
 import { toast } from 'sonner';
 import { storage } from '@/lib/prefixed-storage';
@@ -7,6 +8,8 @@ import { storage } from '@/lib/prefixed-storage';
 interface CartContextType {
   items: CartItemDB[];
   loading: boolean;
+  validationResult: CartValidationResult | null;
+  expirationInfo: CartExpirationInfo | null;
   addItem: (productId: string, variantId?: string, quantity?: number, customizations?: Record<string, any>) => Promise<void>;
   updateItem: (itemId: string, quantity?: number, customizations?: Record<string, any>) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
@@ -14,6 +17,9 @@ interface CartContextType {
   getCartTotal: () => number;
   getItemCount: () => number;
   refreshCart: () => Promise<void>;
+  validateCart: () => Promise<CartValidationResult>;
+  extendCartExpiration: () => void;
+  getCartHealthScore: () => number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -22,6 +28,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [items, setItems] = useState<CartItemDB[]>([]);
   const [loading, setLoading] = useState(false);
+  const [validationResult, setValidationResult] = useState<CartValidationResult | null>(null);
+  const [expirationInfo, setExpirationInfo] = useState<CartExpirationInfo | null>(null);
 
   // Generate session ID for guest users
   const [sessionId] = useState(() => {
@@ -34,6 +42,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     loadCart();
+    
+    // Initialize cart validation service
+    cartValidationService.initializeCartExpiration();
+    updateExpirationInfo();
   }, [user?.id]);
 
   useEffect(() => {
@@ -42,6 +54,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       handleGuestCartTransfer();
     }
   }, [user?.id, sessionId]);
+
+  useEffect(() => {
+    // Set up expiration timer
+    const interval = setInterval(() => {
+      updateExpirationInfo();
+    }, 30000); // Update every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    // Validate cart when items change
+    if (items.length > 0) {
+      validateCartItems();
+    } else {
+      setValidationResult(null);
+    }
+  }, [items]);
 
   const loadCart = async () => {
     setLoading(true);
@@ -171,9 +201,85 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     await loadCart();
   };
 
+  const updateExpirationInfo = () => {
+    const info = cartValidationService.getCartExpirationInfo();
+    setExpirationInfo(info);
+
+    // Show warnings as cart approaches expiration
+    if (info.timeRemaining <= 5 * 60 * 1000 && info.timeRemaining > 4 * 60 * 1000) {
+      toast.warning('Your cart will expire in 5 minutes. Complete your purchase soon!');
+    } else if (info.timeRemaining <= 1 * 60 * 1000 && info.timeRemaining > 0) {
+      toast.error('Your cart will expire in 1 minute!');
+    } else if (info.isExpired) {
+      toast.error('Your cart has expired. Items will be removed.');
+      clearCart();
+    }
+  };
+
+  const validateCartItems = async () => {
+    try {
+      const result = await cartValidationService.validateCart(items, user?.id, sessionId);
+      setValidationResult(result);
+
+      // Show critical errors
+      if (result.errors.length > 0) {
+        result.errors.forEach(error => {
+          toast.error(error);
+        });
+      }
+
+      // Show warnings
+      if (result.warnings.length > 0) {
+        result.warnings.forEach(warning => {
+          toast.warning(warning);
+        });
+      }
+
+      // Handle inventory issues
+      if (result.inventoryIssues.length > 0) {
+        result.inventoryIssues.forEach(issue => {
+          toast.warning(
+            `${issue.productName}: Only ${issue.available} available (you have ${issue.requested})`
+          );
+        });
+      }
+
+      // Handle price changes
+      if (result.priceChanges.length > 0) {
+        result.priceChanges.forEach(change => {
+          const changeText = change.change > 0 ? 'increased' : 'decreased';
+          toast.warning(
+            `Price ${changeText} for ${change.productName}: $${change.oldPrice.toFixed(2)} → $${change.newPrice.toFixed(2)}`
+          );
+        });
+      }
+
+    } catch (error) {
+      console.error('Error validating cart:', error);
+    }
+  };
+
+  const validateCart = async (): Promise<CartValidationResult> => {
+    const result = await cartValidationService.validateCart(items, user?.id, sessionId);
+    setValidationResult(result);
+    return result;
+  };
+
+  const extendCartExpiration = () => {
+    cartValidationService.extendCartExpiration();
+    updateExpirationInfo();
+  };
+
+  const getCartHealthScore = (): number => {
+    if (!validationResult) return 100;
+    return cartValidationService.getCartHealthScore(validationResult);
+  };
+
   const value = {
     items,
     loading,
+    validationResult,
+    expirationInfo,
     addItem,
     updateItem,
     removeItem,
@@ -181,6 +287,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     getCartTotal,
     getItemCount,
     refreshCart,
+    validateCart,
+    extendCartExpiration,
+    getCartHealthScore,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

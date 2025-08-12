@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -87,7 +87,7 @@ type ViewMode = 'grid' | 'list';
 type SortField = 'name' | 'email' | 'total_spent' | 'total_orders' | 'created_at' | 'last_purchase_date';
 type SortOrder = 'asc' | 'desc';
 
-export function CustomerManagementOptimized() {
+export const CustomerManagementOptimized = React.memo(function CustomerManagementOptimized() {
   const { toast } = useToast();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -295,15 +295,15 @@ export function CustomerManagementOptimized() {
     }
   };
 
-  const handleSelectAll = () => {
+  const handleSelectAll = useCallback(() => {
     if (selectedCustomers.size === paginatedCustomers.length) {
       setSelectedCustomers(new Set());
     } else {
       setSelectedCustomers(new Set(paginatedCustomers.map(c => c.id)));
     }
-  };
+  }, [selectedCustomers.size, paginatedCustomers]);
 
-  const handleSelectCustomer = (customerId: string) => {
+  const handleSelectCustomer = useCallback((customerId: string) => {
     const newSelection = new Set(selectedCustomers);
     if (newSelection.has(customerId)) {
       newSelection.delete(customerId);
@@ -311,7 +311,7 @@ export function CustomerManagementOptimized() {
       newSelection.add(customerId);
     }
     setSelectedCustomers(newSelection);
-  };
+  }, [selectedCustomers]);
 
   const handleBulkAction = async (action: string) => {
     if (selectedCustomers.size === 0) {
@@ -1175,4 +1175,4 @@ export function CustomerManagementOptimized() {
       </Dialog>
     </div>
   );
-}
+});

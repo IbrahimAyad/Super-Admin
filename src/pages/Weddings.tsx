@@ -28,12 +28,6 @@ const WeddingsPage = () => {
   const [joinLoading, setJoinLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('user');
 
-  console.log('Wedding page - User:', JSON.stringify({
-    user: user?.email, 
-    loading: authLoading,
-    session: !!session,
-    userId: user?.id
-  }), 'Is Admin:', isAdmin); // Debug logging
 
   useEffect(() => {
     if (authLoading) {

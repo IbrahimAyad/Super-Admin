@@ -1,48 +1,53 @@
-#!/bin/bash
+#\!/bin/bash
 
-# Quick Edge Function Deployment Script
+# Deploy Edge Functions to Supabase
+# Usage: ./deploy-edge-functions.sh
 
-echo "🚀 Deploying Stripe Edge Functions to Supabase..."
+echo "🚀 Starting Edge Functions deployment..."
+
+# Check if supabase CLI is installed
+if \! command -v supabase &> /dev/null; then
+    echo "❌ Supabase CLI not found. Please install it first:"
+    echo "   brew install supabase/tap/supabase"
+    exit 1
+fi
+
+# Check if logged in
+if \! supabase projects list &> /dev/null; then
+    echo "📝 Please login to Supabase:"
+    supabase login
+fi
+
+# Deploy critical functions
 echo ""
-echo "This script will deploy the Edge Functions needed for Stripe integration."
-echo ""
-
-# Step 1: Login to Supabase
-echo "Step 1: Login to Supabase"
-echo "========================="
-echo "You'll need to authenticate with Supabase."
-echo "Running: supabase login"
-supabase login
-
-# Step 2: Link to project
-echo ""
-echo "Step 2: Link to your project"
-echo "============================"
-echo "Linking to project: gvcswimqaxvylgxbklbz"
-supabase link --project-ref gvcswimqaxvylgxbklbz
-
-# Step 3: Deploy sync-stripe-product function
-echo ""
-echo "Step 3: Deploy sync-stripe-product function"
-echo "==========================================="
-supabase functions deploy sync-stripe-product
-
-# Step 4: Deploy create-checkout function
-echo ""
-echo "Step 4: Deploy create-checkout function"
-echo "======================================="
-supabase functions deploy create-checkout
-
-# Step 5: List deployed functions
-echo ""
-echo "Step 5: Verify deployment"
-echo "========================"
-supabase functions list
+echo "📦 Deploying secure checkout functions..."
+supabase functions deploy create-checkout-secure
+supabase functions deploy stripe-webhook-secure
 
 echo ""
-echo "✅ Deployment complete!"
+echo "📧 Deploying email functions..."
+supabase functions deploy send-order-confirmation-secure
+supabase functions deploy send-verification-email
+supabase functions deploy send-password-reset-secure
+supabase functions deploy email-service-secure
+
+echo ""
+echo "🛍️ Deploying order processing functions..."
+supabase functions deploy process-refund
+supabase functions deploy get-order
+
+echo ""
+echo "📊 Deploying product functions..."
+supabase functions deploy get-products-secure
+supabase functions deploy sync-stripe-products
+
+echo ""
+echo "✅ Deployment complete\!"
 echo ""
 echo "Next steps:"
-echo "1. Go to https://supabase.com/dashboard/project/gvcswimqaxvylgxbklbz/settings/functions"
-echo "2. Add your STRIPE_SECRET_KEY in the Secrets section"
-echo "3. Test the Stripe sync in the Admin Panel"
+echo "1. Set your secrets using: supabase secrets set KEY=value"
+echo "2. Configure Stripe webhook in Stripe Dashboard"
+echo "3. Run database migrations"
+echo "4. Test the functions"
+echo ""
+echo "To view logs: supabase functions logs FUNCTION_NAME"
