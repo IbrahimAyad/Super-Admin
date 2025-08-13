@@ -84,6 +84,12 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
       );
     }
 
+    // Get client IP for logging
+    const clientIp = req.headers.get("x-forwarded-for") || 
+                     req.headers.get("x-real-ip") || 
+                     req.headers.get("cf-connecting-ip") || 
+                     "unknown";
+
     // Log webhook processing
     console.log(`Processing webhook: ${event.type} (${event.id})`);
     

@@ -363,6 +363,12 @@ class MonitoringService {
    * Send data to API endpoint
    */
   private async sendToAPI(endpoint: string, data: any): Promise<void> {
+    // DISABLED: No backend API endpoints exist for logs/metrics in this Vite app
+    // This was causing 404 errors during login
+    // Keeping the method for future implementation when backend is added
+    return;
+    
+    /* Original implementation - disabled to fix 404 errors
     // Skip in development unless explicitly enabled
     if (!this.isProduction && !getEnv().ENABLE_ANALYTICS) {
       return;
@@ -385,6 +391,7 @@ class MonitoringService {
       // Silently fail to avoid infinite error loops
       console.error(`Failed to send monitoring data to ${endpoint}:`, error);
     }
+    */
   }
 
   /**

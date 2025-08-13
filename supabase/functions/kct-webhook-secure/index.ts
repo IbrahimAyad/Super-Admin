@@ -109,6 +109,12 @@ async function handleKCTWebhook(req: Request): Promise<Response> {
       }
     }
 
+    // Get client IP for logging
+    const clientIp = req.headers.get("x-forwarded-for") || 
+                     req.headers.get("x-real-ip") || 
+                     req.headers.get("cf-connecting-ip") || 
+                     "unknown";
+
     // Initialize Supabase client
     const supabase = createClient(
       SUPABASE_URL,
