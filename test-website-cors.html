@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test R2 Image CORS</title>
+</head>
+<body>
+    <h1>Testing R2 Image Loading from Website Domain</h1>
+    
+    <h2>Test Images:</h2>
+    
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px;">
+        <div>
+            <h3>Wine Vest</h3>
+            <img src="https://pub-8ea0502158a94b8ca8a7abb9e18a57e8.r2.dev/main-solid-vest-tie/wine-model.png" 
+                 style="width: 100%; max-width: 300px;" 
+                 onerror="this.style.border='5px solid red'; console.error('Failed to load:', this.src)"
+                 onload="this.style.border='5px solid green'; console.log('Loaded:', this.src)">
+        </div>
+        
+        <div>
+            <h3>Velvet Blazer</h3>
+            <img src="https://pub-8ea0502158a94b8ca8a7abb9e18a57e8.r2.dev/velvet-blazer/mens_black_velvet_blazer_2025_1096.webp" 
+                 style="width: 100%; max-width: 300px;"
+                 onerror="this.style.border='5px solid red'; console.error('Failed to load:', this.src)"
+                 onload="this.style.border='5px solid green'; console.log('Loaded:', this.src)">
+        </div>
+        
+        <div>
+            <h3>Double Breasted Suit</h3>
+            <img src="https://pub-8ea0502158a94b8ca8a7abb9e18a57e8.r2.dev/double_breasted/mens_double_breasted_suit_2021_0.webp" 
+                 style="width: 100%; max-width: 300px;"
+                 onerror="this.style.border='5px solid red'; console.error('Failed to load:', this.src)"
+                 onload="this.style.border='5px solid green'; console.log('Loaded:', this.src)">
+        </div>
+    </div>
+    
+    <div style="padding: 20px; background: #f0f0f0; margin: 20px;">
+        <h3>Console Output:</h3>
+        <p>Open DevTools (F12) and check the Console tab for errors</p>
+        <p>Green border = Image loaded successfully</p>
+        <p>Red border = Image failed to load</p>
+    </div>
+    
+    <script>
+        // Test fetching an image programmatically
+        fetch('https://pub-8ea0502158a94b8ca8a7abb9e18a57e8.r2.dev/main-solid-vest-tie/wine-model.png')
+            .then(response => {
+                console.log('Fetch test response:', response.status, response.statusText);
+                console.log('Headers:', response.headers);
+            })
+            .catch(error => {
+                console.error('Fetch test failed:', error);
+            });
+            
+        // Show current domain
+        document.write('<p>Testing from domain: ' + window.location.origin + '</p>');
+    </script>
+</body>
+</html>
