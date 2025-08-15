@@ -48,8 +48,11 @@ import { ReviewManagement } from '@/components/admin/ReviewManagement';
 import { InventoryManagement } from '@/components/admin/InventoryManagement';
 import { StripeOrderManagement } from '@/components/admin/StripeOrderManagement';
 import { DataImportExport } from '@/components/admin/DataImportExport';
+import AIChatBot from '@/components/chat/AIChatBot';
 import { ProductManagementClean } from '@/components/admin/ProductManagementClean';
 import { ProductManagementEnhanced } from '@/components/admin/ProductManagementEnhanced';
+import { EnhancedProductManagement } from '@/components/admin/EnhancedProductManagement';
+import { ProductSystemToggle } from '@/components/admin/ProductSystemToggle';
 import { ProductQuickAdd } from '@/components/admin/ProductQuickAdd';
 import { BulkProductImport } from '@/components/admin/BulkProductImport';
 import { BulkProductEditor } from '@/components/admin/BulkProductEditor';
@@ -79,6 +82,7 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
+  const [productSystem, setProductSystem] = useState<'old' | 'new'>('old');
   
   // Use the new dashboard data hook
   const { 
@@ -152,7 +156,14 @@ const AdminDashboard = () => {
               <TabsTrigger value="enhancements">Enhancements</TabsTrigger>
             </TabsList>
             <TabsContent value="manage">
-              <ProductManagementEnhanced />
+              <ProductSystemToggle 
+                onSystemChange={(system) => setProductSystem(system)}
+              />
+              {productSystem === 'old' ? (
+                <ProductManagementEnhanced />
+              ) : (
+                <EnhancedProductManagement />
+              )}
             </TabsContent>
             <TabsContent value="quick-add">
               <ProductQuickAdd
@@ -525,6 +536,9 @@ const AdminDashboard = () => {
             {renderContent()}
           </div>
         </main>
+        
+        {/* AI Chat Bot */}
+        <AIChatBot />
       </div>
     </SidebarProvider>
   );

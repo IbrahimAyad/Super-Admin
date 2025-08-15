@@ -17,7 +17,7 @@ const getDeploymentUrl = (): string => {
   if (typeof window !== 'undefined') {
     return window.location.origin;
   }
-  return process.env.NEXT_PUBLIC_SUPABASE_URL || 'localhost';
+  return import.meta.env.VITE_SUPABASE_URL || 'localhost';
 };
 
 // Create storage key prefix based on deployment URL
@@ -36,9 +36,9 @@ function createSupabaseClient(): SupabaseClient {
     return supabaseInstance;
   }
 
-  // HARDCODED VALUES - Environment variables not working in production
-  const supabaseUrl = 'https://gvcswimqaxvylgxbklbz.supabase.co';
-  const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2Y3N3aW1xYXh2eWxneGJrbGJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3NjA1MzAsImV4cCI6MjA2OTMzNjUzMH0.UZdiGcJXUV5VYetjWXV26inmbj2yXdiT03Z6t_5Lg24';
+  // Use environment variables for security
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://gvcswimqaxvylgxbklbz.supabase.co';
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
   const storageKeyPrefix = createStorageKeyPrefix();
   
@@ -76,8 +76,8 @@ function createAdminSupabaseClient(): SupabaseClient | null {
     return adminSupabaseInstance;
   }
 
-  const supabaseUrl = 'https://gvcswimqaxvylgxbklbz.supabase.co';
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://gvcswimqaxvylgxbklbz.supabase.co';
+  const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || '';
   
   if (!supabaseServiceKey) {
     console.warn('⚠️ SUPABASE_SERVICE_ROLE_KEY not set - admin operations unavailable');
@@ -123,7 +123,7 @@ export const supabase = createSupabaseClient();
  * Reset the singletons (for testing purposes only)
  */
 export function resetSupabaseClient(): void {
-  if (process.env.NODE_ENV === 'test') {
+  if (import.meta.env.MODE === 'test') {
     supabaseInstance = null;
     adminSupabaseInstance = null;
   }

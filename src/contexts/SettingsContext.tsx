@@ -214,7 +214,7 @@ interface SettingsProviderProps {
 export function SettingsProvider({ 
   children, 
   queryClient,
-  enableDevtools = process.env.NODE_ENV === 'development'
+  enableDevtools = import.meta.env.MODE === 'development'
 }: SettingsProviderProps) {
   const client = queryClient || createSettingsQueryClient();
 

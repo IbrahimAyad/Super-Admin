@@ -78,8 +78,8 @@ class FashionClipService {
   constructor() {
     this.config = {
       // Using a mock API endpoint - replace with actual Fashion CLIP service
-      apiUrl: process.env.NEXT_PUBLIC_FASHION_CLIP_API || 'https://api.fashionclip.ai/v2',
-      apiKey: process.env.NEXT_PUBLIC_FASHION_CLIP_KEY || 'demo-key',
+      apiUrl: import.meta.env.VITE_FASHION_CLIP_API || 'https://api.fashionclip.ai/v2',
+      apiKey: import.meta.env.VITE_FASHION_CLIP_KEY || 'demo-key',
       model: 'fashion-clip-v2',
       timeout: 30000, // 30 seconds
       maxRetries: 3

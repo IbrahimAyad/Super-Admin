@@ -50,8 +50,8 @@ interface SmartDefaults {
 }
 
 class KCTIntelligenceService {
-  private baseUrl = process.env.NEXT_PUBLIC_KCT_API_URL || 'https://kct-knowledge-api-2-production.up.railway.app';
-  private apiKey = process.env.NEXT_PUBLIC_KCT_API_KEY || 'kct-menswear-api-2024-secret';
+  private baseUrl = import.meta.env.VITE_KCT_API_URL || 'https://kct-knowledge-api-2-production.up.railway.app';
+  private apiKey = import.meta.env.VITE_KCT_API_KEY || 'kct-menswear-api-2024-secret';
   private cache = new Map<string, { data: any; timestamp: number }>();
   private cacheTimeout = 5 * 60 * 1000; // 5 minutes
   private maxRetries = 3;

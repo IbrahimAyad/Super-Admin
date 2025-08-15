@@ -29,7 +29,11 @@ import { monitoring, logger } from "@/lib/services/monitoring";
 import AdminDashboardDirect from "./pages/AdminDashboardDirect";
 import EmergencyAdmin from "./pages/EmergencyAdmin";
 import EnhancedProducts from "./pages/EnhancedProducts";
+import EnhancedProductsAdmin from "./pages/EnhancedProductsAdmin";
 import TestEnhancedProducts from "./pages/TestEnhancedProducts";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
+import CheckoutCancel from "./pages/CheckoutCancel";
+import TestChatCheckout from "./pages/TestChatCheckout";
 
 const queryClient = new QueryClient();
 
@@ -92,7 +96,11 @@ const App = () => (
               <Route path="/admin/automation" element={<AdminDashboard />} />
               <Route path="/admin/stripe-sync" element={<AdminDashboard />} />
               <Route path="/admin/enhanced-products" element={<EnhancedProducts />} />
+              <Route path="/admin/enhanced-products-admin" element={<EnhancedProductsAdmin />} />
               <Route path="/test-enhanced-products" element={<TestEnhancedProducts />} />
+              <Route path="/test-chat-checkout" element={<TestChatCheckout />} />
+              <Route path="/checkout/success" element={<CheckoutSuccess />} />
+              <Route path="/checkout/cancel" element={<CheckoutCancel />} />
               <Route path="/admin/test-auth" element={<ProtectedRoute><AdminRoute><AdminAuthTest /></AdminRoute></ProtectedRoute>} />
               <Route path="/product-test" element={<ProtectedRoute><ProductTest /></ProtectedRoute>} />
               <Route path="/storage-test" element={<ProtectedRoute><StorageTest /></ProtectedRoute>} />

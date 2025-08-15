@@ -21,7 +21,8 @@ import {
   DollarSign,
   User,
   Calendar,
-  Plus
+  Plus,
+  MessageCircle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase-client';
@@ -56,6 +57,8 @@ interface Order {
   total_amount: number;
   payment_status: 'pending' | 'paid' | 'partially_paid' | 'failed' | 'refunded';
   payment_method?: string;
+  source?: string; // Added to identify chat orders
+  metadata?: any; // Added for chat order details
   shipping_method?: string;
   tracking_number?: string;
   estimated_delivery_date?: string;
@@ -430,7 +433,15 @@ export function OrderManagement() {
                 {filteredOrders.map(order => (
                   <TableRow key={order.id} className="hover:bg-muted/50">
                     <TableCell className="font-medium">
-                      {order.order_number}
+                      <div className="flex items-center gap-2">
+                        {order.order_number}
+                        {order.source === 'chat_commerce' && (
+                          <Badge variant="secondary" className="text-xs">
+                            <MessageCircle className="h-3 w-3 mr-1" />
+                            Chat
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     
                     <TableCell>

@@ -12,7 +12,7 @@ describe('Basic Test Setup', () => {
 
   it('should handle environment variables', () => {
     // Environment variables should exist (values may vary)
-    expect(process.env.VITE_SUPABASE_URL).toBeDefined()
-    expect(process.env.VITE_SUPABASE_ANON_KEY).toBeDefined()
+    expect(import.meta.env.VITE_SUPABASE_URL).toBeDefined()
+    expect(import.meta.env.VITE_SUPABASE_ANON_KEY).toBeDefined()
   })
 })

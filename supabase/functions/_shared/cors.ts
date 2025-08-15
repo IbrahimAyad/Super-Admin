@@ -42,8 +42,10 @@ export function getCorsHeaders(origin?: string | null): Record<string, string> {
   };
 }
 
-// Legacy export for backward compatibility (to be phased out)
+// Updated to use secure CORS configuration
+// Use getCorsHeaders() function instead for proper origin validation
 export const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://kctmenswear.com',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 }

@@ -571,7 +571,7 @@ export class IncidentResponseSystem {
             {
               type: 'button',
               text: 'View Details',
-              url: `${process.env.FRONTEND_URL}/admin/incidents/${incident.id}`
+              url: `${import.meta.env.VITE_FRONTEND_URL}/admin/incidents/${incident.id}`
             },
             {
               type: 'button',
@@ -610,15 +610,15 @@ export class IncidentResponseSystem {
         
         <hr>
         <p>Incident ID: ${incident.id}</p>
-        <p><a href="${process.env.FRONTEND_URL}/admin/incidents/${incident.id}">View Incident Details</a></p>
+        <p><a href="${import.meta.env.VITE_FRONTEND_URL}/admin/incidents/${incident.id}">View Incident Details</a></p>
       `
     };
 
-    await fetch(`${process.env.SUPABASE_URL}/functions/v1/send-email`, {
+    await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY}`
       },
       body: JSON.stringify(emailData)
     });

@@ -508,7 +508,7 @@ export class SettingsSecurityService {
     // with a secret key stored securely (not in code)
     const keyMaterial = await crypto.subtle.importKey(
       'raw',
-      new TextEncoder().encode(process.env.NEXT_PUBLIC_ENCRYPTION_KEY || 'default-key-change-me'),
+      new TextEncoder().encode(import.meta.env.VITE_ENCRYPTION_KEY || 'default-key-change-me'),
       { name: 'PBKDF2' },
       false,
       ['deriveBits', 'deriveKey']

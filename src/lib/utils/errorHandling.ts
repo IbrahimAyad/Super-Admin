@@ -242,7 +242,7 @@ export class ErrorHandler {
     this.errorLogs.push(logEntry);
 
     // Console logging for development
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.MODE === 'development') {
       console.error('Error:', logEntry);
     }
 
@@ -573,7 +573,7 @@ export function createErrorResponse(error: Error) {
       statusCode: appError.statusCode,
       timestamp: appError.timestamp.toISOString(),
       // Don't expose sensitive details in production
-      ...(process.env.NODE_ENV === 'development' && {
+      ...(import.meta.env.MODE === 'development' && {
         details: appError.message,
         stack: appError.stack
       })
