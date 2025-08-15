@@ -1,10 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from '@/lib/supabase';
 
 interface EnhancedProduct {
   id: string;
@@ -44,20 +39,26 @@ export default function EnhancedProducts() {
   async function fetchEnhancedProducts() {
     try {
       setLoading(true);
+      
+      console.log('Fetching products from products_enhanced table...');
+      
       const { data, error } = await supabase
         .from('products_enhanced')
         .select('*')
         .order('created_at', { ascending: false });
 
+      console.log('Query result:', { data, error });
+
       if (error) {
         console.error('Supabase error:', error);
-        setError(error.message);
+        setError(`Database error: ${error.message}`);
       } else {
+        console.log(`Found ${data?.length || 0} products`);
         setProducts(data || []);
       }
     } catch (err) {
       console.error('Error fetching enhanced products:', err);
-      setError('Failed to load products');
+      setError('Failed to load products. Check console for details.');
     } finally {
       setLoading(false);
     }
