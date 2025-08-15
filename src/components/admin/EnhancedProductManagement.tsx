@@ -38,6 +38,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase-client';
 import { cn } from '@/lib/utils';
+import { ProductForm } from './ProductForm';
 
 interface PriceTier {
   tier_id: string;
@@ -209,6 +210,58 @@ export function EnhancedProductManagement() {
       toast({
         title: "Error",
         description: "Failed to update product",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSaveProduct = async (productData: Partial<EnhancedProduct>) => {
+    try {
+      if (selectedProduct?.id) {
+        // Update existing product
+        const { error } = await supabase
+          .from('products_enhanced')
+          .update({
+            ...productData,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', selectedProduct.id);
+
+        if (error) throw error;
+        
+        toast({
+          title: "Product updated",
+          description: "Product has been successfully updated"
+        });
+      } else {
+        // Create new product
+        const handle = productData.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || '';
+        const { error } = await supabase
+          .from('products_enhanced')
+          .insert({
+            ...productData,
+            handle,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            is_available: true
+          });
+
+        if (error) throw error;
+        
+        toast({
+          title: "Product created",
+          description: "New product has been successfully created"
+        });
+      }
+
+      setShowProductDialog(false);
+      setSelectedProduct(null);
+      await loadProducts();
+    } catch (error) {
+      console.error('Error saving product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save product",
         variant: "destructive"
       });
     }
@@ -691,24 +744,11 @@ export function EnhancedProductManagement() {
             </DialogTitle>
           </DialogHeader>
           
-          {/* Product form would go here - keeping it simple for brevity */}
-          <div className="space-y-4">
-            <p className="text-muted-foreground">
-              Full product editing form with all fields would be implemented here
-            </p>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowProductDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => {
-              // Save logic here
-              setShowProductDialog(false);
-            }}>
-              Save Product
-            </Button>
-          </DialogFooter>
+          <ProductForm
+            product={selectedProduct}
+            onSave={handleSaveProduct}
+            onCancel={() => setShowProductDialog(false)}
+          />
         </DialogContent>
       </Dialog>
 
