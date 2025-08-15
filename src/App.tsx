@@ -28,6 +28,7 @@ import { getEnv } from "@/lib/config/env";
 import { monitoring, logger } from "@/lib/services/monitoring";
 import AdminDashboardDirect from "./pages/AdminDashboardDirect";
 import EmergencyAdmin from "./pages/EmergencyAdmin";
+import EnhancedProducts from "./pages/EnhancedProducts";
 
 const queryClient = new QueryClient();
 
@@ -89,6 +90,7 @@ const App = () => (
               <Route path="/admin/inventory-forecasting" element={<AdminDashboard />} />
               <Route path="/admin/automation" element={<AdminDashboard />} />
               <Route path="/admin/stripe-sync" element={<AdminDashboard />} />
+              <Route path="/admin/enhanced-products" element={<EnhancedProducts />} />
               <Route path="/admin/test-auth" element={<ProtectedRoute><AdminRoute><AdminAuthTest /></AdminRoute></ProtectedRoute>} />
               <Route path="/product-test" element={<ProtectedRoute><ProductTest /></ProtectedRoute>} />
               <Route path="/storage-test" element={<ProtectedRoute><StorageTest /></ProtectedRoute>} />

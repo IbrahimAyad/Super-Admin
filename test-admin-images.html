@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Admin Panel Image Loading</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .product-name {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .image-url {
+            font-size: 10px;
+            color: #666;
+            word-break: break-all;
+            margin-top: 5px;
+        }
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .summary {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        .stat {
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Testing Product Images from Admin Panel Perspective</h1>
+    <div id="summary" class="summary">
+        <h2>Loading products...</h2>
+    </div>
+    <div id="results" class="grid"></div>
+
+    <script type="module">
+        // Use same credentials as admin panel
+        const SUPABASE_URL = 'https://gvcswimqaxvylgxbklbz.supabase.co';
+        const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2Y3N3aW1xYXh2eWxneGJrbGJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3NjA1MzAsImV4cCI6MjA2OTMzNjUzMH0.UZdiGcJXUV5VYetjWXV26inmbj2yXdiT03Z6t_5Lg24';
+        
+        async function testImages() {
+            const summaryEl = document.getElementById('summary');
+            const resultsEl = document.getElementById('results');
+            
+            try {
+                // Fetch products like admin panel would
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=name&limit=50`, {
+                    headers: {
+                        'apikey': ANON_KEY,
+                        'Authorization': `Bearer ${ANON_KEY}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const products = await response.json();
+                
+                let loadedCount = 0;
+                let failedCount = 0;
+                let noImageCount = 0;
+                
+                // Update summary
+                summaryEl.innerHTML = `
+                    <h2>Testing ${products.length} Products</h2>
+                    <div class="stats">
+                        <div class="stat">
+                            <strong>Total:</strong> ${products.length}
+                        </div>
+                        <div class="stat" id="loaded">
+                            <strong>✅ Loaded:</strong> <span>0</span>
+                        </div>
+                        <div class="stat" id="failed">
+                            <strong>❌ Failed:</strong> <span>0</span>
+                        </div>
+                        <div class="stat" id="noimage">
+                            <strong>⚠️ No Image:</strong> <span>0</span>
+                        </div>
+                    </div>
+                `;
+                
+                // Test each product image
+                products.forEach(product => {
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    
+                    if (!product.primary_image) {
+                        noImageCount++;
+                        card.innerHTML = `
+                            <div style="height: 200px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
+                                No Image
+                            </div>
+                            <div class="product-name">${product.name}</div>
+                            <span class="status error">No Image Set</span>
+                        `;
+                        document.getElementById('noimage').querySelector('span').textContent = noImageCount;
+                    } else {
+                        const img = new Image();
+                        img.className = 'product-image';
+                        img.src = product.primary_image;
+                        
+                        img.onload = () => {
+                            loadedCount++;
+                            card.innerHTML = `
+                                <img src="${product.primary_image}" class="product-image" alt="${product.name}">
+                                <div class="product-name">${product.name}</div>
+                                <span class="status success">✅ Loaded</span>
+                                <div class="image-url">${product.primary_image}</div>
+                            `;
+                            document.getElementById('loaded').querySelector('span').textContent = loadedCount;
+                        };
+                        
+                        img.onerror = () => {
+                            failedCount++;
+                            card.innerHTML = `
+                                <div style="height: 200px; background: #ffebee; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
+                                    ❌ Failed to Load
+                                </div>
+                                <div class="product-name">${product.name}</div>
+                                <span class="status error">Failed to Load</span>
+                                <div class="image-url" style="color: red;">${product.primary_image}</div>
+                            `;
+                            document.getElementById('failed').querySelector('span').textContent = failedCount;
+                            
+                            // Log error for debugging
+                            console.error(`Failed to load image for ${product.name}:`, product.primary_image);
+                        };
+                        
+                        // Initial placeholder
+                        card.innerHTML = `
+                            <div style="height: 200px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
+                                Loading...
+                            </div>
+                            <div class="product-name">${product.name}</div>
+                        `;
+                    }
+                    
+                    resultsEl.appendChild(card);
+                });
+                
+            } catch (error) {
+                summaryEl.innerHTML = `
+                    <h2 style="color: red;">Error Loading Products</h2>
+                    <p>${error.message}</p>
+                `;
+                console.error('Error:', error);
+            }
+        }
+        
+        // Start test
+        testImages();
+    </script>
+</body>
+</html>
