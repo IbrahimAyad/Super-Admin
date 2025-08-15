@@ -29,6 +29,7 @@ import { monitoring, logger } from "@/lib/services/monitoring";
 import AdminDashboardDirect from "./pages/AdminDashboardDirect";
 import EmergencyAdmin from "./pages/EmergencyAdmin";
 import EnhancedProducts from "./pages/EnhancedProducts";
+import TestEnhancedProducts from "./pages/TestEnhancedProducts";
 
 const queryClient = new QueryClient();
 
@@ -91,6 +92,7 @@ const App = () => (
               <Route path="/admin/automation" element={<AdminDashboard />} />
               <Route path="/admin/stripe-sync" element={<AdminDashboard />} />
               <Route path="/admin/enhanced-products" element={<EnhancedProducts />} />
+              <Route path="/test-enhanced-products" element={<TestEnhancedProducts />} />
               <Route path="/admin/test-auth" element={<ProtectedRoute><AdminRoute><AdminAuthTest /></AdminRoute></ProtectedRoute>} />
               <Route path="/product-test" element={<ProtectedRoute><ProductTest /></ProtectedRoute>} />
               <Route path="/storage-test" element={<ProtectedRoute><StorageTest /></ProtectedRoute>} />
