@@ -57,7 +57,6 @@ function createSupabaseClient(): SupabaseClient {
     },
   });
 
-  console.log(`✅ Public Supabase client initialized`);
   return supabaseInstance;
 }
 
@@ -68,7 +67,6 @@ function createSupabaseClient(): SupabaseClient {
 function createAdminSupabaseClient(): SupabaseClient | null {
   // Don't create admin client in browser environment
   if (typeof window !== 'undefined') {
-    console.warn('⚠️ Admin client not available in browser - use Edge Functions for admin operations');
     return null;
   }
 
@@ -80,7 +78,6 @@ function createAdminSupabaseClient(): SupabaseClient | null {
   const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || '';
   
   if (!supabaseServiceKey) {
-    console.warn('⚠️ SUPABASE_SERVICE_ROLE_KEY not set - admin operations unavailable');
     return null;
   }
 
@@ -135,10 +132,9 @@ export function resetSupabaseClient(): void {
 export function getClientForOperation(operationType: 'public' | 'admin' | 'auth'): SupabaseClient {
   switch (operationType) {
     case 'admin':
-      // In browser, fall back to public client with warning
+      // In browser, fall back to public client
       const adminClient = getAdminSupabaseClient();
       if (!adminClient) {
-        console.warn('Admin operations should use Edge Functions');
         return getSupabaseClient();
       }
       return adminClient;

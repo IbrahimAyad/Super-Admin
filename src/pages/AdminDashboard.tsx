@@ -16,9 +16,7 @@ import {
   DollarSign,
   Eye,
   Crown,
-  Settings,
   Star,
-  Database,
   Download,
   Bell,
   CreditCard
