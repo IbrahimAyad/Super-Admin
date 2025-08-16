@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff, Copy, Edit2 } from 'lucide-react';
-import { Product, getProductImageUrl } from '@/lib/services';
+import { Product, getProductImageUrl, formatPrice } from '@/lib/services';
 import styles from '../ProductManagement.module.css';
 
 interface ProductListProps {
@@ -105,7 +105,7 @@ export const ProductList = React.memo(function ProductList({
                 </div>
               </TableCell>
               <TableCell>{product.category}</TableCell>
-              <TableCell>${product.base_price}</TableCell>
+              <TableCell>{formatPrice(product.base_price)}</TableCell>
               <TableCell>
                 <Badge variant={product.status === 'active' ? "default" : "secondary"}>
                   {product.status}
@@ -179,7 +179,7 @@ export const ProductList = React.memo(function ProductList({
             <div className="space-y-2">
               <h3 className="font-medium text-sm line-clamp-2">{product.name}</h3>
               <div className="flex items-center justify-between">
-                <p className="text-lg font-bold">${product.base_price}</p>
+                <p className="text-lg font-bold">{formatPrice(product.base_price)}</p>
                 <Badge variant={product.status === 'active' ? "default" : "secondary"} className="text-xs">
                   {product.status}
                 </Badge>
@@ -255,7 +255,7 @@ export const ProductList = React.memo(function ProductList({
             </div>
           </div>
           <div className={styles.mobileCardActions}>
-            <div className={styles.mobilePrice}>${product.base_price}</div>
+            <div className={styles.mobilePrice}>{formatPrice(product.base_price)}</div>
             <div className={styles.mobileActionButtons}>
               <button
                 className={styles.mobileActionButton}

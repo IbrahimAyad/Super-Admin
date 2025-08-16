@@ -34,11 +34,15 @@ import styles from './ProductManagement.module.css';
 
 
 const categories = [
-  'Suits & Blazers',
-  'Shirts & Tops',
-  'Trousers & Pants',
+  'Blazers',
+  'Double-Breasted Suits',
+  'Stretch Suits',
+  'Suits',
+  'Tuxedos',
+  'Mens Shirts',
   'Accessories',
-  'Footwear',
+  'Vests',
+  'Trousers',
   'Formal Wear',
   'Casual Wear'
 ];
@@ -302,32 +306,32 @@ export const ProductManagement = () => {
       switch (action) {
         case 'activate':
           await supabase
-            .from('products')
+            .from('products_enhanced')
             .update({ status: 'active' })
             .in('id', selectedProducts);
           break;
         case 'deactivate':
           await supabase
-            .from('products')
+            .from('products_enhanced')
             .update({ status: 'inactive' })
             .in('id', selectedProducts);
           break;
         case 'feature':
           await supabase
-            .from('products')
+            .from('products_enhanced')
             .update({ is_bundleable: true })
             .in('id', selectedProducts);
           break;
         case 'unfeature':
           await supabase
-            .from('products')
+            .from('products_enhanced')
             .update({ is_bundleable: false })
             .in('id', selectedProducts);
           break;
         case 'delete':
           if (confirm(`Are you sure you want to delete ${selectedProducts.length} products?`)) {
             await supabase
-              .from('products')
+              .from('products_enhanced')
               .delete()
               .in('id', selectedProducts);
           } else {
@@ -457,7 +461,7 @@ export const ProductManagement = () => {
       // Use shared supabase instance
       
       const { error } = await supabase
-        .from('products')
+        .from('products_enhanced')
         .delete()
         .eq('id', productId);
 
