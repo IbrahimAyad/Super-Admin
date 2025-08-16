@@ -7,24 +7,52 @@
 import { supabase } from '../supabase-client';
 import { productCache } from '../cache';
 
-// Product types
+// Product types - Updated for products_enhanced
 export interface Product {
   id: string;
   name: string;
   slug: string;
+  handle?: string;
   description: string;
   category: string;
   subcategory?: string;
   base_price: number;
+  compare_at_price?: number;
   sale_price?: number;
   sku: string;
+  style_code?: string;
+  season?: string;
+  collection?: string;
+  price_tier?: string;
+  color_name?: string;
+  color_family?: string;
+  materials?: any;
+  fit_type?: string;
+  size_options?: {
+    regular: boolean;
+    short: boolean;
+    long: boolean;
+  };
+  available_sizes?: string[];
   shopify_id?: string;
+  stripe_product_id?: string;
   status: 'active' | 'draft' | 'archived';
   created_at: string;
   updated_at: string;
   metadata?: Record<string, any>;
-  images?: ProductImage[];
+  additional_info?: Record<string, any>;
+  images?: ProductImage[] | any; // Can be array or JSON
   variants?: ProductVariant[];
+  // SEO fields
+  meta_title?: string;
+  meta_description?: string;
+  meta_keywords?: string[];
+  og_title?: string;
+  og_description?: string;
+  search_terms?: string;
+  url_slug?: string;
+  is_indexable?: boolean;
+  sitemap_priority?: number;
 }
 
 export interface ProductImage {
@@ -115,10 +143,10 @@ export async function fetchProductsWithImages(options?: {
       }
     }
     let query = supabase
-      .from('products')
+      .from('products_enhanced')
       .select(`
         *,
-        images:product_images(*),
+        images:product_images(product_id, image_url, image_type, position, alt_text),
         variants:product_variants(*)
       `, { count: 'exact' })
       .order('created_at', { ascending: false });
@@ -217,10 +245,10 @@ export async function getProduct(slugOrId: string) {
   try {
     // First try by slug
     let { data, error } = await supabase
-      .from('products')
+      .from('products_enhanced')
       .select(`
         *,
-        images:product_images(*),
+        images:product_images(product_id, image_url, image_type, position, alt_text),
         variants:product_variants(*)
       `)
       .eq('slug', slugOrId)
@@ -229,10 +257,10 @@ export async function getProduct(slugOrId: string) {
     // If not found by slug, try by ID
     if (!data) {
       const result = await supabase
-        .from('products')
+        .from('products_enhanced')
         .select(`
           *,
-          images:product_images(*),
+          images:product_images(product_id, image_url, image_type, position, alt_text),
           variants:product_variants(*)
         `)
         .eq('id', slugOrId)
@@ -270,10 +298,10 @@ export async function getProduct(slugOrId: string) {
 export async function getProductById(id: string) {
   try {
     const { data, error } = await supabase
-      .from('products')
+      .from('products_enhanced')
       .select(`
         *,
-        images:product_images(*),
+        images:product_images(product_id, image_url, image_type, position, alt_text),
         variants:product_variants(*)
       `)
       .eq('id', id)
@@ -501,13 +529,32 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
 }
 
 /**
- * Format price for display
+ * Format price for display - handles both cents and dollars
  */
-export function formatPrice(cents: number): string {
+export function formatPrice(price: number): string {
+  // If price is greater than 1000, assume it's in cents
+  // Otherwise assume it's in dollars (for products_enhanced which stores as dollars)
+  const amount = price > 1000 ? price / 100 : price;
+  
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-  }).format(cents / 100);
+  }).format(amount);
+}
+
+/**
+ * Convert price to cents for Stripe
+ */
+export function priceToCents(price: number): number {
+  // If price is less than 1000, it's likely in dollars, so convert to cents
+  return price < 1000 ? Math.round(price * 100) : Math.round(price);
+}
+
+/**
+ * Convert cents to dollars
+ */
+export function centsToPrice(cents: number): number {
+  return cents / 100;
 }
 
 /**
@@ -744,7 +791,7 @@ export async function createProductWithImages(productData: Partial<Product> & { 
     
     // Create the product first
     const { data: product, error: productError } = await supabase
-      .from('products')
+      .from('products_enhanced')
       .insert([productInfo])
       .select()
       .single();
@@ -875,7 +922,7 @@ export async function toggleProductStatus(productId: string) {
   try {
     // First get current status
     const { data: currentProduct, error: fetchError } = await supabase
-      .from('products')
+      .from('products_enhanced')
       .select('status')
       .eq('id', productId)
       .single();
@@ -886,7 +933,7 @@ export async function toggleProductStatus(productId: string) {
     const newStatus = currentProduct.status === 'active' ? 'draft' : 'active';
 
     const { data, error } = await supabase
-      .from('products')
+      .from('products_enhanced')
       .update({ status: newStatus, updated_at: new Date().toISOString() })
       .eq('id', productId)
       .select()
@@ -916,10 +963,10 @@ export async function duplicateProduct(productId: string) {
   try {
     // Get the original product with images
     const { data: originalProduct, error: fetchError } = await supabase
-      .from('products')
+      .from('products_enhanced')
       .select(`
         *,
-        images:product_images(*),
+        images:product_images(product_id, image_url, image_type, position, alt_text),
         variants:product_variants(*)
       `)
       .eq('id', productId)
@@ -939,7 +986,7 @@ export async function duplicateProduct(productId: string) {
 
     // Create the new product
     const { data: newProduct, error: createError } = await supabase
-      .from('products')
+      .from('products_enhanced')
       .insert([newProductData])
       .select()
       .single();
@@ -986,7 +1033,7 @@ export async function duplicateProduct(productId: string) {
 export async function getRecentlyUpdatedProducts(limit: number = 5) {
   try {
     const { data, error } = await supabase
-      .from('products')
+      .from('products_enhanced')
       .select(`
         id,
         name,
@@ -1054,7 +1101,7 @@ export async function updateProductWithImages(productId: string, productData: Pa
     
     // Update the product first
     const { data: product, error: productError } = await supabase
-      .from('products')
+      .from('products_enhanced')
       .update(cleanProductInfo)
       .eq('id', productId)
       .select()

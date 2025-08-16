@@ -1,5 +1,7 @@
 -- Complete Fall 2025 Collection Import with Correct Pricing
 -- Shirts: $49-69, Suits: $200-400, Tuxedos: $250-400
+-- UPSERT: Will update existing products or insert new ones
+-- Safe to run multiple times - won't create duplicates
 
 
 INSERT INTO products_enhanced (
@@ -10,7 +12,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '217e2476-eea8-4884-91cd-92f4d1d00d9f',
+    '17895847-54b1-4e83-aca0-70c6fe1f2c56',
     'Black Strip Shawl Lapel',
     'F25-DOU-001',
     'black-strip-shawl-lapel',
@@ -21,8 +23,8 @@ INSERT INTO products_enhanced (
     'Double-Breasted Suits',
     'Premium Collection',
     'TIER_8',
-    363.06,
-    492.77,
+    354.77,
+    530.35,
     'Black',
     'Black',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -30,8 +32,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/double-breasted-suits/black-strip-shawl-lapel/main.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/double-breasted-suits/black-strip-shawl-lapel/back.webp"}, {"url": "https://cdn.kctmenswear.com/double-breasted-suits/black-strip-shawl-lapel/front.webp"}]}',
     'Premium Black Strip Shawl Lapel from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Black Strip Shawl Lapel | Double-Breasted Suits | KCT Menswear',
-    'Shop Black Strip Shawl Lapel at $363.06. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Black Strip Shawl Lapel | Double-Breasted Suits',
+    'Shop Black Strip Shawl Lapel at $354.77. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['double-breasted suits', 'black', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Black Strip Shawl Lapel - Fall 2025',
     'Elegant Black Strip Shawl Lapel from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -41,7 +43,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -51,7 +65,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '41fb13a3-3b8a-4dd3-9686-a79474d31f87',
+    '5d8e9ba8-aea0-43fe-8ba1-1acb9d269c81',
     'Fall Forest Green Mocha Double Breasted Suit',
     'F25-DOU-002',
     'fall-forest-green-mocha-double-breasted-suit',
@@ -62,8 +76,8 @@ INSERT INTO products_enhanced (
     'Double-Breasted Suits',
     'Executive Collection',
     'TIER_6',
-    240.84,
-    316.72,
+    222.27,
+    330.23,
     'Green Mocha Forest',
     'Green',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -71,8 +85,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/double-breasted-suits/fall-forest-green-mocha-double-breasted-suit/main.webp"}}',
     'Premium Fall Forest Green Mocha Double Breasted Suit from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Fall Forest Green Mocha Double Breasted Suit | Double-Breasted Suits | KCT Menswear',
-    'Shop Fall Forest Green Mocha Double Breasted Suit at $240.84. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Fall Forest Green Mocha Double | Double-Breasted Suits',
+    'Shop Fall Forest Green Mocha Double Breasted Suit at $222.27. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['double-breasted suits', 'green mocha forest', 'fall 2025', 'menswear', 'formal', 'executive collection'],
     'Fall Forest Green Mocha Double Breasted Suit - Fall 2025',
     'Elegant Fall Forest Green Mocha Double Breasted Suit from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -82,7 +96,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -92,7 +118,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '9b26ee3e-6f0b-4ac6-918a-db7577432f85',
+    '873d85a4-1cca-438a-9acd-aacf5df9eae8',
     'Fall Mocha Double Breasted Suit',
     'F25-DOU-003',
     'fall-mocha-double-breasted-suit',
@@ -102,9 +128,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Double-Breasted Suits',
     'Executive Collection',
-    'TIER_8',
-    374.03,
-    555.04,
+    'TIER_6',
+    201.99,
+    276.69,
     'Mocha',
     'Brown',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -112,8 +138,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/double-breasted-suits/fall-mocha-double-breasted-suit/20250806_1901_Stylish Suit Display_remix_01k20srfr9ez1ag6z2kba3s8x3.webp"}}',
     'Premium Fall Mocha Double Breasted Suit from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Fall Mocha Double Breasted Suit | Double-Breasted Suits | KCT Menswear',
-    'Shop Fall Mocha Double Breasted Suit at $374.03. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Fall Mocha Double Breasted Sui | Double-Breasted Suits',
+    'Shop Fall Mocha Double Breasted Suit at $201.99. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['double-breasted suits', 'mocha', 'fall 2025', 'menswear', 'formal', 'executive collection'],
     'Fall Mocha Double Breasted Suit - Fall 2025',
     'Elegant Fall Mocha Double Breasted Suit from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -123,7 +149,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -133,7 +171,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'b950380a-4f42-47e8-944c-f6cf3b215adc',
+    '8041d1eb-fea5-475d-86b9-8220a4701bb0',
     'Fall Smoked Blue Double Breasted Suit',
     'F25-DOU-004',
     'fall-smoked-blue-double-breasted-suit',
@@ -144,8 +182,8 @@ INSERT INTO products_enhanced (
     'Double-Breasted Suits',
     'Executive Collection',
     'TIER_7',
-    293.21,
-    406.95,
+    261.54,
+    342.24,
     'Blue Smoked',
     'Blue',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -153,8 +191,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/double-breasted-suits/fall-smoked-blue-double-breasted-suit/main.webp"}}',
     'Premium Fall Smoked Blue Double Breasted Suit from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Fall Smoked Blue Double Breasted Suit | Double-Breasted Suits | KCT Menswear',
-    'Shop Fall Smoked Blue Double Breasted Suit at $293.21. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Fall Smoked Blue Double Breast | Double-Breasted Suits',
+    'Shop Fall Smoked Blue Double Breasted Suit at $261.54. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['double-breasted suits', 'blue smoked', 'fall 2025', 'menswear', 'formal', 'executive collection'],
     'Fall Smoked Blue Double Breasted Suit - Fall 2025',
     'Elegant Fall Smoked Blue Double Breasted Suit from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -164,7 +202,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -174,7 +224,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '3c5741f0-0123-4ee3-ae55-09b8a9b38396',
+    '5b52dc4c-f08a-4069-87de-d5241461b6bf',
     'Light Grey',
     'F25-DOU-005',
     'light-grey',
@@ -184,9 +234,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Double-Breasted Suits',
     'Premium Collection',
-    'TIER_6',
-    223.43,
-    313.64,
+    'TIER_8',
+    311.69,
+    445.08,
     'Grey Light',
     'Grey',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -194,8 +244,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/double-breasted-suits/light-grey/main.webp"}}',
     'Premium Light Grey from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Light Grey | Double-Breasted Suits | KCT Menswear',
-    'Shop Light Grey at $223.43. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Light Grey | Double-Breasted Suits',
+    'Shop Light Grey at $311.69. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['double-breasted suits', 'grey light', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Light Grey - Fall 2025',
     'Elegant Light Grey from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -205,7 +255,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -215,7 +277,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '4e3c661f-9c1a-4cfd-bfb4-5a7abe67509d',
+    '422d80ca-2232-47ef-a270-eb1088f7c46b',
     'Pin Stripe Canyon Clay Double Breasted Suit',
     'F25-DOU-006',
     'pin-stripe-canyon-clay-double-breasted-suit',
@@ -225,9 +287,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Double-Breasted Suits',
     'Executive Collection',
-    'TIER_6',
-    248.57,
-    327.06,
+    'TIER_7',
+    264.57,
+    354.34,
     'Canyon Clay',
     'Brown',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -235,8 +297,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/double-breasted-suits/pin-stripe-canyon-clay-double-breasted-suit/main.webp"}}',
     'Premium Pin Stripe Canyon Clay Double Breasted Suit from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Pin Stripe Canyon Clay Double Breasted Suit | Double-Breasted Suits | KCT Menswear',
-    'Shop Pin Stripe Canyon Clay Double Breasted Suit at $248.57. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Pin Stripe Canyon Clay Double  | Double-Breasted Suits',
+    'Shop Pin Stripe Canyon Clay Double Breasted Suit at $264.57. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['double-breasted suits', 'canyon clay', 'fall 2025', 'menswear', 'formal', 'executive collection'],
     'Pin Stripe Canyon Clay Double Breasted Suit - Fall 2025',
     'Elegant Pin Stripe Canyon Clay Double Breasted Suit from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -246,7 +308,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -256,7 +330,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'd79216e8-2979-48fd-aedb-cacb9f453901',
+    'e14413af-bafc-4eba-8385-71105c6058f9',
     'Pink',
     'F25-DOU-007',
     'pink',
@@ -267,8 +341,8 @@ INSERT INTO products_enhanced (
     'Double-Breasted Suits',
     'Premium Collection',
     'TIER_8',
-    321.38,
-    477.43,
+    341.69,
+    449.66,
     'Pink',
     'Pink',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -276,8 +350,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/double-breasted-suits/pink/main.webp"}}',
     'Premium Pink from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Pink | Double-Breasted Suits | KCT Menswear',
-    'Shop Pink at $321.38. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Pink | Double-Breasted Suits',
+    'Shop Pink at $341.69. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['double-breasted suits', 'pink', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Pink - Fall 2025',
     'Elegant Pink from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -287,7 +361,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -297,7 +383,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'e8f29fa2-a6cd-4223-866f-a8f88b61cce4',
+    '44ba7d02-c24c-4d84-9c6c-108dc4fd39f5',
     'Red Tuxedo Double Breasted',
     'F25-DOU-008',
     'red-tuxedo-double-breasted',
@@ -307,9 +393,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Double-Breasted Suits',
     'Executive Collection',
-    'TIER_6',
-    237.92,
-    349.52,
+    'TIER_8',
+    333.42,
+    494.05,
     'Red',
     'Red',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -317,8 +403,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/double-breasted-suits/red-tuxedo-double-breasted/main.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/double-breasted-suits/red-tuxedo-double-breasted/front.webp"}]}',
     'Premium Red Tuxedo Double Breasted from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Red Tuxedo Double Breasted | Double-Breasted Suits | KCT Menswear',
-    'Shop Red Tuxedo Double Breasted at $237.92. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Red Tuxedo Double Breasted | Double-Breasted Suits',
+    'Shop Red Tuxedo Double Breasted at $333.42. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['double-breasted suits', 'red', 'fall 2025', 'menswear', 'formal', 'executive collection'],
     'Red Tuxedo Double Breasted - Fall 2025',
     'Elegant Red Tuxedo Double Breasted from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -328,7 +414,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -338,7 +436,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '6d671100-36ad-40d0-8581-b2ca17fc9d9b',
+    'e0679434-b5ea-4169-a477-b56d713cbf64',
     'Tan Tuxedo Double Breasted',
     'F25-DOU-009',
     'tan-tuxedo-double-breasted',
@@ -349,8 +447,8 @@ INSERT INTO products_enhanced (
     'Double-Breasted Suits',
     'Executive Collection',
     'TIER_8',
-    313.28,
-    411.6,
+    312.91,
+    427.75,
     'Tan',
     'Brown',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -358,8 +456,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/double-breasted-suits/tan-tuxedo-double-breasted/main.webp"}}',
     'Premium Tan Tuxedo Double Breasted from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Tan Tuxedo Double Breasted | Double-Breasted Suits | KCT Menswear',
-    'Shop Tan Tuxedo Double Breasted at $313.28. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Tan Tuxedo Double Breasted | Double-Breasted Suits',
+    'Shop Tan Tuxedo Double Breasted at $312.91. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['double-breasted suits', 'tan', 'fall 2025', 'menswear', 'formal', 'executive collection'],
     'Tan Tuxedo Double Breasted - Fall 2025',
     'Elegant Tan Tuxedo Double Breasted from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -369,7 +467,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -379,7 +489,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '4c9a3828-ec43-452e-981b-afd21d02e596',
+    'cdb22862-d7eb-4b65-9b45-5b058acd64c6',
     'White Tuxedo Double Breasted',
     'F25-DOU-010',
     'white-tuxedo-double-breasted',
@@ -389,9 +499,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Double-Breasted Suits',
     'Executive Collection',
-    'TIER_7',
-    295.94,
-    437.75,
+    'TIER_6',
+    243.81,
+    323.48,
     'White',
     'White',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -399,8 +509,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/double-breasted-suits/white-tuxedo-double-breasted/main.webp"}}',
     'Premium White Tuxedo Double Breasted from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'White Tuxedo Double Breasted | Double-Breasted Suits | KCT Menswear',
-    'Shop White Tuxedo Double Breasted at $295.94. Fall 2025 Collection. Free shipping on orders over $200.',
+    'White Tuxedo Double Breasted | Double-Breasted Suits',
+    'Shop White Tuxedo Double Breasted at $243.81. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['double-breasted suits', 'white', 'fall 2025', 'menswear', 'formal', 'executive collection'],
     'White Tuxedo Double Breasted - Fall 2025',
     'Elegant White Tuxedo Double Breasted from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -410,7 +520,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -420,7 +542,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'ec997ebd-3649-4f86-ba26-23c6e863cbfd',
+    'a767bdba-c80b-46b8-9d91-866628a13991',
     'Black Turtleneck',
     'F25-MEN-011',
     'black-turtleneck',
@@ -431,8 +553,8 @@ INSERT INTO products_enhanced (
     'Mens Shirts',
     'Premium Collection',
     'TIER_1',
-    55.75,
-    73.77,
+    66.52,
+    91.46,
     'Black',
     'Black',
     '{"primary": "Premium Cotton Blend", "finish": "Wrinkle-Resistant"}',
@@ -440,8 +562,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/mens-shirts/black-turtleneck/main.webp"}}',
     'Premium Black Turtleneck from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Black Turtleneck | Mens Shirts | KCT Menswear',
-    'Shop Black Turtleneck at $55.75. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Black Turtleneck | Mens Shirts',
+    'Shop Black Turtleneck at $66.52. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['mens shirts', 'black', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Black Turtleneck - Fall 2025',
     'Elegant Black Turtleneck from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -451,7 +573,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -461,7 +595,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '6c4a1cbb-35c3-42fe-804e-af40c9d12933',
+    'f7bed254-25f6-499d-a4e5-2ad52c0d26f0',
     'Black Ultra Stretch Dress Shirt',
     'F25-MEN-012',
     'black-ultra-stretch-dress-shirt',
@@ -472,8 +606,8 @@ INSERT INTO products_enhanced (
     'Mens Shirts',
     'Performance Collection',
     'TIER_1',
-    64.2,
-    87.17,
+    59.06,
+    81.71,
     'Black',
     'Black',
     '{"primary": "Premium Cotton Blend", "finish": "Wrinkle-Resistant"}',
@@ -481,8 +615,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/mens-shirts/black-ultra-stretch-dress-shirt/main.webp"}}',
     'Premium Black Ultra Stretch Dress Shirt from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Black Ultra Stretch Dress Shirt | Mens Shirts | KCT Menswear',
-    'Shop Black Ultra Stretch Dress Shirt at $64.2. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Black Ultra Stretch Dress Shir | Mens Shirts',
+    'Shop Black Ultra Stretch Dress Shirt at $59.06. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['mens shirts', 'black', 'fall 2025', 'menswear', 'formal', 'performance collection'],
     'Black Ultra Stretch Dress Shirt - Fall 2025',
     'Elegant Black Ultra Stretch Dress Shirt from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -492,7 +626,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -502,7 +648,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '264407c2-8348-49a8-a12d-d8b44b833e67',
+    'd43a6b4c-5d71-400d-83fa-f6dd875e413e',
     'Light Blue Collarless Dress Shirt',
     'F25-MEN-013',
     'light-blue-collarless-dress-shirt',
@@ -513,8 +659,8 @@ INSERT INTO products_enhanced (
     'Mens Shirts',
     'Premium Collection',
     'TIER_1',
-    61.49,
-    89.71,
+    52.39,
+    70.57,
     'Blue Light',
     'Blue',
     '{"primary": "Premium Cotton Blend", "finish": "Wrinkle-Resistant"}',
@@ -522,8 +668,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/mens-shirts/light-blue-collarless-dress-shirt/main.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/mens-shirts/light-blue-collarless-dress-shirt/front.webp"}, {"url": "https://cdn.kctmenswear.com/mens-shirts/light-blue-collarless-dress-shirt/side.webp"}]}',
     'Premium Light Blue Collarless Dress Shirt from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Light Blue Collarless Dress Shirt | Mens Shirts | KCT Menswear',
-    'Shop Light Blue Collarless Dress Shirt at $61.49. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Light Blue Collarless Dress Sh | Mens Shirts',
+    'Shop Light Blue Collarless Dress Shirt at $52.39. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['mens shirts', 'blue light', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Light Blue Collarless Dress Shirt - Fall 2025',
     'Elegant Light Blue Collarless Dress Shirt from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -533,7 +679,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -543,7 +701,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '8f87a508-5c3f-483a-a173-459cdd305b2d',
+    'a986f6a3-6bcb-46ba-b990-7aea89b53448',
     'Light Blue Turtleneck',
     'F25-MEN-014',
     'light-blue-turtleneck',
@@ -554,8 +712,8 @@ INSERT INTO products_enhanced (
     'Mens Shirts',
     'Premium Collection',
     'TIER_1',
-    51.43,
-    69.29,
+    60.99,
+    82.14,
     'Blue Light',
     'Blue',
     '{"primary": "Premium Cotton Blend", "finish": "Wrinkle-Resistant"}',
@@ -563,8 +721,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/mens-shirts/light-blue-turtleneck/main.webp"}}',
     'Premium Light Blue Turtleneck from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Light Blue Turtleneck | Mens Shirts | KCT Menswear',
-    'Shop Light Blue Turtleneck at $51.43. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Light Blue Turtleneck | Mens Shirts',
+    'Shop Light Blue Turtleneck at $60.99. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['mens shirts', 'blue light', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Light Blue Turtleneck - Fall 2025',
     'Elegant Light Blue Turtleneck from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -574,7 +732,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -584,7 +754,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '0e9969cb-f29f-4d8b-a5e3-dc4007ec22d2',
+    '76911fe5-79d8-49e5-9b06-848196281fd5',
     'Black Collarless Dress Shirt',
     'F25-MEN-015',
     'black-collarless-dress-shirt',
@@ -595,8 +765,8 @@ INSERT INTO products_enhanced (
     'Mens Shirts',
     'Premium Collection',
     'TIER_1',
-    58.64,
-    82.24,
+    50.59,
+    72.3,
     'Black',
     'Black',
     '{"primary": "Premium Cotton Blend", "finish": "Wrinkle-Resistant"}',
@@ -604,8 +774,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/mens-shirts/black-collarless-dress-shirt/main.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/mens-shirts/black-collarless-dress-shirt/front.webp"}, {"url": "https://cdn.kctmenswear.com/mens-shirts/black-collarless-dress-shirt/side.webp"}]}',
     'Premium Black Collarless Dress Shirt from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Black Collarless Dress Shirt | Mens Shirts | KCT Menswear',
-    'Shop Black Collarless Dress Shirt at $58.64. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Black Collarless Dress Shirt | Mens Shirts',
+    'Shop Black Collarless Dress Shirt at $50.59. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['mens shirts', 'black', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Black Collarless Dress Shirt - Fall 2025',
     'Elegant Black Collarless Dress Shirt from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -615,7 +785,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -625,7 +807,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'ef60b546-3048-4266-8fe8-6980c5dbd429',
+    '2e9ad162-fd0f-4c12-8068-666a2fdace78',
     'Black Short Sleeve Moc Neck',
     'F25-MEN-016',
     'black-short-sleeve-moc-neck',
@@ -636,8 +818,8 @@ INSERT INTO products_enhanced (
     'Mens Shirts',
     'Premium Collection',
     'TIER_1',
-    60.41,
-    81.17,
+    62.77,
+    93.24,
     'Black',
     'Black',
     '{"primary": "Premium Cotton Blend", "finish": "Wrinkle-Resistant"}',
@@ -645,8 +827,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/mens-shirts/black-short-sleeve-moc-neck/main.webp"}}',
     'Premium Black Short Sleeve Moc Neck from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Black Short Sleeve Moc Neck | Mens Shirts | KCT Menswear',
-    'Shop Black Short Sleeve Moc Neck at $60.41. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Black Short Sleeve Moc Neck | Mens Shirts',
+    'Shop Black Short Sleeve Moc Neck at $62.77. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['mens shirts', 'black', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Black Short Sleeve Moc Neck - Fall 2025',
     'Elegant Black Short Sleeve Moc Neck from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -656,7 +838,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -666,7 +860,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '3d4e741b-659c-4478-8b1b-2901a84d6d07',
+    '0878d256-88d9-483f-8afb-5d1b9aacbe38',
     'Light Grey Turtleneck',
     'F25-MEN-017',
     'light-grey-turtleneck',
@@ -677,8 +871,8 @@ INSERT INTO products_enhanced (
     'Mens Shirts',
     'Premium Collection',
     'TIER_1',
-    52.81,
-    74.52,
+    68.75,
+    102.25,
     'Grey Light',
     'Grey',
     '{"primary": "Premium Cotton Blend", "finish": "Wrinkle-Resistant"}',
@@ -686,8 +880,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/mens-shirts/light-grey-turtleneck/main.webp"}}',
     'Premium Light Grey Turtleneck from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Light Grey Turtleneck | Mens Shirts | KCT Menswear',
-    'Shop Light Grey Turtleneck at $52.81. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Light Grey Turtleneck | Mens Shirts',
+    'Shop Light Grey Turtleneck at $68.75. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['mens shirts', 'grey light', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Light Grey Turtleneck - Fall 2025',
     'Elegant Light Grey Turtleneck from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -697,7 +891,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -707,7 +913,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '49e01b03-ea77-48a4-8d92-c1819fb1dc4d',
+    '7634d609-d00d-4d04-bbba-941fb8f0072a',
     'Navy Short Sleeve Moc Neck',
     'F25-MEN-018',
     'navy-short-sleeve-moc-neck',
@@ -718,8 +924,8 @@ INSERT INTO products_enhanced (
     'Mens Shirts',
     'Premium Collection',
     'TIER_1',
-    55.53,
-    73.85,
+    52.71,
+    70.81,
     'Navy',
     'Blue',
     '{"primary": "Premium Cotton Blend", "finish": "Wrinkle-Resistant"}',
@@ -727,8 +933,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/mens-shirts/navy-short-sleeve-moc-neck/main.webp"}}',
     'Premium Navy Short Sleeve Moc Neck from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Navy Short Sleeve Moc Neck | Mens Shirts | KCT Menswear',
-    'Shop Navy Short Sleeve Moc Neck at $55.53. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Navy Short Sleeve Moc Neck | Mens Shirts',
+    'Shop Navy Short Sleeve Moc Neck at $52.71. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['mens shirts', 'navy', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Navy Short Sleeve Moc Neck - Fall 2025',
     'Elegant Navy Short Sleeve Moc Neck from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -738,7 +944,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -748,7 +966,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'af910cbc-ad09-421e-b4e0-d6c42fa8b1a5',
+    '6004ad0a-0fca-421b-962c-adc4cb245ca8',
     'Tan Short Sleeve Moc Neck',
     'F25-MEN-019',
     'tan-short-sleeve-moc-neck',
@@ -759,8 +977,8 @@ INSERT INTO products_enhanced (
     'Mens Shirts',
     'Premium Collection',
     'TIER_1',
-    66.08,
-    97.44,
+    56.53,
+    79.79,
     'Tan',
     'Brown',
     '{"primary": "Premium Cotton Blend", "finish": "Wrinkle-Resistant"}',
@@ -768,8 +986,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/mens-shirts/tan-short-sleeve-moc-neck/main.webp"}}',
     'Premium Tan Short Sleeve Moc Neck from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Tan Short Sleeve Moc Neck | Mens Shirts | KCT Menswear',
-    'Shop Tan Short Sleeve Moc Neck at $66.08. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Tan Short Sleeve Moc Neck | Mens Shirts',
+    'Shop Tan Short Sleeve Moc Neck at $56.53. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['mens shirts', 'tan', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Tan Short Sleeve Moc Neck - Fall 2025',
     'Elegant Tan Short Sleeve Moc Neck from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -779,7 +997,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -789,7 +1019,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'd445f3f4-942e-4cca-989f-90772ff91e14',
+    '0e4d3832-672b-4b84-a94a-c5f0493caa2f',
     'White Short Sleeve Moc Neck',
     'F25-MEN-020',
     'white-short-sleeve-moc-neck',
@@ -800,8 +1030,8 @@ INSERT INTO products_enhanced (
     'Mens Shirts',
     'Premium Collection',
     'TIER_1',
-    65.94,
-    94.08,
+    58.72,
+    82.19,
     'White',
     'White',
     '{"primary": "Premium Cotton Blend", "finish": "Wrinkle-Resistant"}',
@@ -809,8 +1039,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/mens-shirts/white-short-sleeve-moc-neck/main.webp"}}',
     'Premium White Short Sleeve Moc Neck from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'White Short Sleeve Moc Neck | Mens Shirts | KCT Menswear',
-    'Shop White Short Sleeve Moc Neck at $65.94. Fall 2025 Collection. Free shipping on orders over $200.',
+    'White Short Sleeve Moc Neck | Mens Shirts',
+    'Shop White Short Sleeve Moc Neck at $58.72. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['mens shirts', 'white', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'White Short Sleeve Moc Neck - Fall 2025',
     'Elegant White Short Sleeve Moc Neck from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -820,7 +1050,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -830,7 +1072,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '9a0c7de9-a7ed-4c12-9561-09b6a5686d14',
+    '772df9a1-d65d-4719-8a01-8a258017c08f',
     'Tan Turtleneck',
     'F25-MEN-021',
     'tan-turtleneck',
@@ -841,8 +1083,8 @@ INSERT INTO products_enhanced (
     'Mens Shirts',
     'Premium Collection',
     'TIER_1',
-    59.49,
-    78.98,
+    61.79,
+    80.84,
     'Tan',
     'Brown',
     '{"primary": "Premium Cotton Blend", "finish": "Wrinkle-Resistant"}',
@@ -850,8 +1092,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/mens-shirts/tan-turtleneck/main.webp"}}',
     'Premium Tan Turtleneck from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Tan Turtleneck | Mens Shirts | KCT Menswear',
-    'Shop Tan Turtleneck at $59.49. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Tan Turtleneck | Mens Shirts',
+    'Shop Tan Turtleneck at $61.79. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['mens shirts', 'tan', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Tan Turtleneck - Fall 2025',
     'Elegant Tan Turtleneck from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -861,7 +1103,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -871,7 +1125,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'b91e6a62-a861-4cd8-8902-9cce3cd49d3d',
+    'ede1a18a-2261-427f-b796-61ee00d3a80a',
     'White Collarless Dress Shirt',
     'F25-MEN-022',
     'white-collarless-dress-shirt',
@@ -882,8 +1136,8 @@ INSERT INTO products_enhanced (
     'Mens Shirts',
     'Premium Collection',
     'TIER_1',
-    52.27,
-    73.51,
+    59.3,
+    88.39,
     'White',
     'White',
     '{"primary": "Premium Cotton Blend", "finish": "Wrinkle-Resistant"}',
@@ -891,8 +1145,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/mens-shirts/white-collarless-dress-shirt/main.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/mens-shirts/white-collarless-dress-shirt/front.webp"}, {"url": "https://cdn.kctmenswear.com/mens-shirts/white-collarless-dress-shirt/side.webp"}]}',
     'Premium White Collarless Dress Shirt from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'White Collarless Dress Shirt | Mens Shirts | KCT Menswear',
-    'Shop White Collarless Dress Shirt at $52.27. Fall 2025 Collection. Free shipping on orders over $200.',
+    'White Collarless Dress Shirt | Mens Shirts',
+    'Shop White Collarless Dress Shirt at $59.3. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['mens shirts', 'white', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'White Collarless Dress Shirt - Fall 2025',
     'Elegant White Collarless Dress Shirt from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -902,7 +1156,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -912,7 +1178,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'c97cf8f5-bb14-4eb3-af26-e95fe54849ce',
+    '98a70afd-3711-4c33-8e47-c671b89daf3d',
     'White Turtleneck',
     'F25-MEN-023',
     'white-turtleneck',
@@ -923,8 +1189,8 @@ INSERT INTO products_enhanced (
     'Mens Shirts',
     'Premium Collection',
     'TIER_1',
-    68.62,
-    95.91,
+    57.36,
+    75.55,
     'White',
     'White',
     '{"primary": "Premium Cotton Blend", "finish": "Wrinkle-Resistant"}',
@@ -932,8 +1198,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/mens-shirts/white-turtleneck/main.webp"}}',
     'Premium White Turtleneck from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'White Turtleneck | Mens Shirts | KCT Menswear',
-    'Shop White Turtleneck at $68.62. Fall 2025 Collection. Free shipping on orders over $200.',
+    'White Turtleneck | Mens Shirts',
+    'Shop White Turtleneck at $57.36. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['mens shirts', 'white', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'White Turtleneck - Fall 2025',
     'Elegant White Turtleneck from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -943,7 +1209,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -953,7 +1231,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'd6dc70c2-afb4-4da4-9fb1-4cd4ef932ead',
+    '4cbbf0b4-0278-4c3d-8079-ad4430c9de4e',
     'Beige Slim Stretch',
     'F25-STR-024',
     'beige-slim-stretch',
@@ -963,9 +1241,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Stretch Suits',
     'Performance Collection',
-    'TIER_8',
-    373.36,
-    496.1,
+    'TIER_6',
+    241.94,
+    318.22,
     'Beige',
     'Multi',
     '{"primary": "Wool Blend with Elastane", "lining": "Breathable Viscose", "stretch": "4-way"}',
@@ -973,8 +1251,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/stretch-suits/beige-slim-stretch/main.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/stretch-suits/beige-slim-stretch/lifestlye.webp"}]}',
     'Premium Beige Slim Stretch from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Beige Slim Stretch | Stretch Suits | KCT Menswear',
-    'Shop Beige Slim Stretch at $373.36. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Beige Slim Stretch | Stretch Suits',
+    'Shop Beige Slim Stretch at $241.94. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['stretch suits', 'beige', 'fall 2025', 'menswear', 'formal', 'performance collection'],
     'Beige Slim Stretch - Fall 2025',
     'Elegant Beige Slim Stretch from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -984,7 +1262,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -994,7 +1284,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'fd76a6c1-36a6-4513-b6bf-7eb286b148e4',
+    '3ecb56eb-a630-4ea1-ae10-1dc56e82076d',
     'Black Slim Stretch',
     'F25-STR-025',
     'black-slim-stretch',
@@ -1004,9 +1294,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Stretch Suits',
     'Performance Collection',
-    'TIER_8',
-    358.66,
-    510.12,
+    'TIER_6',
+    248.35,
+    339.68,
     'Black',
     'Black',
     '{"primary": "Wool Blend with Elastane", "lining": "Breathable Viscose", "stretch": "4-way"}',
@@ -1014,8 +1304,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/stretch-suits/black-slim-stretch/main.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/stretch-suits/black-slim-stretch/front.webp"}, {"url": "https://cdn.kctmenswear.com/stretch-suits/black-slim-stretch/lifesstyle.webp"}]}',
     'Premium Black Slim Stretch from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Black Slim Stretch | Stretch Suits | KCT Menswear',
-    'Shop Black Slim Stretch at $358.66. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Black Slim Stretch | Stretch Suits',
+    'Shop Black Slim Stretch at $248.35. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['stretch suits', 'black', 'fall 2025', 'menswear', 'formal', 'performance collection'],
     'Black Slim Stretch - Fall 2025',
     'Elegant Black Slim Stretch from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1025,7 +1315,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1035,7 +1337,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'c0015aa5-38c6-44f9-a8ce-de510394a165',
+    'b07e2a16-4d2d-46fe-b450-55eae4fe3955',
     'Burgundy Slim Stretch',
     'F25-STR-026',
     'burgundy--slim-stretch',
@@ -1045,9 +1347,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Stretch Suits',
     'Performance Collection',
-    'TIER_7',
-    268.16,
-    350.56,
+    'TIER_8',
+    381.02,
+    501.24,
     'Burgundy',
     'Red',
     '{"primary": "Wool Blend with Elastane", "lining": "Breathable Viscose", "stretch": "4-way"}',
@@ -1055,8 +1357,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/stretch-suits/burgundy--slim-stretch/main.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/stretch-suits/burgundy--slim-stretch/front.webp"}]}',
     'Premium Burgundy Slim Stretch from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Burgundy Slim Stretch | Stretch Suits | KCT Menswear',
-    'Shop Burgundy Slim Stretch at $268.16. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Burgundy Slim Stretch | Stretch Suits',
+    'Shop Burgundy Slim Stretch at $381.02. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['stretch suits', 'burgundy', 'fall 2025', 'menswear', 'formal', 'performance collection'],
     'Burgundy Slim Stretch - Fall 2025',
     'Elegant Burgundy Slim Stretch from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1066,7 +1368,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1076,7 +1390,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'a38d186d-0f93-4da8-ae1e-e9e6d734489a',
+    '31d4a9dc-1a29-4228-8f58-9325f1da3edb',
     'Light Grey Slim Stretch',
     'F25-STR-027',
     'light-grey-slim-stretch',
@@ -1087,8 +1401,8 @@ INSERT INTO products_enhanced (
     'Stretch Suits',
     'Performance Collection',
     'TIER_8',
-    397.44,
-    563.82,
+    322.25,
+    419.4,
     'Grey Light',
     'Grey',
     '{"primary": "Wool Blend with Elastane", "lining": "Breathable Viscose", "stretch": "4-way"}',
@@ -1096,8 +1410,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/stretch-suits/light-grey-slim-stretch/main.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/stretch-suits/light-grey-slim-stretch/front.webp"}]}',
     'Premium Light Grey Slim Stretch from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Light Grey Slim Stretch | Stretch Suits | KCT Menswear',
-    'Shop Light Grey Slim Stretch at $397.44. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Light Grey Slim Stretch | Stretch Suits',
+    'Shop Light Grey Slim Stretch at $322.25. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['stretch suits', 'grey light', 'fall 2025', 'menswear', 'formal', 'performance collection'],
     'Light Grey Slim Stretch - Fall 2025',
     'Elegant Light Grey Slim Stretch from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1107,7 +1421,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1117,7 +1443,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '47c1e6ac-667b-4b0b-a1a4-ee39e67386fa',
+    '9a260b54-443c-4c19-9165-176b7e733f55',
     'Mauve Slim Stretch',
     'F25-STR-028',
     'mauve-slim-stretch',
@@ -1127,9 +1453,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Stretch Suits',
     'Performance Collection',
-    'TIER_6',
-    235.99,
-    349.81,
+    'TIER_8',
+    318.66,
+    435.41,
     'Classic',
     'Multi',
     '{"primary": "Wool Blend with Elastane", "lining": "Breathable Viscose", "stretch": "4-way"}',
@@ -1137,8 +1463,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/stretch-suits/mauve-slim-stretch/main.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/stretch-suits/mauve-slim-stretch/front.webp"}]}',
     'Premium Mauve Slim Stretch from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Mauve Slim Stretch | Stretch Suits | KCT Menswear',
-    'Shop Mauve Slim Stretch at $235.99. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Mauve Slim Stretch | Stretch Suits',
+    'Shop Mauve Slim Stretch at $318.66. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['stretch suits', 'classic', 'fall 2025', 'menswear', 'formal', 'performance collection'],
     'Mauve Slim Stretch - Fall 2025',
     'Elegant Mauve Slim Stretch from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1148,7 +1474,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1158,7 +1496,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '7b96a59c-d129-499c-810f-8454e851f920',
+    '538a4101-697f-4fad-ab01-1944aa2fcafb',
     'Mint Slim Stretch',
     'F25-STR-029',
     'mint-slim-stretch',
@@ -1168,9 +1506,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Stretch Suits',
     'Performance Collection',
-    'TIER_7',
-    267.91,
-    353.64,
+    'TIER_8',
+    316.61,
+    412.63,
     'Classic',
     'Multi',
     '{"primary": "Wool Blend with Elastane", "lining": "Breathable Viscose", "stretch": "4-way"}',
@@ -1178,8 +1516,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/stretch-suits/mint-slim-stretch/main.webp"}}',
     'Premium Mint Slim Stretch from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Mint Slim Stretch | Stretch Suits | KCT Menswear',
-    'Shop Mint Slim Stretch at $267.91. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Mint Slim Stretch | Stretch Suits',
+    'Shop Mint Slim Stretch at $316.61. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['stretch suits', 'classic', 'fall 2025', 'menswear', 'formal', 'performance collection'],
     'Mint Slim Stretch - Fall 2025',
     'Elegant Mint Slim Stretch from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1189,7 +1527,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1199,7 +1549,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '9cc2296d-c7c0-488f-bc2e-ad35d4c164a2',
+    '67e3128e-e9de-4971-b69f-9cb7aed149f6',
     'Pink Slim Stretch',
     'F25-STR-030',
     'pink-slim-stretch',
@@ -1209,9 +1559,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Stretch Suits',
     'Performance Collection',
-    'TIER_8',
-    381.91,
-    534.63,
+    'TIER_7',
+    264.44,
+    364.23,
     'Pink',
     'Pink',
     '{"primary": "Wool Blend with Elastane", "lining": "Breathable Viscose", "stretch": "4-way"}',
@@ -1219,8 +1569,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/stretch-suits/pink-slim-stretch/main.webp"}}',
     'Premium Pink Slim Stretch from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Pink Slim Stretch | Stretch Suits | KCT Menswear',
-    'Shop Pink Slim Stretch at $381.91. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Pink Slim Stretch | Stretch Suits',
+    'Shop Pink Slim Stretch at $264.44. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['stretch suits', 'pink', 'fall 2025', 'menswear', 'formal', 'performance collection'],
     'Pink Slim Stretch - Fall 2025',
     'Elegant Pink Slim Stretch from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1230,7 +1580,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1240,7 +1602,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'dfa20b6c-4617-4bb7-adb2-903012414e58',
+    'cff30bd0-5858-409a-b8f4-fe3131bf08d3',
     'Salmon Slim Stretch',
     'F25-STR-031',
     'salmon-slim-stretch',
@@ -1250,9 +1612,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Stretch Suits',
     'Performance Collection',
-    'TIER_8',
-    317.03,
-    450.16,
+    'TIER_7',
+    298.82,
+    411.5,
     'Classic',
     'Multi',
     '{"primary": "Wool Blend with Elastane", "lining": "Breathable Viscose", "stretch": "4-way"}',
@@ -1260,8 +1622,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/stretch-suits/salmon-slim-stretch/main.webp"}}',
     'Premium Salmon Slim Stretch from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Salmon Slim Stretch | Stretch Suits | KCT Menswear',
-    'Shop Salmon Slim Stretch at $317.03. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Salmon Slim Stretch | Stretch Suits',
+    'Shop Salmon Slim Stretch at $298.82. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['stretch suits', 'classic', 'fall 2025', 'menswear', 'formal', 'performance collection'],
     'Salmon Slim Stretch - Fall 2025',
     'Elegant Salmon Slim Stretch from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1271,7 +1633,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1281,7 +1655,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '629668e7-cc0d-4000-ba57-b269f4948e50',
+    'b3342c74-9f6b-4a79-9c87-6f3800ae7651',
     'Tan Slim Stretch',
     'F25-STR-032',
     'tan-slim-stretch',
@@ -1292,8 +1666,8 @@ INSERT INTO products_enhanced (
     'Stretch Suits',
     'Performance Collection',
     'TIER_8',
-    305.02,
-    420.88,
+    351.07,
+    464.74,
     'Tan',
     'Brown',
     '{"primary": "Wool Blend with Elastane", "lining": "Breathable Viscose", "stretch": "4-way"}',
@@ -1301,8 +1675,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/stretch-suits/tan-slim-stretch/main.webp"}}',
     'Premium Tan Slim Stretch from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Tan Slim Stretch | Stretch Suits | KCT Menswear',
-    'Shop Tan Slim Stretch at $305.02. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Tan Slim Stretch | Stretch Suits',
+    'Shop Tan Slim Stretch at $351.07. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['stretch suits', 'tan', 'fall 2025', 'menswear', 'formal', 'performance collection'],
     'Tan Slim Stretch - Fall 2025',
     'Elegant Tan Slim Stretch from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1312,7 +1686,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1322,7 +1708,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'bfab81bd-18b7-4690-8f4b-480955092616',
+    'd372086a-ef16-4262-aab7-769730d2778d',
     'Brick Fall Suit',
     'F25-SUI-033',
     'brick-fall-suit',
@@ -1332,9 +1718,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Suits',
     'Premium Collection',
-    'TIER_8',
-    320.73,
-    419.78,
+    'TIER_6',
+    227.32,
+    340.09,
     'Classic',
     'Multi',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -1342,8 +1728,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/suits/brick-fall-suit/main.webp"}}',
     'Premium Brick Fall Suit from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Brick Fall Suit | Suits | KCT Menswear',
-    'Shop Brick Fall Suit at $320.73. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Brick Fall Suit | Suits',
+    'Shop Brick Fall Suit at $227.32. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['suits', 'classic', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Brick Fall Suit - Fall 2025',
     'Elegant Brick Fall Suit from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1353,7 +1739,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1363,7 +1761,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'e6b195cb-7e29-4392-a56c-cc4703e41555',
+    '704d76d4-42de-4cf5-8c21-7b553d30d9b8',
     'Brown Gold Buttons',
     'F25-SUI-034',
     'brown-gold-buttons',
@@ -1373,9 +1771,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Suits',
     'Premium Collection',
-    'TIER_7',
-    297.54,
-    405.5,
+    'TIER_6',
+    218.65,
+    304.59,
     'Brown Gold',
     'Brown',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -1383,8 +1781,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/suits/brown-gold-buttons/mens_suits_suit_2035_0.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/suits/brown-gold-buttons/mens_suits_suit_model_2035_0.webp"}, {"url": "https://cdn.kctmenswear.com/suits/brown-gold-buttons/mens_suits_suit_model_2035_1.webp"}]}',
     'Premium Brown Gold Buttons from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Brown Gold Buttons | Suits | KCT Menswear',
-    'Shop Brown Gold Buttons at $297.54. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Brown Gold Buttons | Suits',
+    'Shop Brown Gold Buttons at $218.65. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['suits', 'brown gold', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Brown Gold Buttons - Fall 2025',
     'Elegant Brown Gold Buttons from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1394,7 +1792,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1404,7 +1814,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '4051b901-5fd6-488c-89db-8a8a6470bd6e',
+    '62f54a2c-6a39-4d05-99c7-4ede833344d4',
     'Burnt Orange',
     'F25-SUI-035',
     'burnt-orange',
@@ -1414,9 +1824,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Suits',
     'Premium Collection',
-    'TIER_7',
-    285.81,
-    402.47,
+    'TIER_8',
+    311.58,
+    446.13,
     'Orange Burnt',
     'Orange',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -1424,8 +1834,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/suits/burnt-orange/mens_suits_suit_2036_0.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/suits/burnt-orange/mens_suits_suit_model_2036_0.webp"}]}',
     'Premium Burnt Orange from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Burnt Orange | Suits | KCT Menswear',
-    'Shop Burnt Orange at $285.81. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Burnt Orange | Suits',
+    'Shop Burnt Orange at $311.58. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['suits', 'orange burnt', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Burnt Orange - Fall 2025',
     'Elegant Burnt Orange from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1435,7 +1845,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1445,7 +1867,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'e6cd76ba-ba7e-4b7b-b6c1-23a3fdc4b578',
+    '7c9dfce2-9f81-46b8-a027-20d94f5cbfbe',
     'Estate Blue',
     'F25-SUI-036',
     'estate-blue',
@@ -1455,9 +1877,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Suits',
     'Premium Collection',
-    'TIER_7',
-    266.04,
-    364.7,
+    'TIER_8',
+    353.54,
+    473.98,
     'Blue',
     'Blue',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -1465,8 +1887,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/suits/estate-blue/main.webp"}}',
     'Premium Estate Blue from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Estate Blue | Suits | KCT Menswear',
-    'Shop Estate Blue at $266.04. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Estate Blue | Suits',
+    'Shop Estate Blue at $353.54. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['suits', 'blue', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Estate Blue - Fall 2025',
     'Elegant Estate Blue from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1476,7 +1898,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1486,7 +1920,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '2a9851b5-0448-4d67-b29b-9195cc87ad6a',
+    'ad92362d-1534-46ce-8248-a8f0d70dd4f1',
     'Fall Rust',
     'F25-SUI-037',
     'fall-rust',
@@ -1496,9 +1930,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Suits',
     'Premium Collection',
-    'TIER_8',
-    335.48,
-    462.94,
+    'TIER_7',
+    288.85,
+    421.6,
     'Classic',
     'Multi',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -1506,8 +1940,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/suits/fall-rust/20250806_1806_Trendy Orange Suit_remix_01k20pkyb6es9bnyz5c7ycrv7c.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/suits/fall-rust/20250806_1806_Trendy Orange Suit_remix_01k20pkyb9evr8t065byeycmqv.webp"}]}',
     'Premium Fall Rust from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Fall Rust | Suits | KCT Menswear',
-    'Shop Fall Rust at $335.48. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Fall Rust | Suits',
+    'Shop Fall Rust at $288.85. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['suits', 'classic', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Fall Rust - Fall 2025',
     'Elegant Fall Rust from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1517,7 +1951,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1527,7 +1973,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '6794639b-a24d-457b-979d-8b737fafbf9f',
+    'ed6b49d6-a60d-4597-bfce-74bb35e3c684',
     'Mint',
     'F25-SUI-038',
     'mint',
@@ -1537,9 +1983,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Suits',
     'Premium Collection',
-    'TIER_7',
-    287.4,
-    381.65,
+    'TIER_8',
+    345.15,
+    448.9,
     'Classic',
     'Multi',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -1547,8 +1993,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/suits/mint/main.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/suits/mint/lifestlye.webp"}]}',
     'Premium Mint from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Mint | Suits | KCT Menswear',
-    'Shop Mint at $287.4. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Mint | Suits',
+    'Shop Mint at $345.15. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['suits', 'classic', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Mint - Fall 2025',
     'Elegant Mint from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1558,7 +2004,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1568,7 +2026,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '7cfbc7df-4b8a-400f-9805-d1a39c729e7b',
+    'b6bb25c2-837b-477f-85f9-b62ddecef9b8',
     'Pin Stripe Black',
     'F25-SUI-039',
     'pin-stripe-black',
@@ -1579,8 +2037,8 @@ INSERT INTO products_enhanced (
     'Suits',
     'Premium Collection',
     'TIER_8',
-    361.02,
-    520.21,
+    398.45,
+    519.24,
     'Black',
     'Black',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -1588,8 +2046,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/suits/pin-stripe-black/main.webp"}}',
     'Premium Pin Stripe Black from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Pin Stripe Black | Suits | KCT Menswear',
-    'Shop Pin Stripe Black at $361.02. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Pin Stripe Black | Suits',
+    'Shop Pin Stripe Black at $398.45. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['suits', 'black', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Pin Stripe Black - Fall 2025',
     'Elegant Pin Stripe Black from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1599,7 +2057,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1609,7 +2079,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'caf1e868-a6d8-4839-8784-11bcff41e94a',
+    '51c7a71d-be7e-46d6-bf01-8e5a85515dab',
     'Pin Stripe Brown',
     'F25-SUI-040',
     'pin-stripe-brown',
@@ -1619,9 +2089,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Suits',
     'Premium Collection',
-    'TIER_7',
-    294.33,
-    436.77,
+    'TIER_6',
+    206.71,
+    289.34,
     'Brown',
     'Brown',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -1629,8 +2099,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/suits/pin-stripe-brown/main.webp"}}',
     'Premium Pin Stripe Brown from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Pin Stripe Brown | Suits | KCT Menswear',
-    'Shop Pin Stripe Brown at $294.33. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Pin Stripe Brown | Suits',
+    'Shop Pin Stripe Brown at $206.71. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['suits', 'brown', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Pin Stripe Brown - Fall 2025',
     'Elegant Pin Stripe Brown from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1640,7 +2110,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1650,7 +2132,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'd0bd5067-0465-4447-a04d-d72ec0e17ce8',
+    'a7f59b66-388c-4d3c-bb14-cbfc38025d0c',
     'Pin Stripe Grey',
     'F25-SUI-041',
     'pin-stripe-grey',
@@ -1660,9 +2142,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Suits',
     'Premium Collection',
-    'TIER_7',
-    262.02,
-    354.11,
+    'TIER_8',
+    327.88,
+    426.51,
     'Grey',
     'Grey',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -1670,8 +2152,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/suits/pin-stripe-grey/main.webp"}}',
     'Premium Pin Stripe Grey from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Pin Stripe Grey | Suits | KCT Menswear',
-    'Shop Pin Stripe Grey at $262.02. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Pin Stripe Grey | Suits',
+    'Shop Pin Stripe Grey at $327.88. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['suits', 'grey', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Pin Stripe Grey - Fall 2025',
     'Elegant Pin Stripe Grey from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1681,7 +2163,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1691,7 +2185,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '3f9d9643-987b-4e6e-b5f8-3ad40787def2',
+    '741a29dd-0777-4898-b67f-12110a2771b5',
     'Pin Stripe Navy',
     'F25-SUI-042',
     'pin-stripe-navy',
@@ -1702,8 +2196,8 @@ INSERT INTO products_enhanced (
     'Suits',
     'Premium Collection',
     'TIER_8',
-    353.92,
-    529.46,
+    382.71,
+    524.98,
     'Navy',
     'Blue',
     '{"primary": "Premium Wool Blend", "lining": "Viscose", "buttons": "Horn"}',
@@ -1711,8 +2205,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/suits/pin-stripe-navy/main.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/suits/pin-stripe-navy/front.webp"}]}',
     'Premium Pin Stripe Navy from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Pin Stripe Navy | Suits | KCT Menswear',
-    'Shop Pin Stripe Navy at $353.92. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Pin Stripe Navy | Suits',
+    'Shop Pin Stripe Navy at $382.71. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['suits', 'navy', 'fall 2025', 'menswear', 'formal', 'premium collection'],
     'Pin Stripe Navy - Fall 2025',
     'Elegant Pin Stripe Navy from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1722,7 +2216,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1732,7 +2238,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '2b4d2e7b-4b11-4ff4-8890-6816d92d72e8',
+    '752d5ac2-1ff3-46f6-af07-8e38fead8c49',
     'Black Gold Design Tuxedo',
     'F25-TUX-043',
     'black-gold-design-tuxedo',
@@ -1743,8 +2249,8 @@ INSERT INTO products_enhanced (
     'Tuxedos',
     'Black Tie Collection',
     'TIER_8',
-    303.96,
-    415.08,
+    388.75,
+    578.74,
     'Black Gold',
     'Black',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -1752,8 +2258,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/black-gold-design-tuxedo/mens_tuxedos_suit_2005_0.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/tuxedos/black-gold-design-tuxedo/mens_tuxedos_suit_2005_1.webp"}]}',
     'Premium Black Gold Design Tuxedo from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Black Gold Design Tuxedo | Tuxedos | KCT Menswear',
-    'Shop Black Gold Design Tuxedo at $303.96. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Black Gold Design Tuxedo | Tuxedos',
+    'Shop Black Gold Design Tuxedo at $388.75. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'black gold', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
     'Black Gold Design Tuxedo - Fall 2025',
     'Elegant Black Gold Design Tuxedo from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1763,7 +2269,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1773,7 +2291,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '486c1433-b904-4002-a231-cd0673594d5c',
+    'f47d46c6-ed6a-4de8-b967-319fa1eeb3a6',
     'Black On Black Slim Tuxedo Tone Trim Tuxedo',
     'F25-TUX-044',
     'black-on-black-slim-tuxedo-tone-trim-tuxedo',
@@ -1783,9 +2301,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Tuxedos',
     'Black Tie Collection',
-    'TIER_7',
-    281.55,
-    386.39,
+    'TIER_8',
+    352.33,
+    463.52,
     'Black',
     'Black',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -1793,8 +2311,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/black-on-black-slim-tuxedo-tone-trim-tuxedo/mens_tuxedos_suit_2003_0.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/tuxedos/black-on-black-slim-tuxedo-tone-trim-tuxedo/mens_tuxedos_suit_2003_1.webp"}, {"url": "https://cdn.kctmenswear.com/tuxedos/black-on-black-slim-tuxedo-tone-trim-tuxedo/mens_tuxedos_suit_model_2003_0.webp"}]}',
     'Premium Black On Black Slim Tuxedo Tone Trim Tuxedo from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Black On Black Slim Tuxedo Tone Trim Tuxedo | Tuxedos | KCT Menswear',
-    'Shop Black On Black Slim Tuxedo Tone Trim Tuxedo at $281.55. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Black On Black Slim Tuxedo Ton | Tuxedos',
+    'Shop Black On Black Slim Tuxedo Tone Trim Tuxedo at $352.33. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'black', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
     'Black On Black Slim Tuxedo Tone Trim Tuxedo - Fall 2025',
     'Elegant Black On Black Slim Tuxedo Tone Trim Tuxedo from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1804,7 +2322,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1814,7 +2344,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'b0e94b14-5f59-4a71-8d8a-671fa589d3b1',
+    '358a13f9-e236-47cd-866d-690314c36549',
     'Black Paisley Tuxedo',
     'F25-TUX-045',
     'black-paisley-tuxedo',
@@ -1824,9 +2354,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Tuxedos',
     'Black Tie Collection',
-    'TIER_8',
-    334.47,
-    435.21,
+    'TIER_7',
+    294.82,
+    398.01,
     'Black',
     'Black',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -1834,8 +2364,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/black-paisley-tuxedo/main.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/tuxedos/black-paisley-tuxedo/front.webp"}]}',
     'Premium Black Paisley Tuxedo from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Black Paisley Tuxedo | Tuxedos | KCT Menswear',
-    'Shop Black Paisley Tuxedo at $334.47. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Black Paisley Tuxedo | Tuxedos',
+    'Shop Black Paisley Tuxedo at $294.82. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'black', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
     'Black Paisley Tuxedo - Fall 2025',
     'Elegant Black Paisley Tuxedo from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1845,7 +2375,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1855,7 +2397,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'cde03be4-1c33-42a1-810e-835c5c0decd7',
+    'b4599c56-16f4-4d59-a6ea-ef451d3a1fb7',
     'Black Tone Trim Tuxedo Shawl Lapel',
     'F25-TUX-046',
     'black-tone-trim-tuxedo-shawl-lapel',
@@ -1866,8 +2408,8 @@ INSERT INTO products_enhanced (
     'Tuxedos',
     'Black Tie Collection',
     'TIER_8',
-    381.48,
-    540.49,
+    309.63,
+    453.41,
     'Black',
     'Black',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -1875,8 +2417,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/black-tone-trim-tuxedo-shawl-lapel/main.webp"}}',
     'Premium Black Tone Trim Tuxedo Shawl Lapel from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Black Tone Trim Tuxedo Shawl Lapel | Tuxedos | KCT Menswear',
-    'Shop Black Tone Trim Tuxedo Shawl Lapel at $381.48. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Black Tone Trim Tuxedo Shawl L | Tuxedos',
+    'Shop Black Tone Trim Tuxedo Shawl Lapel at $309.63. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'black', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
     'Black Tone Trim Tuxedo Shawl Lapel - Fall 2025',
     'Elegant Black Tone Trim Tuxedo Shawl Lapel from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1886,7 +2428,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1896,7 +2450,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '6114634b-a123-4984-b3f9-e24943ced1ab',
+    '65d895b4-1a0e-4042-953b-f38a29fd18b4',
     'Blush Pink Paisley Tuxedo',
     'F25-TUX-047',
     'blush-pink-paisley-tuxedo',
@@ -1906,9 +2460,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Tuxedos',
     'Black Tie Collection',
-    'TIER_7',
-    278.4,
-    363.59,
+    'TIER_8',
+    333.94,
+    467.51,
     'Pink',
     'Pink',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -1916,8 +2470,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/blush-pink-paisley-tuxedo/main.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/tuxedos/blush-pink-paisley-tuxedo/front.webp"}]}',
     'Premium Blush Pink Paisley Tuxedo from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Blush Pink Paisley Tuxedo | Tuxedos | KCT Menswear',
-    'Shop Blush Pink Paisley Tuxedo at $278.4. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Blush Pink Paisley Tuxedo | Tuxedos',
+    'Shop Blush Pink Paisley Tuxedo at $333.94. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'pink', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
     'Blush Pink Paisley Tuxedo - Fall 2025',
     'Elegant Blush Pink Paisley Tuxedo from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1927,7 +2481,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1937,7 +2503,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '93e9c966-a181-4ea8-85ee-21dc4bfbebbc',
+    '46913915-1cb1-4207-946e-718264c6fb8c',
     'Blush Tuxedo',
     'F25-TUX-048',
     'blush-tuxedo',
@@ -1947,9 +2513,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Tuxedos',
     'Black Tie Collection',
-    'TIER_8',
-    395.31,
-    560.46,
+    'TIER_7',
+    260.98,
+    339.47,
     'Classic',
     'Multi',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -1957,8 +2523,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/blush-tuxedo/main.webp"}}',
     'Premium Blush Tuxedo from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Blush Tuxedo | Tuxedos | KCT Menswear',
-    'Shop Blush Tuxedo at $395.31. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Blush Tuxedo | Tuxedos',
+    'Shop Blush Tuxedo at $260.98. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'classic', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
     'Blush Tuxedo - Fall 2025',
     'Elegant Blush Tuxedo from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -1968,7 +2534,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -1978,7 +2556,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '534b537c-2adc-40ea-8b7b-7ce5d62b9603',
+    '6f1bc319-fd0b-4e0b-8317-9bbc9379daa4',
     'Burnt Orange Tuxedo',
     'F25-TUX-049',
     'burnt-orange-tuxedo',
@@ -1988,9 +2566,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Tuxedos',
     'Black Tie Collection',
-    'TIER_7',
-    263.3,
-    363.38,
+    'TIER_8',
+    303.73,
+    437.71,
     'Orange Burnt',
     'Orange',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -1998,8 +2576,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/burnt-orange-tuxedo/mens_tuxedos_suit_2008_0.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/tuxedos/burnt-orange-tuxedo/mens_tuxedos_suit_2008_1.webp"}, {"url": "https://cdn.kctmenswear.com/tuxedos/burnt-orange-tuxedo/mens_tuxedos_suit_model_2008_0.webp"}]}',
     'Premium Burnt Orange Tuxedo from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Burnt Orange Tuxedo | Tuxedos | KCT Menswear',
-    'Shop Burnt Orange Tuxedo at $263.3. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Burnt Orange Tuxedo | Tuxedos',
+    'Shop Burnt Orange Tuxedo at $303.73. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'orange burnt', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
     'Burnt Orange Tuxedo - Fall 2025',
     'Elegant Burnt Orange Tuxedo from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -2009,7 +2587,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2019,7 +2609,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'c2b414e8-cd78-4377-989a-dc80d2d5b51f',
+    'fb4633e4-7b66-4465-8505-299fb2bd13ab',
     'Gold Paisley Tuxedo',
     'F25-TUX-050',
     'gold-paisley-tuxedo',
@@ -2030,8 +2620,8 @@ INSERT INTO products_enhanced (
     'Tuxedos',
     'Black Tie Collection',
     'TIER_8',
-    394.93,
-    537.48,
+    397.56,
+    590.06,
     'Gold',
     'Yellow',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -2039,8 +2629,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/gold-paisley-tuxedo/main.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/tuxedos/gold-paisley-tuxedo/front.webp"}]}',
     'Premium Gold Paisley Tuxedo from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Gold Paisley Tuxedo | Tuxedos | KCT Menswear',
-    'Shop Gold Paisley Tuxedo at $394.93. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Gold Paisley Tuxedo | Tuxedos',
+    'Shop Gold Paisley Tuxedo at $397.56. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'gold', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
     'Gold Paisley Tuxedo - Fall 2025',
     'Elegant Gold Paisley Tuxedo from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -2050,7 +2640,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2060,7 +2662,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '7f44c043-b67b-4e43-9de7-1777478fd480',
+    '94046f17-9a82-46a8-b360-fd259ff29a89',
     'Hunter Green Tuxedo',
     'F25-TUX-051',
     'hunter-green-tuxedo',
@@ -2070,9 +2672,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Tuxedos',
     'Black Tie Collection',
-    'TIER_7',
-    278.09,
-    381.62,
+    'TIER_8',
+    328.12,
+    442.59,
     'Green Hunter',
     'Green',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -2080,8 +2682,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/hunter-green-tuxedo/mens_tuxedos_suit_2009_0.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/tuxedos/hunter-green-tuxedo/mens_tuxedos_suit_model_2009_0.webp"}]}',
     'Premium Hunter Green Tuxedo from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Hunter Green Tuxedo | Tuxedos | KCT Menswear',
-    'Shop Hunter Green Tuxedo at $278.09. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Hunter Green Tuxedo | Tuxedos',
+    'Shop Hunter Green Tuxedo at $328.12. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'green hunter', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
     'Hunter Green Tuxedo - Fall 2025',
     'Elegant Hunter Green Tuxedo from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -2091,7 +2693,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2101,7 +2715,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '1b498cb7-7f56-4921-8151-c6ee3c5541d7',
+    'cdb3f7c7-9562-4b0f-b4d1-a5084da9c28b',
     'Ivory Black Tone Trim Tuxedo',
     'F25-TUX-052',
     'ivory-black-tone-trim-tuxedo',
@@ -2111,9 +2725,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Tuxedos',
     'Black Tie Collection',
-    'TIER_7',
-    268.23,
-    393.44,
+    'TIER_8',
+    394.78,
+    586.64,
     'Black',
     'Black',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -2121,8 +2735,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/ivory-black-tone-trim-tuxedo/main.webp"}}',
     'Premium Ivory Black Tone Trim Tuxedo from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Ivory Black Tone Trim Tuxedo | Tuxedos | KCT Menswear',
-    'Shop Ivory Black Tone Trim Tuxedo at $268.23. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Ivory Black Tone Trim Tuxedo | Tuxedos',
+    'Shop Ivory Black Tone Trim Tuxedo at $394.78. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'black', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
     'Ivory Black Tone Trim Tuxedo - Fall 2025',
     'Elegant Ivory Black Tone Trim Tuxedo from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -2132,7 +2746,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2142,7 +2768,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '8627a48c-86b3-4f36-a098-fa75421919e6',
+    '2a8b6f75-3209-47c4-b0de-4c224c8099b1',
     'Ivory Gold Paisley Tuxedo',
     'F25-TUX-053',
     'ivory-gold-paisley-tuxedo',
@@ -2153,8 +2779,8 @@ INSERT INTO products_enhanced (
     'Tuxedos',
     'Black Tie Collection',
     'TIER_8',
-    324.16,
-    438.29,
+    330.11,
+    490.45,
     'Gold',
     'Yellow',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -2162,8 +2788,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/ivory-gold-paisley-tuxedo/main.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/tuxedos/ivory-gold-paisley-tuxedo/front.webp"}]}',
     'Premium Ivory Gold Paisley Tuxedo from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Ivory Gold Paisley Tuxedo | Tuxedos | KCT Menswear',
-    'Shop Ivory Gold Paisley Tuxedo at $324.16. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Ivory Gold Paisley Tuxedo | Tuxedos',
+    'Shop Ivory Gold Paisley Tuxedo at $330.11. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'gold', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
     'Ivory Gold Paisley Tuxedo - Fall 2025',
     'Elegant Ivory Gold Paisley Tuxedo from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -2173,7 +2799,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2183,7 +2821,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '8abe9486-91f4-4e56-a6bf-7b9eb2fa1a7b',
+    '68241be0-f02d-4e82-b4cc-cb14ebe69e19',
     'Ivory Paisley Tuxedo',
     'F25-TUX-054',
     'ivory-paisley-tuxedo',
@@ -2194,8 +2832,8 @@ INSERT INTO products_enhanced (
     'Tuxedos',
     'Black Tie Collection',
     'TIER_7',
-    269.8,
-    393.35,
+    256.03,
+    357.05,
     'Classic',
     'Multi',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -2203,8 +2841,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/ivory-paisley-tuxedo/main.webp"}}',
     'Premium Ivory Paisley Tuxedo from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Ivory Paisley Tuxedo | Tuxedos | KCT Menswear',
-    'Shop Ivory Paisley Tuxedo at $269.8. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Ivory Paisley Tuxedo | Tuxedos',
+    'Shop Ivory Paisley Tuxedo at $256.03. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'classic', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
     'Ivory Paisley Tuxedo - Fall 2025',
     'Elegant Ivory Paisley Tuxedo from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -2214,7 +2852,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2224,7 +2874,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '540b274b-c556-446d-a4a2-b6e7e75347f2',
+    'ed113151-e007-4666-abc2-e9f5e104436f',
     'Light Grey On Light Grey Slim Tuxedo Tone Trim Tuxedo',
     'F25-TUX-055',
     'light-grey--on-light-grey-slim-tuxedo-tone-trim-tuxedo',
@@ -2235,8 +2885,8 @@ INSERT INTO products_enhanced (
     'Tuxedos',
     'Black Tie Collection',
     'TIER_8',
-    312.11,
-    441.86,
+    364.01,
+    523.74,
     'Grey Light',
     'Grey',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -2244,10 +2894,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/light-grey--on-light-grey-slim-tuxedo-tone-trim-tuxedo/main.webp"}}',
     'Premium Light Grey On Light Grey Slim Tuxedo Tone Trim Tuxedo from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Light Grey On Light Grey Slim Tuxedo Tone Trim Tuxedo | Tuxedos | KCT Menswear',
-    'Shop Light Grey On Light Grey Slim Tuxedo Tone Trim Tuxedo at $312.11. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Light Grey On Light Grey Slim  | Tuxedos',
+    'Shop Light Grey On Light Grey Slim Tuxedo Tone Trim Tuxedo at $364.01. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'grey light', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
-    'Light Grey On Light Grey Slim Tuxedo Tone Trim Tuxedo - Fall 2025',
+    'Light Grey On Light Grey Slim Tuxedo Tone Tri - Fall 2025',
     'Elegant Light Grey On Light Grey Slim Tuxedo Tone Trim Tuxedo from our Fall 2025 Collection. Perfect for formal occasions and special events.',
     'light-grey--on-light-grey-slim-tuxedo-tone-trim-tuxedo tuxedos grey light formal fall 2025',
     'light-grey--on-light-grey-slim-tuxedo-tone-trim-tuxedo',
@@ -2255,7 +2905,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2265,7 +2927,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'f52c9c09-c022-47ca-9708-5ec114f9102b',
+    'cd1d03c4-4108-48ef-a497-e1cdc74b250d',
     'Navy Tone Trim Tuxedo',
     'F25-TUX-056',
     'navy-tone-trim-tuxedo',
@@ -2275,9 +2937,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Tuxedos',
     'Black Tie Collection',
-    'TIER_7',
-    282.02,
-    392.92,
+    'TIER_8',
+    315.48,
+    460.31,
     'Navy',
     'Blue',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -2285,8 +2947,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/navy-tone-trim-tuxedo/main.webp"}}',
     'Premium Navy Tone Trim Tuxedo from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Navy Tone Trim Tuxedo | Tuxedos | KCT Menswear',
-    'Shop Navy Tone Trim Tuxedo at $282.02. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Navy Tone Trim Tuxedo | Tuxedos',
+    'Shop Navy Tone Trim Tuxedo at $315.48. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'navy', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
     'Navy Tone Trim Tuxedo - Fall 2025',
     'Elegant Navy Tone Trim Tuxedo from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -2296,7 +2958,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2306,7 +2980,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'ad8bd2f7-9285-4520-9af6-3f76d1ca079f',
+    '37972d97-5c06-4f02-a3c7-a8a163d9a2fb',
     'Pink Gold Design Tuxedo',
     'F25-TUX-057',
     'pink-gold-design-tuxedo',
@@ -2317,8 +2991,8 @@ INSERT INTO products_enhanced (
     'Tuxedos',
     'Black Tie Collection',
     'TIER_7',
-    295.32,
-    387.93,
+    297.47,
+    388.49,
     'Pink Gold',
     'Pink',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -2326,8 +3000,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/pink-gold-design-tuxedo/mens_tuxedos_suit_2012_0.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/tuxedos/pink-gold-design-tuxedo/mens_tuxedos_suit_2012_1.webp"}]}',
     'Premium Pink Gold Design Tuxedo from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Pink Gold Design Tuxedo | Tuxedos | KCT Menswear',
-    'Shop Pink Gold Design Tuxedo at $295.32. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Pink Gold Design Tuxedo | Tuxedos',
+    'Shop Pink Gold Design Tuxedo at $297.47. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'pink gold', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
     'Pink Gold Design Tuxedo - Fall 2025',
     'Elegant Pink Gold Design Tuxedo from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -2337,7 +3011,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2347,7 +3033,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'a223aaf9-5a86-40d2-a606-b50a5500b564',
+    '03ceed90-07db-4e63-931f-ba4c9db1024e',
     'Sand Tuxedo',
     'F25-TUX-058',
     'sand-tuxedo',
@@ -2357,9 +3043,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Tuxedos',
     'Black Tie Collection',
-    'TIER_8',
-    367.66,
-    506.76,
+    'TIER_7',
+    268.97,
+    384.58,
     'Classic',
     'Multi',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -2367,8 +3053,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/sand-tuxedo/mens_tuxedos_suit_2011_0.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/tuxedos/sand-tuxedo/mens_tuxedos_suit_model_2011_0.webp"}]}',
     'Premium Sand Tuxedo from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Sand Tuxedo | Tuxedos | KCT Menswear',
-    'Shop Sand Tuxedo at $367.66. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Sand Tuxedo | Tuxedos',
+    'Shop Sand Tuxedo at $268.97. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'classic', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
     'Sand Tuxedo - Fall 2025',
     'Elegant Sand Tuxedo from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -2378,7 +3064,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2388,7 +3086,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'd0840ea8-b1ef-4059-9546-de9dd7217644',
+    '4ddadf12-d18c-47b4-9b52-c3f2ba45c068',
     'Vivid Purple Tuxedo Tone Trim Tuxedo',
     'F25-TUX-059',
     'vivid-purple- tuxedo-tone-trim-tuxedo',
@@ -2399,8 +3097,8 @@ INSERT INTO products_enhanced (
     'Tuxedos',
     'Black Tie Collection',
     'TIER_8',
-    317.64,
-    472.03,
+    316.23,
+    414.67,
     'Purple',
     'Purple',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -2408,8 +3106,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/vivid-purple- tuxedo-tone-trim-tuxedo/main.webp"}}',
     'Premium Vivid Purple Tuxedo Tone Trim Tuxedo from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Vivid Purple Tuxedo Tone Trim Tuxedo | Tuxedos | KCT Menswear',
-    'Shop Vivid Purple Tuxedo Tone Trim Tuxedo at $317.64. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Vivid Purple Tuxedo Tone Trim  | Tuxedos',
+    'Shop Vivid Purple Tuxedo Tone Trim Tuxedo at $316.23. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'purple', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
     'Vivid Purple Tuxedo Tone Trim Tuxedo - Fall 2025',
     'Elegant Vivid Purple Tuxedo Tone Trim Tuxedo from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -2419,7 +3117,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2429,7 +3139,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'c9012d96-5911-4896-b526-13f6dc6922d8',
+    'c855b553-4527-4c3e-9eee-ec09c2bc2643',
     'White Black Tuxedo',
     'F25-TUX-060',
     'white-black-tuxedo',
@@ -2439,9 +3149,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Tuxedos',
     'Black Tie Collection',
-    'TIER_8',
-    385.01,
-    553.65,
+    'TIER_7',
+    265.21,
+    363.44,
     'Black White',
     'Black',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -2449,8 +3159,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/white-black-tuxedo/main.webp"}}',
     'Premium White Black Tuxedo from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'White Black Tuxedo | Tuxedos | KCT Menswear',
-    'Shop White Black Tuxedo at $385.01. Fall 2025 Collection. Free shipping on orders over $200.',
+    'White Black Tuxedo | Tuxedos',
+    'Shop White Black Tuxedo at $265.21. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'black white', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
     'White Black Tuxedo - Fall 2025',
     'Elegant White Black Tuxedo from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -2460,7 +3170,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2470,7 +3192,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'bcba8bf1-172d-427c-9ab7-1a315b6af0c9',
+    '7e6d218b-bf80-4340-aca9-5506c8026124',
     'Wine On Wine Slim Tuxedotone Trim Tuxedo',
     'F25-TUX-061',
     'wine-on-wine-slim-tuxedotone-trim-tuxedo',
@@ -2480,9 +3202,9 @@ INSERT INTO products_enhanced (
     'Fall 2025 Collection',
     'Tuxedos',
     'Black Tie Collection',
-    'TIER_8',
-    326.44,
-    433.29,
+    'TIER_7',
+    284.96,
+    394.97,
     'Classic',
     'Multi',
     '{"primary": "Premium Wool", "lapels": "Silk Satin", "lining": "Silk Blend"}',
@@ -2490,8 +3212,8 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/tuxedos/wine-on-wine-slim-tuxedotone-trim-tuxedo/mens_tuxedos_suit_2015_0.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/tuxedos/wine-on-wine-slim-tuxedotone-trim-tuxedo/mens_tuxedos_suit_model_2015_0.webp"}]}',
     'Premium Wine On Wine Slim Tuxedotone Trim Tuxedo from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    'Wine On Wine Slim Tuxedotone Trim Tuxedo | Tuxedos | KCT Menswear',
-    'Shop Wine On Wine Slim Tuxedotone Trim Tuxedo at $326.44. Fall 2025 Collection. Free shipping on orders over $200.',
+    'Wine On Wine Slim Tuxedotone T | Tuxedos',
+    'Shop Wine On Wine Slim Tuxedotone Trim Tuxedo at $284.96. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['tuxedos', 'classic', 'fall 2025', 'menswear', 'formal', 'black tie collection'],
     'Wine On Wine Slim Tuxedotone Trim Tuxedo - Fall 2025',
     'Elegant Wine On Wine Slim Tuxedotone Trim Tuxedo from our Fall 2025 Collection. Perfect for formal occasions and special events.',
@@ -2501,10 +3223,23 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 -- Complete Accessories Collection Import
 -- All accessories priced at $49.99
+-- UPSERT: Will update existing products or insert new ones
 
 
 INSERT INTO products_enhanced (
@@ -2515,7 +3250,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '3bcf515b-be0b-42fc-9e41-e264de56b375',
+    '502eabf0-40f3-4f98-8205-6b286321ffc5',
     'Black Suspender Bowtie Set',
     'ACC-SBS-001',
     'black-suspender-bowtie-set',
@@ -2535,10 +3270,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/black-suspender-bowtie-set/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/black-suspender-bowtie-set/suspender-set.jpg"}]}',
     'Elegant Black Suspender Bowtie Set perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Black Suspender Bowtie Set | Formal Accessories | KCT Menswear',
+    'Black Suspender Bowtie Set | Accessories',
     'Shop Black Suspender Bowtie Set at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'suspender sets', 'black', 'formal', 'wedding', 'prom'],
-    'Black Suspender Bowtie Set - Premium Accessories',
+    'Black Suspender Bowtie Set - Accessories',
     'Premium Black Suspender Bowtie Set for weddings, proms, and formal occasions. High-quality construction.',
     'black-suspender-bowtie-set accessories suspender sets formal wedding prom',
     'black-suspender-bowtie-set',
@@ -2546,7 +3281,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2556,7 +3303,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '866b6586-cf03-461b-8532-df044c22cc9e',
+    '2c4a482a-5385-422c-a055-67b48bd0fe41',
     'Brown Suspender Bowtie Set',
     'ACC-SBS-002',
     'brown-suspender-bowtie-set',
@@ -2576,10 +3323,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/brown-suspender-bowtie-set/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/brown-suspender-bowtie-set/product.jpg"}]}',
     'Elegant Brown Suspender Bowtie Set perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Brown Suspender Bowtie Set | Formal Accessories | KCT Menswear',
+    'Brown Suspender Bowtie Set | Accessories',
     'Shop Brown Suspender Bowtie Set at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'suspender sets', 'brown', 'formal', 'wedding', 'prom'],
-    'Brown Suspender Bowtie Set - Premium Accessories',
+    'Brown Suspender Bowtie Set - Accessories',
     'Premium Brown Suspender Bowtie Set for weddings, proms, and formal occasions. High-quality construction.',
     'brown-suspender-bowtie-set accessories suspender sets formal wedding prom',
     'brown-suspender-bowtie-set',
@@ -2587,7 +3334,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2597,7 +3356,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '41bc88e1-4b5d-4f4b-b931-ffe34eee375e',
+    '074dfc52-a11d-4e3a-87d6-9ff24575c971',
     'Burnt Orange Suspender Bowtie Set',
     'ACC-SBS-003',
     'burnt-orange-suspender-bowtie-set',
@@ -2617,10 +3376,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/burnt-orange-suspender-bowtie-set/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/burnt-orange-suspender-bowtie-set/product.jpg"}]}',
     'Elegant Burnt Orange Suspender Bowtie Set perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Burnt Orange Suspender Bowtie Set | Formal Accessories | KCT Menswear',
+    'Burnt Orange Suspender Bowtie Set | Accessories',
     'Shop Burnt Orange Suspender Bowtie Set at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'suspender sets', 'orange burnt', 'formal', 'wedding', 'prom'],
-    'Burnt Orange Suspender Bowtie Set - Premium Accessories',
+    'Burnt Orange Suspender Bowtie Set - Accessories',
     'Premium Burnt Orange Suspender Bowtie Set for weddings, proms, and formal occasions. High-quality construction.',
     'burnt-orange-suspender-bowtie-set accessories suspender sets formal wedding prom',
     'burnt-orange-suspender-bowtie-set',
@@ -2628,7 +3387,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2638,7 +3409,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '61bbdf61-07af-410d-8d7d-6554bb6e648b',
+    '31aa0927-f217-4a15-9c81-5856cef0fe11',
     'Dusty Rose Suspender Bowtie Set',
     'ACC-SBS-004',
     'dusty-rose-suspender-bowtie-set',
@@ -2658,10 +3429,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/dusty-rose-suspender-bowtie-set/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/dusty-rose-suspender-bowtie-set/product.jpg"}]}',
     'Elegant Dusty Rose Suspender Bowtie Set perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Dusty Rose Suspender Bowtie Set | Formal Accessories | KCT Menswear',
+    'Dusty Rose Suspender Bowtie Set | Accessories',
     'Shop Dusty Rose Suspender Bowtie Set at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'suspender sets', 'dusty rose', 'formal', 'wedding', 'prom'],
-    'Dusty Rose Suspender Bowtie Set - Premium Accessories',
+    'Dusty Rose Suspender Bowtie Set - Accessories',
     'Premium Dusty Rose Suspender Bowtie Set for weddings, proms, and formal occasions. High-quality construction.',
     'dusty-rose-suspender-bowtie-set accessories suspender sets formal wedding prom',
     'dusty-rose-suspender-bowtie-set',
@@ -2669,7 +3440,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2679,7 +3462,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'd4ce6aeb-1908-41b5-a0ef-b681c28d2a97',
+    '005b180b-948c-4b6a-96c3-da61c1324bad',
     'Fuchsia Suspender Bowtie Set',
     'ACC-SBS-005',
     'fuchsia-suspender-bowtie-set',
@@ -2699,10 +3482,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/fuchsia-suspender-bowtie-set/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/fuchsia-suspender-bowtie-set/product.jpg"}]}',
     'Elegant Fuchsia Suspender Bowtie Set perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Fuchsia Suspender Bowtie Set | Formal Accessories | KCT Menswear',
+    'Fuchsia Suspender Bowtie Set | Accessories',
     'Shop Fuchsia Suspender Bowtie Set at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'suspender sets', 'fuchsia', 'formal', 'wedding', 'prom'],
-    'Fuchsia Suspender Bowtie Set - Premium Accessories',
+    'Fuchsia Suspender Bowtie Set - Accessories',
     'Premium Fuchsia Suspender Bowtie Set for weddings, proms, and formal occasions. High-quality construction.',
     'fuchsia-suspender-bowtie-set accessories suspender sets formal wedding prom',
     'fuchsia-suspender-bowtie-set',
@@ -2710,7 +3493,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2720,7 +3515,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '52a81963-7308-42e5-b084-5b4be41a96f7',
+    'e8b1cf67-9d08-43c0-a2f8-7b350a208117',
     'Gold Suspender Bowtie Set',
     'ACC-SBS-006',
     'gold-suspender-bowtie-set',
@@ -2740,10 +3535,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/gold-suspender-bowtie-set/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/gold-suspender-bowtie-set/product.jpg"}, {"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/gold-suspender-bowtie-set/suspenders-bowtie-gold.jpg"}]}',
     'Elegant Gold Suspender Bowtie Set perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Gold Suspender Bowtie Set | Formal Accessories | KCT Menswear',
+    'Gold Suspender Bowtie Set | Accessories',
     'Shop Gold Suspender Bowtie Set at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'suspender sets', 'gold', 'formal', 'wedding', 'prom'],
-    'Gold Suspender Bowtie Set - Premium Accessories',
+    'Gold Suspender Bowtie Set - Accessories',
     'Premium Gold Suspender Bowtie Set for weddings, proms, and formal occasions. High-quality construction.',
     'gold-suspender-bowtie-set accessories suspender sets formal wedding prom',
     'gold-suspender-bowtie-set',
@@ -2751,7 +3546,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2761,7 +3568,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'e7656858-fdd6-446d-8182-d0ef71aef369',
+    '9edf53fc-386f-45c9-a22a-6c8a45860802',
     'Hunter Green Suspender Bowtie Set',
     'ACC-SBS-007',
     'hunter-green-suspender-bowtie-set',
@@ -2781,10 +3588,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/hunter-green-suspender-bowtie-set/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/hunter-green-suspender-bowtie-set/product.jpg"}]}',
     'Elegant Hunter Green Suspender Bowtie Set perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Hunter Green Suspender Bowtie Set | Formal Accessories | KCT Menswear',
+    'Hunter Green Suspender Bowtie Set | Accessories',
     'Shop Hunter Green Suspender Bowtie Set at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'suspender sets', 'green hunter', 'formal', 'wedding', 'prom'],
-    'Hunter Green Suspender Bowtie Set - Premium Accessories',
+    'Hunter Green Suspender Bowtie Set - Accessories',
     'Premium Hunter Green Suspender Bowtie Set for weddings, proms, and formal occasions. High-quality construction.',
     'hunter-green-suspender-bowtie-set accessories suspender sets formal wedding prom',
     'hunter-green-suspender-bowtie-set',
@@ -2792,7 +3599,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2802,7 +3621,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'ae600f62-ea1b-4d52-83b7-79452c79063c',
+    '5acf0ecf-3577-4c41-acd7-094eed615563',
     'Medium Red Suspender Bowtie Set',
     'ACC-SBS-008',
     'medium-red-suspender-bowtie-set',
@@ -2822,10 +3641,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/medium-red-suspender-bowtie-set/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/medium-red-suspender-bowtie-set/product.jpg"}]}',
     'Elegant Medium Red Suspender Bowtie Set perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Medium Red Suspender Bowtie Set | Formal Accessories | KCT Menswear',
+    'Medium Red Suspender Bowtie Set | Accessories',
     'Shop Medium Red Suspender Bowtie Set at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'suspender sets', 'red medium', 'formal', 'wedding', 'prom'],
-    'Medium Red Suspender Bowtie Set - Premium Accessories',
+    'Medium Red Suspender Bowtie Set - Accessories',
     'Premium Medium Red Suspender Bowtie Set for weddings, proms, and formal occasions. High-quality construction.',
     'medium-red-suspender-bowtie-set accessories suspender sets formal wedding prom',
     'medium-red-suspender-bowtie-set',
@@ -2833,7 +3652,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2843,7 +3674,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '18edbdb7-07a4-41a9-85cf-2c2a6e569a95',
+    '5a33eaf5-3a6c-4936-b7ab-007b9ddde7bf',
     'Orange Suspender Bowtie Set',
     'ACC-SBS-009',
     'orange-suspender-bowtie-set',
@@ -2863,10 +3694,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/orange-suspender-bowtie-set/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/orange-suspender-bowtie-set/product.jpg"}]}',
     'Elegant Orange Suspender Bowtie Set perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Orange Suspender Bowtie Set | Formal Accessories | KCT Menswear',
+    'Orange Suspender Bowtie Set | Accessories',
     'Shop Orange Suspender Bowtie Set at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'suspender sets', 'orange', 'formal', 'wedding', 'prom'],
-    'Orange Suspender Bowtie Set - Premium Accessories',
+    'Orange Suspender Bowtie Set - Accessories',
     'Premium Orange Suspender Bowtie Set for weddings, proms, and formal occasions. High-quality construction.',
     'orange-suspender-bowtie-set accessories suspender sets formal wedding prom',
     'orange-suspender-bowtie-set',
@@ -2874,7 +3705,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2884,7 +3727,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'b497f4ff-156d-4a92-a651-ff5f6fbff802',
+    '2db30994-7a33-4a3f-8114-af532afe632b',
     'Powder Blue Suspender Bowtie Set',
     'ACC-SBS-010',
     'powder-blue-suspender-bowtie-set',
@@ -2904,10 +3747,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/powder-blue-suspender-bowtie-set/powder-blue-model-2.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/powder-blue-suspender-bowtie-set/product.jpg"}]}',
     'Elegant Powder Blue Suspender Bowtie Set perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Powder Blue Suspender Bowtie Set | Formal Accessories | KCT Menswear',
+    'Powder Blue Suspender Bowtie Set | Accessories',
     'Shop Powder Blue Suspender Bowtie Set at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'suspender sets', 'blue', 'formal', 'wedding', 'prom'],
-    'Powder Blue Suspender Bowtie Set - Premium Accessories',
+    'Powder Blue Suspender Bowtie Set - Accessories',
     'Premium Powder Blue Suspender Bowtie Set for weddings, proms, and formal occasions. High-quality construction.',
     'powder-blue-suspender-bowtie-set accessories suspender sets formal wedding prom',
     'powder-blue-suspender-bowtie-set',
@@ -2915,7 +3758,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2925,7 +3780,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '83960070-f1ee-4676-b78a-336f2df6e7e8',
+    '0800fa67-0fef-4566-afa9-cec4e29e5222',
     'Blush Vest',
     'ACC-VTS-011',
     'blush-vest',
@@ -2945,10 +3800,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/blush-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/blush-vest/vest.jpg"}]}',
     'Elegant Blush Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Blush Vest | Formal Accessories | KCT Menswear',
+    'Blush Vest | Accessories',
     'Shop Blush Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'classic', 'formal', 'wedding', 'prom'],
-    'Blush Vest - Premium Accessories',
+    'Blush Vest - Accessories',
     'Premium Blush Vest for weddings, proms, and formal occasions. High-quality construction.',
     'blush-vest accessories vest sets formal wedding prom',
     'blush-vest',
@@ -2956,7 +3811,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -2966,7 +3833,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '673b56cd-43a1-488a-b222-5e8666716c04',
+    '35c4819c-bac1-475d-b9aa-ac7a157c82e0',
     'Burnt Orange Vest',
     'ACC-VTS-012',
     'burnt-orange-vest',
@@ -2986,10 +3853,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/burnt-orange-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/burnt-orange-vest/vest.jpg"}]}',
     'Elegant Burnt Orange Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Burnt Orange Vest | Formal Accessories | KCT Menswear',
+    'Burnt Orange Vest | Accessories',
     'Shop Burnt Orange Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'orange burnt', 'formal', 'wedding', 'prom'],
-    'Burnt Orange Vest - Premium Accessories',
+    'Burnt Orange Vest - Accessories',
     'Premium Burnt Orange Vest for weddings, proms, and formal occasions. High-quality construction.',
     'burnt-orange-vest accessories vest sets formal wedding prom',
     'burnt-orange-vest',
@@ -2997,7 +3864,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3007,7 +3886,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '4d85437f-a45b-464b-ac19-8dc1340a2210',
+    'd4c14a70-9b52-46f4-8be4-1ebcb11eded2',
     'Canary Vest',
     'ACC-VTS-013',
     'canary-vest',
@@ -3027,10 +3906,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/canary-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/canary-vest/vest.jpg"}]}',
     'Elegant Canary Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Canary Vest | Formal Accessories | KCT Menswear',
+    'Canary Vest | Accessories',
     'Shop Canary Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'classic', 'formal', 'wedding', 'prom'],
-    'Canary Vest - Premium Accessories',
+    'Canary Vest - Accessories',
     'Premium Canary Vest for weddings, proms, and formal occasions. High-quality construction.',
     'canary-vest accessories vest sets formal wedding prom',
     'canary-vest',
@@ -3038,7 +3917,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3048,7 +3939,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'ab8acc04-8e37-4f5a-8ed3-ccdf4588f027',
+    '11ede747-6984-4903-a7db-3d6e587ae072',
     'Carolina Blue Vest',
     'ACC-VTS-014',
     'carolina-blue-vest',
@@ -3068,10 +3959,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/carolina-blue-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/carolina-blue-vest/10-gg_10.jpg"}]}',
     'Elegant Carolina Blue Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Carolina Blue Vest | Formal Accessories | KCT Menswear',
+    'Carolina Blue Vest | Accessories',
     'Shop Carolina Blue Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'blue', 'formal', 'wedding', 'prom'],
-    'Carolina Blue Vest - Premium Accessories',
+    'Carolina Blue Vest - Accessories',
     'Premium Carolina Blue Vest for weddings, proms, and formal occasions. High-quality construction.',
     'carolina-blue-vest accessories vest sets formal wedding prom',
     'carolina-blue-vest',
@@ -3079,7 +3970,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3089,7 +3992,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '716f0a65-6888-4414-96d6-5e92d258a334',
+    'd3c80b4e-32a2-4e52-9c0b-60e248778ffe',
     'Chocolate Brown Vest',
     'ACC-VTS-015',
     'chocolate-brown-vest',
@@ -3109,10 +4012,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/chocolate-brown-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/chocolate-brown-vest/vest.jpg"}]}',
     'Elegant Chocolate Brown Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Chocolate Brown Vest | Formal Accessories | KCT Menswear',
+    'Chocolate Brown Vest | Accessories',
     'Shop Chocolate Brown Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'brown', 'formal', 'wedding', 'prom'],
-    'Chocolate Brown Vest - Premium Accessories',
+    'Chocolate Brown Vest - Accessories',
     'Premium Chocolate Brown Vest for weddings, proms, and formal occasions. High-quality construction.',
     'chocolate-brown-vest accessories vest sets formal wedding prom',
     'chocolate-brown-vest',
@@ -3120,7 +4023,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3130,7 +4045,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '138bc600-5693-426b-a6e1-c6222d071ac7',
+    '98e5da90-21cd-4825-ba59-26d4ca9ccdf1',
     'Coral Vest',
     'ACC-VTS-016',
     'coral-vest',
@@ -3150,10 +4065,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/coral-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/coral-vest/vest.jpg"}]}',
     'Elegant Coral Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Coral Vest | Formal Accessories | KCT Menswear',
+    'Coral Vest | Accessories',
     'Shop Coral Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'classic', 'formal', 'wedding', 'prom'],
-    'Coral Vest - Premium Accessories',
+    'Coral Vest - Accessories',
     'Premium Coral Vest for weddings, proms, and formal occasions. High-quality construction.',
     'coral-vest accessories vest sets formal wedding prom',
     'coral-vest',
@@ -3161,7 +4076,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3171,7 +4098,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '2c363c41-af58-406e-820b-6702cac7f087',
+    'ac7886da-09f7-4dc9-aa39-93d9d0e14d5d',
     'Dark Burgundy Vest',
     'ACC-VTS-017',
     'dark-burgundy-vest',
@@ -3191,10 +4118,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/dark-burgundy-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/dark-burgundy-vest/vest.jpg"}]}',
     'Elegant Dark Burgundy Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Dark Burgundy Vest | Formal Accessories | KCT Menswear',
+    'Dark Burgundy Vest | Accessories',
     'Shop Dark Burgundy Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'burgundy dark', 'formal', 'wedding', 'prom'],
-    'Dark Burgundy Vest - Premium Accessories',
+    'Dark Burgundy Vest - Accessories',
     'Premium Dark Burgundy Vest for weddings, proms, and formal occasions. High-quality construction.',
     'dark-burgundy-vest accessories vest sets formal wedding prom',
     'dark-burgundy-vest',
@@ -3202,7 +4129,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3212,7 +4151,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'e15d7025-b7a9-4970-8f3a-49b244ef7545',
+    '4287b229-aa0a-43bd-a708-667e4c402f83',
     'Dark Teal',
     'ACC-VTS-018',
     'dark-teal',
@@ -3232,10 +4171,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/dark-teal/main.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/dark-teal/vest.jpg"}]}',
     'Elegant Dark Teal perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Dark Teal | Formal Accessories | KCT Menswear',
+    'Dark Teal | Accessories',
     'Shop Dark Teal at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'dark', 'formal', 'wedding', 'prom'],
-    'Dark Teal - Premium Accessories',
+    'Dark Teal - Accessories',
     'Premium Dark Teal for weddings, proms, and formal occasions. High-quality construction.',
     'dark-teal accessories vest sets formal wedding prom',
     'dark-teal',
@@ -3243,7 +4182,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3253,7 +4204,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '39ff5b14-5339-4357-8edb-3b25b72ad904',
+    '9e7b5194-e0c5-4db4-a9eb-d31fc209b8bf',
     'Dusty Rose Vest',
     'ACC-VTS-019',
     'dusty-rose-vest',
@@ -3273,10 +4224,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/dusty-rose-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/dusty-rose-vest/vest.jpg"}]}',
     'Elegant Dusty Rose Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Dusty Rose Vest | Formal Accessories | KCT Menswear',
+    'Dusty Rose Vest | Accessories',
     'Shop Dusty Rose Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'dusty rose', 'formal', 'wedding', 'prom'],
-    'Dusty Rose Vest - Premium Accessories',
+    'Dusty Rose Vest - Accessories',
     'Premium Dusty Rose Vest for weddings, proms, and formal occasions. High-quality construction.',
     'dusty-rose-vest accessories vest sets formal wedding prom',
     'dusty-rose-vest',
@@ -3284,7 +4235,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3294,7 +4257,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'db9845bb-9756-4edb-9f34-ad7e1e156a88',
+    'd902fe6a-788b-4444-997c-b741084b9081',
     'Dusty Sage Vest',
     'ACC-VTS-020',
     'dusty-sage-vest',
@@ -3314,10 +4277,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/dusty-sage-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/dusty-sage-vest/vest.webp"}]}',
     'Elegant Dusty Sage Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Dusty Sage Vest | Formal Accessories | KCT Menswear',
+    'Dusty Sage Vest | Accessories',
     'Shop Dusty Sage Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'sage dusty', 'formal', 'wedding', 'prom'],
-    'Dusty Sage Vest - Premium Accessories',
+    'Dusty Sage Vest - Accessories',
     'Premium Dusty Sage Vest for weddings, proms, and formal occasions. High-quality construction.',
     'dusty-sage-vest accessories vest sets formal wedding prom',
     'dusty-sage-vest',
@@ -3325,7 +4288,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3335,7 +4310,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '42a0cb0f-1ba6-46b3-a6c0-f22bd9d4f688',
+    'b71fe98c-5cb4-4b2e-b4ac-7e85481749da',
     'Emerald Green Vest',
     'ACC-VTS-021',
     'emerald-green-vest',
@@ -3355,10 +4330,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/emerald-green-vest/main.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/emerald-green-vest/vest.jpg"}]}',
     'Elegant Emerald Green Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Emerald Green Vest | Formal Accessories | KCT Menswear',
+    'Emerald Green Vest | Accessories',
     'Shop Emerald Green Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'green', 'formal', 'wedding', 'prom'],
-    'Emerald Green Vest - Premium Accessories',
+    'Emerald Green Vest - Accessories',
     'Premium Emerald Green Vest for weddings, proms, and formal occasions. High-quality construction.',
     'emerald-green-vest accessories vest sets formal wedding prom',
     'emerald-green-vest',
@@ -3366,7 +4341,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3376,7 +4363,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '8cc6cec9-2cf9-4678-939b-3be4f263b46f',
+    'a04eef95-a2f8-4496-a2dd-6099e0878b8a',
     'Fuchsia Vest',
     'ACC-VTS-022',
     'fuchsia-vest',
@@ -3396,10 +4383,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/fuchsia-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/fuchsia-vest/vest.jpg"}]}',
     'Elegant Fuchsia Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Fuchsia Vest | Formal Accessories | KCT Menswear',
+    'Fuchsia Vest | Accessories',
     'Shop Fuchsia Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'fuchsia', 'formal', 'wedding', 'prom'],
-    'Fuchsia Vest - Premium Accessories',
+    'Fuchsia Vest - Accessories',
     'Premium Fuchsia Vest for weddings, proms, and formal occasions. High-quality construction.',
     'fuchsia-vest accessories vest sets formal wedding prom',
     'fuchsia-vest',
@@ -3407,7 +4394,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3417,7 +4416,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '479e8988-d76d-47e2-b031-cda26fc0cdd5',
+    'a844bfbb-ac43-473f-b208-4312e5fb9617',
     'Gold Vest',
     'ACC-VTS-023',
     'gold-vest',
@@ -3437,10 +4436,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/gold-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/gold-vest/vest.jpg"}]}',
     'Elegant Gold Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Gold Vest | Formal Accessories | KCT Menswear',
+    'Gold Vest | Accessories',
     'Shop Gold Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'gold', 'formal', 'wedding', 'prom'],
-    'Gold Vest - Premium Accessories',
+    'Gold Vest - Accessories',
     'Premium Gold Vest for weddings, proms, and formal occasions. High-quality construction.',
     'gold-vest accessories vest sets formal wedding prom',
     'gold-vest',
@@ -3448,7 +4447,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3458,7 +4469,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '1a753c5b-7273-4a30-8518-8638ff6316a0',
+    '417fdbfd-4799-4e7a-9371-8759e5483255',
     'Grey Vest',
     'ACC-VTS-024',
     'grey-vest',
@@ -3478,10 +4489,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/grey-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/grey-vest/vest.jpg"}]}',
     'Elegant Grey Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Grey Vest | Formal Accessories | KCT Menswear',
+    'Grey Vest | Accessories',
     'Shop Grey Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'grey', 'formal', 'wedding', 'prom'],
-    'Grey Vest - Premium Accessories',
+    'Grey Vest - Accessories',
     'Premium Grey Vest for weddings, proms, and formal occasions. High-quality construction.',
     'grey-vest accessories vest sets formal wedding prom',
     'grey-vest',
@@ -3489,7 +4500,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3499,7 +4522,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'dc943b17-5508-4dad-b4bf-a9e9c0b225db',
+    'b9b63292-f832-44f8-8f1c-5993ce9d95ec',
     'Hunter Green Vest',
     'ACC-VTS-025',
     'hunter-green-vest',
@@ -3519,10 +4542,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/hunter-green-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/hunter-green-vest/vest.jpg"}]}',
     'Elegant Hunter Green Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Hunter Green Vest | Formal Accessories | KCT Menswear',
+    'Hunter Green Vest | Accessories',
     'Shop Hunter Green Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'green hunter', 'formal', 'wedding', 'prom'],
-    'Hunter Green Vest - Premium Accessories',
+    'Hunter Green Vest - Accessories',
     'Premium Hunter Green Vest for weddings, proms, and formal occasions. High-quality construction.',
     'hunter-green-vest accessories vest sets formal wedding prom',
     'hunter-green-vest',
@@ -3530,7 +4553,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3540,7 +4575,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'a8944681-2d75-4adc-bb56-e0922de5f9bf',
+    '781b7c40-5109-4ce0-9a79-19daa8aa783b',
     'Lilac Vest',
     'ACC-VTS-026',
     'lilac-vest',
@@ -3560,10 +4595,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/lilac-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/lilac-vest/vest.jpg"}]}',
     'Elegant Lilac Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Lilac Vest | Formal Accessories | KCT Menswear',
+    'Lilac Vest | Accessories',
     'Shop Lilac Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'classic', 'formal', 'wedding', 'prom'],
-    'Lilac Vest - Premium Accessories',
+    'Lilac Vest - Accessories',
     'Premium Lilac Vest for weddings, proms, and formal occasions. High-quality construction.',
     'lilac-vest accessories vest sets formal wedding prom',
     'lilac-vest',
@@ -3571,7 +4606,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3581,7 +4628,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'f1f63183-8cfd-4944-a4d7-fd66db86eb48',
+    '3975b012-e388-4aa8-9c6e-c73481a05111',
     'Mint Vest',
     'ACC-VTS-027',
     'mint-vest',
@@ -3601,10 +4648,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/mint-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/mint-vest/vest.jpg"}]}',
     'Elegant Mint Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Mint Vest | Formal Accessories | KCT Menswear',
+    'Mint Vest | Accessories',
     'Shop Mint Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'classic', 'formal', 'wedding', 'prom'],
-    'Mint Vest - Premium Accessories',
+    'Mint Vest - Accessories',
     'Premium Mint Vest for weddings, proms, and formal occasions. High-quality construction.',
     'mint-vest accessories vest sets formal wedding prom',
     'mint-vest',
@@ -3612,7 +4659,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3622,7 +4681,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '9ebf2714-3cf8-49bd-8019-dc0ae35062c8',
+    '668928fd-b47f-431c-b839-246f9a4886e5',
     'Peach Vest',
     'ACC-VTS-028',
     'peach-vest',
@@ -3642,10 +4701,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/peach-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/peach-vest/vest.jpg"}]}',
     'Elegant Peach Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Peach Vest | Formal Accessories | KCT Menswear',
+    'Peach Vest | Accessories',
     'Shop Peach Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'classic', 'formal', 'wedding', 'prom'],
-    'Peach Vest - Premium Accessories',
+    'Peach Vest - Accessories',
     'Premium Peach Vest for weddings, proms, and formal occasions. High-quality construction.',
     'peach-vest accessories vest sets formal wedding prom',
     'peach-vest',
@@ -3653,7 +4712,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3663,7 +4734,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '92916fa0-8864-425a-96ed-db06f7c9395d',
+    '85b43efe-9845-42ed-a713-b9cf6e32cc5c',
     'Pink Vest',
     'ACC-VTS-029',
     'pink-vest',
@@ -3683,10 +4754,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/pink-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/pink-vest/vest.jpg"}]}',
     'Elegant Pink Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Pink Vest | Formal Accessories | KCT Menswear',
+    'Pink Vest | Accessories',
     'Shop Pink Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'pink', 'formal', 'wedding', 'prom'],
-    'Pink Vest - Premium Accessories',
+    'Pink Vest - Accessories',
     'Premium Pink Vest for weddings, proms, and formal occasions. High-quality construction.',
     'pink-vest accessories vest sets formal wedding prom',
     'pink-vest',
@@ -3694,7 +4765,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3704,7 +4787,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'e50531ff-a52a-4bde-9e4c-7bc87b694ac7',
+    'ef024b6b-9d81-4b89-8bcd-f2e2c05a690a',
     'Plum Vest',
     'ACC-VTS-030',
     'plum-vest',
@@ -3724,10 +4807,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/plum-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/plum-vest/vest.jpg"}]}',
     'Elegant Plum Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Plum Vest | Formal Accessories | KCT Menswear',
+    'Plum Vest | Accessories',
     'Shop Plum Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'classic', 'formal', 'wedding', 'prom'],
-    'Plum Vest - Premium Accessories',
+    'Plum Vest - Accessories',
     'Premium Plum Vest for weddings, proms, and formal occasions. High-quality construction.',
     'plum-vest accessories vest sets formal wedding prom',
     'plum-vest',
@@ -3735,7 +4818,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3745,7 +4840,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'fa684a3f-bcab-40dd-8998-f134e157ae2c',
+    'db3cfeae-ca35-451e-bb86-2b4496898920',
     'Powder Blue Vest',
     'ACC-VTS-031',
     'powder-blue-vest',
@@ -3765,10 +4860,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/powder-blue-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/powder-blue-vest/vest.jpg"}]}',
     'Elegant Powder Blue Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Powder Blue Vest | Formal Accessories | KCT Menswear',
+    'Powder Blue Vest | Accessories',
     'Shop Powder Blue Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'blue', 'formal', 'wedding', 'prom'],
-    'Powder Blue Vest - Premium Accessories',
+    'Powder Blue Vest - Accessories',
     'Premium Powder Blue Vest for weddings, proms, and formal occasions. High-quality construction.',
     'powder-blue-vest accessories vest sets formal wedding prom',
     'powder-blue-vest',
@@ -3776,7 +4871,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3786,7 +4893,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '4490210b-6877-496f-9e2a-03b5dcdcdeb0',
+    'c154ea85-1451-4ab5-8176-2e5b0300cf16',
     'Red Vest',
     'ACC-VTS-032',
     'red-vest',
@@ -3806,10 +4913,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/red-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/red-vest/vest.jpg"}]}',
     'Elegant Red Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Red Vest | Formal Accessories | KCT Menswear',
+    'Red Vest | Accessories',
     'Shop Red Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'red', 'formal', 'wedding', 'prom'],
-    'Red Vest - Premium Accessories',
+    'Red Vest - Accessories',
     'Premium Red Vest for weddings, proms, and formal occasions. High-quality construction.',
     'red-vest accessories vest sets formal wedding prom',
     'red-vest',
@@ -3817,7 +4924,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3827,7 +4946,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '83b7da8e-51ea-45f9-aa7f-670a3c7ed0d7',
+    'a3a7ac8d-156d-4452-9cc7-bd9952ce585e',
     'Rose Gold Vest',
     'ACC-VTS-033',
     'rose-gold-vest',
@@ -3847,10 +4966,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/rose-gold-vest/rose-gold-vest.jpg"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/rose-gold-vest/vest.webp"}]}',
     'Elegant Rose Gold Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Rose Gold Vest | Formal Accessories | KCT Menswear',
+    'Rose Gold Vest | Accessories',
     'Shop Rose Gold Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'gold rose', 'formal', 'wedding', 'prom'],
-    'Rose Gold Vest - Premium Accessories',
+    'Rose Gold Vest - Accessories',
     'Premium Rose Gold Vest for weddings, proms, and formal occasions. High-quality construction.',
     'rose-gold-vest accessories vest sets formal wedding prom',
     'rose-gold-vest',
@@ -3858,7 +4977,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3868,7 +4999,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    'ae949ac9-2e82-4106-8c53-7fc14b35f62d',
+    '4b128687-4ad0-4102-8f7b-29b513854e94',
     'Royal Blue Vest',
     'ACC-VTS-034',
     'royal-blue-vest',
@@ -3888,10 +5019,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/royal-blue-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/royal-blue-vest/vest.jpg"}]}',
     'Elegant Royal Blue Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Royal Blue Vest | Formal Accessories | KCT Menswear',
+    'Royal Blue Vest | Accessories',
     'Shop Royal Blue Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'blue', 'formal', 'wedding', 'prom'],
-    'Royal Blue Vest - Premium Accessories',
+    'Royal Blue Vest - Accessories',
     'Premium Royal Blue Vest for weddings, proms, and formal occasions. High-quality construction.',
     'royal-blue-vest accessories vest sets formal wedding prom',
     'royal-blue-vest',
@@ -3899,7 +5030,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3909,7 +5052,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '4b510dc9-fbe0-4ae4-b4e1-a19c00abb555',
+    'b808d0f2-9ef4-41be-be07-7e5dc6bf24b1',
     'Turquoise Vest',
     'ACC-VTS-035',
     'turquoise-vest',
@@ -3929,10 +5072,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/turquoise-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/turquoise-vest/vest.jpg"}]}',
     'Elegant Turquoise Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Turquoise Vest | Formal Accessories | KCT Menswear',
+    'Turquoise Vest | Accessories',
     'Shop Turquoise Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'classic', 'formal', 'wedding', 'prom'],
-    'Turquoise Vest - Premium Accessories',
+    'Turquoise Vest - Accessories',
     'Premium Turquoise Vest for weddings, proms, and formal occasions. High-quality construction.',
     'turquoise-vest accessories vest sets formal wedding prom',
     'turquoise-vest',
@@ -3940,7 +5083,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 INSERT INTO products_enhanced (
     id, name, sku, handle, slug, style_code, season, collection,
@@ -3950,7 +5105,7 @@ INSERT INTO products_enhanced (
     og_description, search_terms, url_slug, is_indexable, sitemap_priority,
     created_at, updated_at
 ) VALUES (
-    '3a9acbd3-f2e0-4774-ad0d-cc98328b9569',
+    '0fa6622c-e217-4070-9ed3-aaa1df84794c',
     'Wine Vest',
     'ACC-VTS-036',
     'wine-vest',
@@ -3970,10 +5125,10 @@ INSERT INTO products_enhanced (
     '{"hero": {"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/wine-vest/model.webp"}, "gallery": [{"url": "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/wine-vest/vest.jpg"}]}',
     'Elegant Wine Vest perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    'Wine Vest | Formal Accessories | KCT Menswear',
+    'Wine Vest | Accessories',
     'Shop Wine Vest at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', 'vest sets', 'classic', 'formal', 'wedding', 'prom'],
-    'Wine Vest - Premium Accessories',
+    'Wine Vest - Accessories',
     'Premium Wine Vest for weddings, proms, and formal occasions. High-quality construction.',
     'wine-vest accessories vest sets formal wedding prom',
     'wine-vest',
@@ -3981,7 +5136,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();
 
 -- Verify import with pricing ranges
 SELECT 

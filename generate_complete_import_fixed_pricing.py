@@ -103,7 +103,9 @@ def generate_fall_2025_sql():
     
     sql_lines = []
     sql_lines.append("-- Complete Fall 2025 Collection Import with Correct Pricing")
-    sql_lines.append("-- Shirts: $49-69, Suits: $200-400, Tuxedos: $250-400\n")
+    sql_lines.append("-- Shirts: $49-69, Suits: $200-400, Tuxedos: $250-400")
+    sql_lines.append("-- UPSERT: Will update existing products or insert new ones")
+    sql_lines.append("-- Safe to run multiple times - won't create duplicates\n")
     
     # Category mapping
     category_names = {
@@ -211,10 +213,10 @@ INSERT INTO products_enhanced (
     '{images_json}',
     'Premium {product_name} from our exclusive Fall 2025 Collection. Expertly tailored with meticulous attention to detail and superior craftsmanship. Perfect for the modern gentleman who values quality and style.',
     'active',
-    '{product_name} | {category} | KCT Menswear',
+    '{product_name[:30] if len(product_name) > 30 else product_name} | {category}',
     'Shop {product_name} at ${base_price}. Fall 2025 Collection. Free shipping on orders over $200.',
     ARRAY['{category.lower()}', '{color_name.lower()}', 'fall 2025', 'menswear', 'formal', '{subcategory.lower()}'],
-    '{product_name} - Fall 2025',
+    '{product_name[:45] if len(product_name) > 45 else product_name} - Fall 2025',
     'Elegant {product_name} from our Fall 2025 Collection. Perfect for formal occasions and special events.',
     '{product_slug} {category.lower()} {color_name.lower()} formal fall 2025',
     '{product_slug}',
@@ -222,7 +224,19 @@ INSERT INTO products_enhanced (
     0.8,
     NOW(),
     NOW()
-);""")
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();""")
     
     return '\n'.join(sql_lines)
 
@@ -232,7 +246,8 @@ def generate_accessories_sql():
     
     sql_lines = []
     sql_lines.append("\n\n-- Complete Accessories Collection Import")
-    sql_lines.append("-- All accessories priced at $49.99\n")
+    sql_lines.append("-- All accessories priced at $49.99")
+    sql_lines.append("-- UPSERT: Will update existing products or insert new ones\n")
     
     product_count = 0
     
@@ -309,10 +324,10 @@ INSERT INTO products_enhanced (
     '{images_json}',
     'Elegant {product_name} perfect for weddings, proms, and formal events. Premium quality construction with attention to detail. Complete your formal ensemble with this sophisticated accessory set.',
     'active',
-    '{product_name} | Formal Accessories | KCT Menswear',
+    '{product_name[:35] if len(product_name) > 35 else product_name} | Accessories',
     'Shop {product_name} at $49.99. Perfect for weddings & formal events. Same-day shipping available.',
     ARRAY['accessories', '{subcategory.lower()}', '{color_name.lower()}', 'formal', 'wedding', 'prom'],
-    '{product_name} - Premium Accessories',
+    '{product_name[:40] if len(product_name) > 40 else product_name} - Accessories',
     'Premium {product_name} for weddings, proms, and formal occasions. High-quality construction.',
     '{product_slug} accessories {subcategory.lower()} formal wedding prom',
     '{product_slug}',
@@ -320,7 +335,19 @@ INSERT INTO products_enhanced (
     0.7,
     NOW(),
     NOW()
-);""")
+)
+ON CONFLICT (handle) DO UPDATE SET
+    name = EXCLUDED.name,
+    base_price = EXCLUDED.base_price,
+    compare_at_price = EXCLUDED.compare_at_price,
+    price_tier = EXCLUDED.price_tier,
+    images = EXCLUDED.images,
+    materials = EXCLUDED.materials,
+    color_name = EXCLUDED.color_name,
+    color_family = EXCLUDED.color_family,
+    meta_title = EXCLUDED.meta_title,
+    meta_description = EXCLUDED.meta_description,
+    updated_at = NOW();""")
     
     return '\n'.join(sql_lines)
 
