@@ -476,27 +476,27 @@ function ProductForm({
     sku: product?.sku || '',
     category: product?.category || 'Blazers',
     subcategory: product?.subcategory || '',
-    product_type: product?.product_type || '',
-    occasion: product?.occasion || [],
+    product_type: product?.category || '',  // Use category as product_type fallback
+    occasion: product?.tags || [],  // Use tags as occasions
     price_tier: product?.price_tier || 'TIER_7',
     base_price: product?.base_price || 27999,
     compare_at_price: product?.compare_at_price || 0,
-    cost_per_unit: product?.cost_per_unit || 0,
+    cost_per_unit: Math.round((product?.base_price || 27999) * 0.4),  // Estimate 40% cost
     description: product?.description || '',
     status: product?.status || 'active',
-    is_available: product?.is_available !== false,
-    launch_date: product?.launch_date || '',
-    discontinue_date: product?.discontinue_date || '',
+    is_available: product?.status === 'active',  // Derive from status
+    launch_date: product?.created_at || '',  // Use created_at as launch_date
+    discontinue_date: '',  // Empty initially
     style_code: product?.style_code || '',
     season: product?.season || 'SS24',
     collection: product?.collection || '',
     color_family: product?.color_family || '',
     color_name: product?.color_name || '',
     fit_type: product?.fit_type || 'Slim Fit',
-    size_range: product?.size_range || {},
-    measurements: product?.measurements || {},
+    size_range: product?.available_sizes ? { available: product.available_sizes } : {},
+    measurements: {},  // Empty initially
     materials: product?.materials || {},
-    care_instructions: product?.care_instructions || [],
+    care_instructions: [],  // Empty initially
     view_count: product?.view_count || 0,
     add_to_cart_count: product?.add_to_cart_count || 0,
     purchase_count: product?.purchase_count || 0,
@@ -507,7 +507,24 @@ function ProductForm({
       lifestyle: [],
       details: [],
       total_images: 0
-    }
+    },
+    // Include all existing fields from database
+    meta_title: product?.meta_title || '',
+    meta_description: product?.meta_description || '',
+    meta_keywords: product?.meta_keywords || [],
+    og_title: product?.og_title || '',
+    og_description: product?.og_description || '',
+    og_image: product?.og_image || '',
+    canonical_url: product?.canonical_url || '',
+    structured_data: product?.structured_data || {},
+    tags: product?.tags || [],
+    search_terms: product?.search_terms || '',
+    url_slug: product?.url_slug || product?.slug || '',
+    is_indexable: product?.is_indexable !== false,
+    sitemap_priority: product?.sitemap_priority || 0.8,
+    sitemap_change_freq: product?.sitemap_change_freq || 'weekly',
+    size_options: product?.size_options || { regular: true, short: false, long: false },
+    available_sizes: product?.available_sizes || []
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -623,22 +640,22 @@ function ProductForm({
               </Select>
             </div>
             <div>
-              <Label htmlFor="occasion">Occasions</Label>
+              <Label htmlFor="occasion">Occasions (stored in tags)</Label>
               <div className="flex flex-wrap gap-2 mt-2">
                 {OCCASIONS.map(occ => (
                   <label key={occ} className="flex items-center gap-1">
                     <input
                       type="checkbox"
-                      checked={Array.isArray(formData.occasion) && formData.occasion.includes(occ)}
+                      checked={Array.isArray(formData.tags) && formData.tags.includes(occ)}
                       onChange={(e) => {
-                        const occasions = Array.isArray(formData.occasion) ? [...formData.occasion] : [];
+                        const tags = Array.isArray(formData.tags) ? [...formData.tags] : [];
                         if (e.target.checked) {
-                          occasions.push(occ);
+                          tags.push(occ);
                         } else {
-                          const index = occasions.indexOf(occ);
-                          if (index > -1) occasions.splice(index, 1);
+                          const index = tags.indexOf(occ);
+                          if (index > -1) tags.splice(index, 1);
                         }
-                        setFormData({...formData, occasion: occasions});
+                        setFormData({...formData, tags});
                       }}
                       className="h-4 w-4"
                     />
@@ -738,18 +755,16 @@ function ProductForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="cost_per_unit">Cost Per Unit (cents)</Label>
+              <Label htmlFor="cost_per_unit">Estimated Cost Per Unit (cents)</Label>
               <Input
                 id="cost_per_unit"
                 type="number"
                 value={formData.cost_per_unit}
                 onChange={(e) => setFormData({...formData, cost_per_unit: parseInt(e.target.value)})}
               />
-              {formData.cost_per_unit ? (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Cost: ${((formData.cost_per_unit || 0) / 100).toFixed(2)}
-                </p>
-              ) : null}
+              <p className="text-sm text-muted-foreground mt-1">
+                Cost: ${((formData.cost_per_unit || 0) / 100).toFixed(2)} (estimated at 40% of base price)
+              </p>
             </div>
             <div>
               <Label>Profit Margin</Label>
@@ -926,22 +941,20 @@ function ProductForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="size_range">Size Range (JSON)</Label>
+              <Label htmlFor="size_range">Available Sizes (comma-separated)</Label>
               <Textarea
                 id="size_range"
-                value={typeof formData.size_range === 'object' ? JSON.stringify(formData.size_range, null, 2) : ''}
+                value={Array.isArray(formData.available_sizes) ? formData.available_sizes.join(', ') : ''}
                 onChange={(e) => {
-                  try {
-                    const size_range = JSON.parse(e.target.value);
-                    setFormData({...formData, size_range});
-                  } catch {
-                    // Invalid JSON
-                  }
+                  const sizes = e.target.value.split(',').map(s => s.trim()).filter(s => s);
+                  setFormData({...formData, available_sizes: sizes});
                 }}
-                placeholder='{"min": "36R", "max": "54R", "available": ["36R", "38R", "40R"]}'
+                placeholder="36R, 38R, 40R, 42R, 44R, 46R, 48R, 50R, 52R, 54R"
                 rows={3}
-                className="font-mono text-sm"
               />
+              <p className="text-sm text-muted-foreground mt-1">
+                {Array.isArray(formData.available_sizes) ? formData.available_sizes.length : 0} sizes available
+              </p>
             </div>
             <div>
               <Label htmlFor="measurements">Measurements (JSON)</Label>
@@ -980,13 +993,15 @@ function ProductForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="launch_date">Launch Date</Label>
+              <Label htmlFor="launch_date">Launch Date (Created Date)</Label>
               <Input
                 id="launch_date"
                 type="datetime-local"
                 value={formData.launch_date ? new Date(formData.launch_date).toISOString().slice(0, 16) : ''}
-                onChange={(e) => setFormData({...formData, launch_date: e.target.value ? new Date(e.target.value).toISOString() : ''})}
+                readOnly
+                className="bg-muted"
               />
+              <p className="text-sm text-muted-foreground mt-1">Based on product creation date</p>
             </div>
             <div>
               <Label htmlFor="discontinue_date">Discontinue Date</Label>
