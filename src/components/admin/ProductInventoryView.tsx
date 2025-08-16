@@ -21,12 +21,16 @@ import { supabase } from '@/lib/supabase-client';
 interface ProductVariant {
   id: string;
   product_id: string;
-  size: string;
-  color: string;
+  title?: string;
+  option1?: string; // Size
+  option2?: string; // Color
+  option3?: string;
   sku: string;
   inventory_quantity: number;
   price: number;
-  status: string;
+  available?: boolean;
+  available_quantity?: number;
+  reserved_quantity?: number;
   product?: {
     name: string;
     category: string;
@@ -83,12 +87,13 @@ export function ProductInventoryView() {
         const mockVariants = productsData?.map(product => ({
           id: product.id,
           product_id: product.id,
-          size: 'One Size',
-          color: product.color_name || 'Default',
+          title: product.name,
+          option1: 'One Size',
+          option2: product.color_name || 'Default',
           sku: product.sku,
           inventory_quantity: 0, // No inventory data available
-          price: product.base_price / 100,
-          status: product.status,
+          price: product.base_price,
+          available: true,
           product: {
             name: product.name,
             category: product.category,
@@ -116,12 +121,13 @@ export function ProductInventoryView() {
           const mockVariants = productsData?.map(product => ({
             id: product.id,
             product_id: product.id,
-            size: 'One Size',
-            color: product.color_name || 'Default',
+            title: product.name,
+            option1: 'One Size',
+            option2: product.color_name || 'Default',
             sku: product.sku,
             inventory_quantity: 0,
-            price: product.base_price / 100,
-            status: product.status,
+            price: product.base_price,
+            available: true,
             product: {
               name: product.name,
               category: product.category,
@@ -193,7 +199,8 @@ export function ProductInventoryView() {
     return (
       variant.product?.name?.toLowerCase().includes(searchLower) ||
       variant.sku?.toLowerCase().includes(searchLower) ||
-      variant.size?.toLowerCase().includes(searchLower)
+      variant.option1?.toLowerCase().includes(searchLower) ||
+      variant.title?.toLowerCase().includes(searchLower)
     );
   });
 
@@ -341,8 +348,8 @@ export function ProductInventoryView() {
                           </div>
                         </TableCell>
                         <TableCell className="font-mono text-sm">{variant.sku}</TableCell>
-                        <TableCell>{variant.size || 'One Size'}</TableCell>
-                        <TableCell>{variant.color || 'Default'}</TableCell>
+                        <TableCell>{variant.option1 || 'One Size'}</TableCell>
+                        <TableCell>{variant.option2 || 'Default'}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{variant.inventory_quantity}</span>
@@ -352,8 +359,8 @@ export function ProductInventoryView() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={variant.status === 'active' ? 'default' : 'secondary'}>
-                            {variant.status || 'active'}
+                          <Badge variant={variant.available ? 'default' : 'secondary'}>
+                            {variant.available ? 'Active' : 'Inactive'}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -388,9 +395,9 @@ export function ProductInventoryView() {
           {selectedVariant && (
             <div className="space-y-4">
               <div>
-                <p className="font-medium">{selectedVariant.product?.name}</p>
+                <p className="font-medium">{selectedVariant.product?.name || selectedVariant.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  SKU: {selectedVariant.sku} | Size: {selectedVariant.size}
+                  SKU: {selectedVariant.sku} | Size: {selectedVariant.option1 || 'One Size'}
                 </p>
               </div>
               
