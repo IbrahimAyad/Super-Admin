@@ -471,7 +471,12 @@ export default function EnhancedProductsAdmin() {
                             alt={product.name}
                             className="w-16 h-16 object-cover rounded"
                             onError={(e) => {
+                              console.log('❌ Image failed to load:', product.images.hero.url);
                               (e.target as HTMLImageElement).src = '/placeholder.svg';
+                              (e.target as HTMLImageElement).classList.add('opacity-50');
+                            }}
+                            onLoad={() => {
+                              console.log('✅ Image loaded successfully:', product.images.hero.url);
                             }}
                           />
                         ) : (
