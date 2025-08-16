@@ -67,9 +67,11 @@ const PRICE_TIERS = [
   { value: 'TIER_10', label: 'Tier 10 ($500-599)', min: 50000, max: 59999 },
 ];
 
-const CATEGORIES = ['Blazers', 'Suits', 'Shirts', 'Pants', 'Accessories'];
-const SUBCATEGORIES = ['Prom', 'Velvet', 'Summer', 'Sparkle', 'Formal', 'Casual'];
+const CATEGORIES = ['Blazers', 'Suits', 'Shirts', 'Pants', 'Accessories', 'Outerwear', 'Tuxedos', 'Vests'];
+const SUBCATEGORIES = ['Prom', 'Velvet', 'Summer', 'Sparkle', 'Formal', 'Casual', 'Wedding', 'Business'];
 const STATUSES = ['active', 'draft', 'archived'];
+const PRODUCT_TYPES = ['Blazer', 'Suit', 'Tuxedo', 'Shirt', 'Pants', 'Vest', 'Accessories', 'Outerwear'];
+const OCCASIONS = ['Wedding', 'Prom', 'Business', 'Formal Event', 'Party', 'Casual', 'Interview', 'Date Night']
 
 export default function EnhancedProductsAdmin() {
   const [products, setProducts] = useState<EnhancedProduct[]>([]);
@@ -474,18 +476,31 @@ function ProductForm({
     sku: product?.sku || '',
     category: product?.category || 'Blazers',
     subcategory: product?.subcategory || '',
+    product_type: product?.product_type || '',
+    occasion: product?.occasion || [],
     price_tier: product?.price_tier || 'TIER_7',
     base_price: product?.base_price || 27999,
     compare_at_price: product?.compare_at_price || 0,
+    cost_per_unit: product?.cost_per_unit || 0,
     description: product?.description || '',
     status: product?.status || 'active',
+    is_available: product?.is_available !== false,
+    launch_date: product?.launch_date || '',
+    discontinue_date: product?.discontinue_date || '',
     style_code: product?.style_code || '',
     season: product?.season || 'SS24',
     collection: product?.collection || '',
     color_family: product?.color_family || '',
     color_name: product?.color_name || '',
     fit_type: product?.fit_type || 'Slim Fit',
+    size_range: product?.size_range || {},
+    measurements: product?.measurements || {},
     materials: product?.materials || {},
+    care_instructions: product?.care_instructions || [],
+    view_count: product?.view_count || 0,
+    add_to_cart_count: product?.add_to_cart_count || 0,
+    purchase_count: product?.purchase_count || 0,
+    return_rate: product?.return_rate || 0,
     images: product?.images || {
       hero: null,
       flat: null,
@@ -523,11 +538,13 @@ function ProductForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Tabs defaultValue="basic" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="basic">Basic Info</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-7">
+          <TabsTrigger value="basic">Basic</TabsTrigger>
           <TabsTrigger value="pricing">Pricing</TabsTrigger>
           <TabsTrigger value="images">Images</TabsTrigger>
           <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="inventory">Inventory</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="seo">SEO</TabsTrigger>
         </TabsList>
         
@@ -585,6 +602,50 @@ function ProductForm({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="product_type">Product Type</Label>
+              <Select 
+                value={formData.product_type} 
+                onValueChange={(value) => setFormData({...formData, product_type: value})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select product type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRODUCT_TYPES.map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="occasion">Occasions</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {OCCASIONS.map(occ => (
+                  <label key={occ} className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      checked={Array.isArray(formData.occasion) && formData.occasion.includes(occ)}
+                      onChange={(e) => {
+                        const occasions = Array.isArray(formData.occasion) ? [...formData.occasion] : [];
+                        if (e.target.checked) {
+                          occasions.push(occ);
+                        } else {
+                          const index = occasions.indexOf(occ);
+                          if (index > -1) occasions.splice(index, 1);
+                        }
+                        setFormData({...formData, occasion: occasions});
+                      }}
+                      className="h-4 w-4"
+                    />
+                    <span className="text-sm">{occ}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -672,6 +733,38 @@ function ProductForm({
                   ${((formData.compare_at_price || 0) / 100).toFixed(2)}
                 </p>
               ) : null}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="cost_per_unit">Cost Per Unit (cents)</Label>
+              <Input
+                id="cost_per_unit"
+                type="number"
+                value={formData.cost_per_unit}
+                onChange={(e) => setFormData({...formData, cost_per_unit: parseInt(e.target.value)})}
+              />
+              {formData.cost_per_unit ? (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Cost: ${((formData.cost_per_unit || 0) / 100).toFixed(2)}
+                </p>
+              ) : null}
+            </div>
+            <div>
+              <Label>Profit Margin</Label>
+              <div className="p-3 bg-muted rounded-md mt-2">
+                <p className="text-sm font-medium">
+                  {formData.base_price && formData.cost_per_unit ? 
+                    `${(((formData.base_price - formData.cost_per_unit) / formData.base_price) * 100).toFixed(1)}%` : 
+                    'N/A'}
+                </p>
+                {formData.base_price && formData.cost_per_unit ? (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Profit: ${((formData.base_price - formData.cost_per_unit) / 100).toFixed(2)}
+                  </p>
+                ) : null}
+              </div>
             </div>
           </div>
         </TabsContent>
@@ -797,6 +890,241 @@ function ProductForm({
               />
             </div>
           </div>
+
+          <div>
+            <Label htmlFor="materials">Materials (JSON format)</Label>
+            <Textarea
+              id="materials"
+              value={typeof formData.materials === 'object' ? JSON.stringify(formData.materials, null, 2) : ''}
+              onChange={(e) => {
+                try {
+                  const materials = JSON.parse(e.target.value);
+                  setFormData({...formData, materials});
+                } catch {
+                  // Invalid JSON, don't update
+                }
+              }}
+              placeholder='{"primary": "Cotton", "composition": {"Cotton": 60, "Polyester": 40}}'
+              rows={4}
+              className="font-mono text-sm"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="care_instructions">Care Instructions (one per line)</Label>
+            <Textarea
+              id="care_instructions"
+              value={Array.isArray(formData.care_instructions) ? formData.care_instructions.join('\n') : ''}
+              onChange={(e) => setFormData({
+                ...formData, 
+                care_instructions: e.target.value.split('\n').filter(line => line.trim())
+              })}
+              placeholder="Machine wash cold\nTumble dry low\nDo not bleach\nIron on low heat"
+              rows={4}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="size_range">Size Range (JSON)</Label>
+              <Textarea
+                id="size_range"
+                value={typeof formData.size_range === 'object' ? JSON.stringify(formData.size_range, null, 2) : ''}
+                onChange={(e) => {
+                  try {
+                    const size_range = JSON.parse(e.target.value);
+                    setFormData({...formData, size_range});
+                  } catch {
+                    // Invalid JSON
+                  }
+                }}
+                placeholder='{"min": "36R", "max": "54R", "available": ["36R", "38R", "40R"]}'
+                rows={3}
+                className="font-mono text-sm"
+              />
+            </div>
+            <div>
+              <Label htmlFor="measurements">Measurements (JSON)</Label>
+              <Textarea
+                id="measurements"
+                value={typeof formData.measurements === 'object' ? JSON.stringify(formData.measurements, null, 2) : ''}
+                onChange={(e) => {
+                  try {
+                    const measurements = JSON.parse(e.target.value);
+                    setFormData({...formData, measurements});
+                  } catch {
+                    // Invalid JSON
+                  }
+                }}
+                placeholder='{"chest": "42 inches", "length": "30 inches", "sleeve": "34 inches"}'
+                rows={3}
+                className="font-mono text-sm"
+              />
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="inventory" className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="is_available"
+                checked={formData.is_available !== false}
+                onChange={(e) => setFormData({...formData, is_available: e.target.checked})}
+                className="h-4 w-4"
+              />
+              <Label htmlFor="is_available">Product Available for Sale</Label>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="launch_date">Launch Date</Label>
+              <Input
+                id="launch_date"
+                type="datetime-local"
+                value={formData.launch_date ? new Date(formData.launch_date).toISOString().slice(0, 16) : ''}
+                onChange={(e) => setFormData({...formData, launch_date: e.target.value ? new Date(e.target.value).toISOString() : ''})}
+              />
+            </div>
+            <div>
+              <Label htmlFor="discontinue_date">Discontinue Date</Label>
+              <Input
+                id="discontinue_date"
+                type="datetime-local"
+                value={formData.discontinue_date ? new Date(formData.discontinue_date).toISOString().slice(0, 16) : ''}
+                onChange={(e) => setFormData({...formData, discontinue_date: e.target.value ? new Date(e.target.value).toISOString() : ''})}
+              />
+            </div>
+          </div>
+
+          <div className="p-4 bg-muted rounded-lg">
+            <h4 className="font-medium mb-2">Product Lifecycle</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>Status:</span>
+                <Badge variant={formData.status === 'active' ? 'default' : 'secondary'}>
+                  {formData.status}
+                </Badge>
+              </div>
+              <div className="flex justify-between">
+                <span>Available:</span>
+                <Badge variant={formData.is_available ? 'default' : 'destructive'}>
+                  {formData.is_available ? 'Yes' : 'No'}
+                </Badge>
+              </div>
+              {formData.launch_date && (
+                <div className="flex justify-between">
+                  <span>Launch:</span>
+                  <span>{new Date(formData.launch_date).toLocaleDateString()}</span>
+                </div>
+              )}
+              {formData.discontinue_date && (
+                <div className="flex justify-between">
+                  <span>Discontinue:</span>
+                  <span>{new Date(formData.discontinue_date).toLocaleDateString()}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="view_count">View Count</Label>
+              <Input
+                id="view_count"
+                type="number"
+                value={formData.view_count}
+                onChange={(e) => setFormData({...formData, view_count: parseInt(e.target.value) || 0})}
+                readOnly
+                className="bg-muted"
+              />
+            </div>
+            <div>
+              <Label htmlFor="add_to_cart_count">Add to Cart Count</Label>
+              <Input
+                id="add_to_cart_count"
+                type="number"
+                value={formData.add_to_cart_count}
+                onChange={(e) => setFormData({...formData, add_to_cart_count: parseInt(e.target.value) || 0})}
+                readOnly
+                className="bg-muted"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="purchase_count">Purchase Count</Label>
+              <Input
+                id="purchase_count"
+                type="number"
+                value={formData.purchase_count}
+                onChange={(e) => setFormData({...formData, purchase_count: parseInt(e.target.value) || 0})}
+                readOnly
+                className="bg-muted"
+              />
+            </div>
+            <div>
+              <Label htmlFor="return_rate">Return Rate (%)</Label>
+              <Input
+                id="return_rate"
+                type="number"
+                step="0.1"
+                max="100"
+                value={formData.return_rate}
+                onChange={(e) => setFormData({...formData, return_rate: parseFloat(e.target.value) || 0})}
+                readOnly
+                className="bg-muted"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Conversion Rate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formData.view_count && formData.purchase_count ? 
+                    ((formData.purchase_count / formData.view_count) * 100).toFixed(2) + '%' : 
+                    'N/A'}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Cart Rate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formData.view_count && formData.add_to_cart_count ? 
+                    ((formData.add_to_cart_count / formData.view_count) * 100).toFixed(2) + '%' : 
+                    'N/A'}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Revenue Impact</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formData.purchase_count && formData.base_price ? 
+                    '$' + ((formData.purchase_count * formData.base_price) / 100).toLocaleString() : 
+                    'N/A'}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="text-sm text-muted-foreground p-3 bg-yellow-50 rounded-md border">
+            📊 Analytics data is read-only and automatically updated by the system based on customer interactions.
+          </div>
         </TabsContent>
         
         <TabsContent value="seo" className="space-y-4">
@@ -829,17 +1157,31 @@ function ProductForm({
             </p>
           </div>
 
-          <div>
-            <Label htmlFor="tags">Tags (comma-separated)</Label>
-            <Input
-              id="tags"
-              value={formData.tags?.join(', ') || ''}
-              onChange={(e) => setFormData({
-                ...formData, 
-                tags: e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag)
-              })}
-              placeholder="blazer, velvet, formal, wedding"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="tags">Tags (comma-separated)</Label>
+              <Input
+                id="tags"
+                value={formData.tags?.join(', ') || ''}
+                onChange={(e) => setFormData({
+                  ...formData, 
+                  tags: e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag)
+                })}
+                placeholder="blazer, velvet, formal, wedding"
+              />
+            </div>
+            <div>
+              <Label htmlFor="meta_keywords">Meta Keywords (comma-separated)</Label>
+              <Input
+                id="meta_keywords"
+                value={formData.meta_keywords?.join(', ') || ''}
+                onChange={(e) => setFormData({
+                  ...formData, 
+                  meta_keywords: e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag)
+                })}
+                placeholder="men's blazer, formal wear, wedding attire"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

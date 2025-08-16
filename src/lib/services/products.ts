@@ -144,11 +144,7 @@ export async function fetchProductsWithImages(options?: {
     }
     let query = supabase
       .from('products_enhanced')
-      .select(`
-        *,
-        images:product_images(id, product_id, image_url, image_type, position, alt_text),
-        variants:product_variants(*)
-      `, { count: 'exact' })
+      .select('*', { count: 'exact' })
       .order('created_at', { ascending: false });
 
     // Apply filters
@@ -246,11 +242,7 @@ export async function getProduct(slugOrId: string) {
     // First try by slug
     let { data, error } = await supabase
       .from('products_enhanced')
-      .select(`
-        *,
-        images:product_images(id, product_id, image_url, image_type, position, alt_text),
-        variants:product_variants(*)
-      `)
+      .select('*')
       .eq('slug', slugOrId)
       .single();
 
@@ -258,11 +250,7 @@ export async function getProduct(slugOrId: string) {
     if (!data) {
       const result = await supabase
         .from('products_enhanced')
-        .select(`
-          *,
-          images:product_images(id, product_id, image_url, image_type, position, alt_text),
-          variants:product_variants(*)
-        `)
+        .select('*')
         .eq('id', slugOrId)
         .single();
       
@@ -299,11 +287,7 @@ export async function getProductById(id: string) {
   try {
     const { data, error } = await supabase
       .from('products_enhanced')
-      .select(`
-        *,
-        images:product_images(id, product_id, image_url, image_type, position, alt_text),
-        variants:product_variants(*)
-      `)
+      .select('*')
       .eq('id', id)
       .single();
 
