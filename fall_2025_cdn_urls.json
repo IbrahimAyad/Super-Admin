@@ -1,0 +1,875 @@
+{
+  "base_url": "https://cdn.kctmenswear.com",
+  "categories": {
+    "double-breasted-suits": {
+      "black-strip-shawl-lapel": {
+        "product_folder": "black-strip-shawl-lapel",
+        "images": [
+          {
+            "image_name": "back.webp",
+            "local_path": "Fall 2025/double-breasted-suits/black-strip-shawl-lapel/back.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/double-breasted-suits/black-strip-shawl-lapel/back.webp"
+          },
+          {
+            "image_name": "front.webp",
+            "local_path": "Fall 2025/double-breasted-suits/black-strip-shawl-lapel/front.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/double-breasted-suits/black-strip-shawl-lapel/front.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/double-breasted-suits/black-strip-shawl-lapel/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/double-breasted-suits/black-strip-shawl-lapel/main.webp"
+          }
+        ]
+      },
+      "fall-forest-green-mocha-double-breasted-suit": {
+        "product_folder": "fall-forest-green-mocha-double-breasted-suit",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/double-breasted-suits/fall-forest-green-mocha-double-breasted-suit/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/double-breasted-suits/fall-forest-green-mocha-double-breasted-suit/main.webp"
+          }
+        ]
+      },
+      "fall-mocha-double-breasted-suit": {
+        "product_folder": "fall-mocha-double-breasted-suit",
+        "images": [
+          {
+            "image_name": "20250806_1901_Stylish Suit Display_remix_01k20srfr9ez1ag6z2kba3s8x3.webp",
+            "local_path": "Fall 2025/double-breasted-suits/fall-mocha-double-breasted-suit/20250806_1901_Stylish Suit Display_remix_01k20srfr9ez1ag6z2kba3s8x3.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/double-breasted-suits/fall-mocha-double-breasted-suit/20250806_1901_Stylish Suit Display_remix_01k20srfr9ez1ag6z2kba3s8x3.webp"
+          }
+        ]
+      },
+      "fall-smoked-blue-double-breasted-suit": {
+        "product_folder": "fall-smoked-blue-double-breasted-suit",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/double-breasted-suits/fall-smoked-blue-double-breasted-suit/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/double-breasted-suits/fall-smoked-blue-double-breasted-suit/main.webp"
+          }
+        ]
+      },
+      "light-grey": {
+        "product_folder": "light-grey",
+        "images": [
+          {
+            "image_name": "lifestyle.webp",
+            "local_path": "Fall 2025/double-breasted-suits/light-grey/lifestyle.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/double-breasted-suits/light-grey/lifestyle.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/double-breasted-suits/light-grey/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/double-breasted-suits/light-grey/main.webp"
+          }
+        ]
+      },
+      "pin-stripe-canyon-clay-double-breasted-suit": {
+        "product_folder": "pin-stripe-canyon-clay-double-breasted-suit",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/double-breasted-suits/pin-stripe-canyon-clay-double-breasted-suit/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/double-breasted-suits/pin-stripe-canyon-clay-double-breasted-suit/main.webp"
+          }
+        ]
+      },
+      "pink": {
+        "product_folder": "pink",
+        "images": [
+          {
+            "image_name": "lifestyle.webp",
+            "local_path": "Fall 2025/double-breasted-suits/pink/lifestyle.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/double-breasted-suits/pink/lifestyle.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/double-breasted-suits/pink/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/double-breasted-suits/pink/main.webp"
+          }
+        ]
+      },
+      "red-tuxedo-double-breasted": {
+        "product_folder": "red-tuxedo-double-breasted",
+        "images": [
+          {
+            "image_name": "front.webp",
+            "local_path": "Fall 2025/double-breasted-suits/red-tuxedo-double-breasted/front.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/double-breasted-suits/red-tuxedo-double-breasted/front.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/double-breasted-suits/red-tuxedo-double-breasted/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/double-breasted-suits/red-tuxedo-double-breasted/main.webp"
+          }
+        ]
+      },
+      "tan-tuxedo-double-breasted": {
+        "product_folder": "tan-tuxedo-double-breasted",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/double-breasted-suits/tan-tuxedo-double-breasted/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/double-breasted-suits/tan-tuxedo-double-breasted/main.webp"
+          }
+        ]
+      },
+      "white-tuxedo-double-breasted": {
+        "product_folder": "white-tuxedo-double-breasted",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/double-breasted-suits/white-tuxedo-double-breasted/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/double-breasted-suits/white-tuxedo-double-breasted/main.webp"
+          }
+        ]
+      }
+    },
+    "mens-shirts": {
+      "black-turtleneck": {
+        "product_folder": "black-turtleneck",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/mens-shirts/black-turtleneck/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/black-turtleneck/main.webp"
+          }
+        ]
+      },
+      "black-ultra-stretch-dress-shirt": {
+        "product_folder": "black-ultra-stretch-dress-shirt",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/mens-shirts/black-ultra-stretch-dress-shirt/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/black-ultra-stretch-dress-shirt/main.webp"
+          }
+        ]
+      },
+      "light-blue-collarless-dress-shirt": {
+        "product_folder": "light-blue-collarless-dress-shirt",
+        "images": [
+          {
+            "image_name": "front.webp",
+            "local_path": "Fall 2025/mens-shirts/light-blue-collarless-dress-shirt/front.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/light-blue-collarless-dress-shirt/front.webp"
+          },
+          {
+            "image_name": "lifestyle.webp",
+            "local_path": "Fall 2025/mens-shirts/light-blue-collarless-dress-shirt/lifestyle.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/light-blue-collarless-dress-shirt/lifestyle.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/mens-shirts/light-blue-collarless-dress-shirt/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/light-blue-collarless-dress-shirt/main.webp"
+          },
+          {
+            "image_name": "side.webp",
+            "local_path": "Fall 2025/mens-shirts/light-blue-collarless-dress-shirt/side.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/light-blue-collarless-dress-shirt/side.webp"
+          }
+        ]
+      },
+      "light-blue-turtleneck": {
+        "product_folder": "light-blue-turtleneck",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/mens-shirts/light-blue-turtleneck/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/light-blue-turtleneck/main.webp"
+          }
+        ]
+      },
+      "black-collarless-dress-shirt": {
+        "product_folder": "black-collarless-dress-shirt",
+        "images": [
+          {
+            "image_name": "front.webp",
+            "local_path": "Fall 2025/mens-shirts/mens-shirts/black-collarless-dress-shirt/front.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/black-collarless-dress-shirt/front.webp"
+          },
+          {
+            "image_name": "lifestyle.webp",
+            "local_path": "Fall 2025/mens-shirts/mens-shirts/black-collarless-dress-shirt/lifestyle.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/black-collarless-dress-shirt/lifestyle.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/mens-shirts/mens-shirts/black-collarless-dress-shirt/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/black-collarless-dress-shirt/main.webp"
+          },
+          {
+            "image_name": "side.webp",
+            "local_path": "Fall 2025/mens-shirts/mens-shirts/black-collarless-dress-shirt/side.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/black-collarless-dress-shirt/side.webp"
+          }
+        ]
+      },
+      "black-short-sleeve-moc-neck": {
+        "product_folder": "black-short-sleeve-moc-neck",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/mens-shirts/mens-shirts/black-short-sleeve-moc-neck/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/black-short-sleeve-moc-neck/main.webp"
+          }
+        ]
+      },
+      "light-grey-turtleneck": {
+        "product_folder": "light-grey-turtleneck",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/mens-shirts/mens-shirts/light-grey-turtleneck/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/light-grey-turtleneck/main.webp"
+          }
+        ]
+      },
+      "navy-short-sleeve-moc-neck": {
+        "product_folder": "navy-short-sleeve-moc-neck",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/mens-shirts/mens-shirts/navy-short-sleeve-moc-neck/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/navy-short-sleeve-moc-neck/main.webp"
+          }
+        ]
+      },
+      "tan-short-sleeve-moc-neck": {
+        "product_folder": "tan-short-sleeve-moc-neck",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/mens-shirts/mens-shirts/tan-short-sleeve-moc-neck/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/tan-short-sleeve-moc-neck/main.webp"
+          }
+        ]
+      },
+      "white-short-sleeve-moc-neck": {
+        "product_folder": "white-short-sleeve-moc-neck",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/mens-shirts/mens-shirts/white-short-sleeve-moc-neck/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/white-short-sleeve-moc-neck/main.webp"
+          }
+        ]
+      },
+      "tan-turtleneck": {
+        "product_folder": "tan-turtleneck",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/mens-shirts/tan-turtleneck/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/tan-turtleneck/main.webp"
+          }
+        ]
+      },
+      "white-collarless-dress-shirt": {
+        "product_folder": "white-collarless-dress-shirt",
+        "images": [
+          {
+            "image_name": "front.webp",
+            "local_path": "Fall 2025/mens-shirts/white-collarless-dress-shirt/front.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/white-collarless-dress-shirt/front.webp"
+          },
+          {
+            "image_name": "lifestyle.webp",
+            "local_path": "Fall 2025/mens-shirts/white-collarless-dress-shirt/lifestyle.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/white-collarless-dress-shirt/lifestyle.webp"
+          },
+          {
+            "image_name": "main-front.webp",
+            "local_path": "Fall 2025/mens-shirts/white-collarless-dress-shirt/main-front.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/white-collarless-dress-shirt/main-front.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/mens-shirts/white-collarless-dress-shirt/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/white-collarless-dress-shirt/main.webp"
+          },
+          {
+            "image_name": "side.webp",
+            "local_path": "Fall 2025/mens-shirts/white-collarless-dress-shirt/side.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/white-collarless-dress-shirt/side.webp"
+          }
+        ]
+      },
+      "white-turtleneck": {
+        "product_folder": "white-turtleneck",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/mens-shirts/white-turtleneck/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/mens-shirts/white-turtleneck/main.webp"
+          }
+        ]
+      }
+    },
+    "stretch-suits": {
+      "beige-slim-stretch": {
+        "product_folder": "beige-slim-stretch",
+        "images": [
+          {
+            "image_name": "lifestlye.webp",
+            "local_path": "Fall 2025/stretch-suits/beige-slim-stretch/lifestlye.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/beige-slim-stretch/lifestlye.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/stretch-suits/beige-slim-stretch/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/beige-slim-stretch/main.webp"
+          }
+        ]
+      },
+      "black-slim-stretch": {
+        "product_folder": "black-slim-stretch",
+        "images": [
+          {
+            "image_name": "front.webp",
+            "local_path": "Fall 2025/stretch-suits/black-slim-stretch/front.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/black-slim-stretch/front.webp"
+          },
+          {
+            "image_name": "lifesstyle.webp",
+            "local_path": "Fall 2025/stretch-suits/black-slim-stretch/lifesstyle.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/black-slim-stretch/lifesstyle.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/stretch-suits/black-slim-stretch/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/black-slim-stretch/main.webp"
+          }
+        ]
+      },
+      "burgundy--slim-stretch": {
+        "product_folder": "burgundy--slim-stretch",
+        "images": [
+          {
+            "image_name": "front.webp",
+            "local_path": "Fall 2025/stretch-suits/burgundy--slim-stretch/front.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/burgundy--slim-stretch/front.webp"
+          },
+          {
+            "image_name": "lifestyle.webp",
+            "local_path": "Fall 2025/stretch-suits/burgundy--slim-stretch/lifestyle.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/burgundy--slim-stretch/lifestyle.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/stretch-suits/burgundy--slim-stretch/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/burgundy--slim-stretch/main.webp"
+          }
+        ]
+      },
+      "light-grey-slim-stretch": {
+        "product_folder": "light-grey-slim-stretch",
+        "images": [
+          {
+            "image_name": "front.webp",
+            "local_path": "Fall 2025/stretch-suits/light-grey-slim-stretch/front.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/light-grey-slim-stretch/front.webp"
+          },
+          {
+            "image_name": "lifestyle.webp",
+            "local_path": "Fall 2025/stretch-suits/light-grey-slim-stretch/lifestyle.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/light-grey-slim-stretch/lifestyle.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/stretch-suits/light-grey-slim-stretch/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/light-grey-slim-stretch/main.webp"
+          }
+        ]
+      },
+      "mauve-slim-stretch": {
+        "product_folder": "mauve-slim-stretch",
+        "images": [
+          {
+            "image_name": "front.webp",
+            "local_path": "Fall 2025/stretch-suits/mauve-slim-stretch/front.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/mauve-slim-stretch/front.webp"
+          },
+          {
+            "image_name": "lifestyle.webp",
+            "local_path": "Fall 2025/stretch-suits/mauve-slim-stretch/lifestyle.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/mauve-slim-stretch/lifestyle.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/stretch-suits/mauve-slim-stretch/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/mauve-slim-stretch/main.webp"
+          }
+        ]
+      },
+      "mint-slim-stretch": {
+        "product_folder": "mint-slim-stretch",
+        "images": [
+          {
+            "image_name": "lifestyle.webp",
+            "local_path": "Fall 2025/stretch-suits/mint-slim-stretch/lifestyle.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/mint-slim-stretch/lifestyle.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/stretch-suits/mint-slim-stretch/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/mint-slim-stretch/main.webp"
+          }
+        ]
+      },
+      "pink-slim-stretch": {
+        "product_folder": "pink-slim-stretch",
+        "images": [
+          {
+            "image_name": "lifestyle.webp",
+            "local_path": "Fall 2025/stretch-suits/pink-slim-stretch/lifestyle.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/pink-slim-stretch/lifestyle.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/stretch-suits/pink-slim-stretch/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/pink-slim-stretch/main.webp"
+          }
+        ]
+      },
+      "salmon-slim-stretch": {
+        "product_folder": "salmon-slim-stretch",
+        "images": [
+          {
+            "image_name": "lifestyle.webp",
+            "local_path": "Fall 2025/stretch-suits/salmon-slim-stretch/lifestyle.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/salmon-slim-stretch/lifestyle.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/stretch-suits/salmon-slim-stretch/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/salmon-slim-stretch/main.webp"
+          }
+        ]
+      },
+      "tan-slim-stretch": {
+        "product_folder": "tan-slim-stretch",
+        "images": [
+          {
+            "image_name": "lifestyle.webp",
+            "local_path": "Fall 2025/stretch-suits/tan-slim-stretch/lifestyle.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/tan-slim-stretch/lifestyle.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/stretch-suits/tan-slim-stretch/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/stretch-suits/tan-slim-stretch/main.webp"
+          }
+        ]
+      }
+    },
+    "suits": {
+      "brick-fall-suit": {
+        "product_folder": "brick-fall-suit",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/suits/brick-fall-suit/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/suits/brick-fall-suit/main.webp"
+          }
+        ]
+      },
+      "brown-gold-buttons": {
+        "product_folder": "brown-gold-buttons",
+        "images": [
+          {
+            "image_name": "mens_suits_suit_2035_0.webp",
+            "local_path": "Fall 2025/suits/brown-gold-buttons/mens_suits_suit_2035_0.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/suits/brown-gold-buttons/mens_suits_suit_2035_0.webp"
+          },
+          {
+            "image_name": "mens_suits_suit_model_2035_0.webp",
+            "local_path": "Fall 2025/suits/brown-gold-buttons/mens_suits_suit_model_2035_0.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/suits/brown-gold-buttons/mens_suits_suit_model_2035_0.webp"
+          },
+          {
+            "image_name": "mens_suits_suit_model_2035_1.webp",
+            "local_path": "Fall 2025/suits/brown-gold-buttons/mens_suits_suit_model_2035_1.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/suits/brown-gold-buttons/mens_suits_suit_model_2035_1.webp"
+          }
+        ]
+      },
+      "burnt-orange": {
+        "product_folder": "burnt-orange",
+        "images": [
+          {
+            "image_name": "mens_suits_suit_2036_0.webp",
+            "local_path": "Fall 2025/suits/burnt-orange/mens_suits_suit_2036_0.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/suits/burnt-orange/mens_suits_suit_2036_0.webp"
+          },
+          {
+            "image_name": "mens_suits_suit_model_2036_0.webp",
+            "local_path": "Fall 2025/suits/burnt-orange/mens_suits_suit_model_2036_0.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/suits/burnt-orange/mens_suits_suit_model_2036_0.webp"
+          }
+        ]
+      },
+      "estate-blue": {
+        "product_folder": "estate-blue",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/suits/estate-blue/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/suits/estate-blue/main.webp"
+          }
+        ]
+      },
+      "fall-rust": {
+        "product_folder": "fall-rust",
+        "images": [
+          {
+            "image_name": "20250806_1806_Trendy Orange Suit_remix_01k20pkyb6es9bnyz5c7ycrv7c.webp",
+            "local_path": "Fall 2025/suits/fall-rust/20250806_1806_Trendy Orange Suit_remix_01k20pkyb6es9bnyz5c7ycrv7c.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/suits/fall-rust/20250806_1806_Trendy Orange Suit_remix_01k20pkyb6es9bnyz5c7ycrv7c.webp"
+          },
+          {
+            "image_name": "20250806_1806_Trendy Orange Suit_remix_01k20pkyb9evr8t065byeycmqv.webp",
+            "local_path": "Fall 2025/suits/fall-rust/20250806_1806_Trendy Orange Suit_remix_01k20pkyb9evr8t065byeycmqv.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/suits/fall-rust/20250806_1806_Trendy Orange Suit_remix_01k20pkyb9evr8t065byeycmqv.webp"
+          }
+        ]
+      },
+      "mint": {
+        "product_folder": "mint",
+        "images": [
+          {
+            "image_name": "lifestlye.webp",
+            "local_path": "Fall 2025/suits/mint/lifestlye.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/suits/mint/lifestlye.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/suits/mint/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/suits/mint/main.webp"
+          }
+        ]
+      },
+      "pin-stripe-black": {
+        "product_folder": "pin-stripe-black",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/suits/pin-stripe-black/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/suits/pin-stripe-black/main.webp"
+          }
+        ]
+      },
+      "pin-stripe-brown": {
+        "product_folder": "pin-stripe-brown",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/suits/pin-stripe-brown/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/suits/pin-stripe-brown/main.webp"
+          }
+        ]
+      },
+      "pin-stripe-grey": {
+        "product_folder": "pin-stripe-grey",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/suits/pin-stripe-grey/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/suits/pin-stripe-grey/main.webp"
+          }
+        ]
+      },
+      "pin-stripe-navy": {
+        "product_folder": "pin-stripe-navy",
+        "images": [
+          {
+            "image_name": "front.webp",
+            "local_path": "Fall 2025/suits/pin-stripe-navy/front.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/suits/pin-stripe-navy/front.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/suits/pin-stripe-navy/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/suits/pin-stripe-navy/main.webp"
+          }
+        ]
+      }
+    },
+    "tuxedos": {
+      "black-gold-design-tuxedo": {
+        "product_folder": "black-gold-design-tuxedo",
+        "images": [
+          {
+            "image_name": "mens_tuxedos_suit_2005_0.webp",
+            "local_path": "Fall 2025/tuxedos/black-gold-design-tuxedo/mens_tuxedos_suit_2005_0.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/black-gold-design-tuxedo/mens_tuxedos_suit_2005_0.webp"
+          },
+          {
+            "image_name": "mens_tuxedos_suit_2005_1.webp",
+            "local_path": "Fall 2025/tuxedos/black-gold-design-tuxedo/mens_tuxedos_suit_2005_1.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/black-gold-design-tuxedo/mens_tuxedos_suit_2005_1.webp"
+          }
+        ]
+      },
+      "black-on-black-slim-tuxedo-tone-trim-tuxedo": {
+        "product_folder": "black-on-black-slim-tuxedo-tone-trim-tuxedo",
+        "images": [
+          {
+            "image_name": "mens_tuxedos_suit_2003_0.webp",
+            "local_path": "Fall 2025/tuxedos/black-on-black-slim-tuxedo-tone-trim-tuxedo/mens_tuxedos_suit_2003_0.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/black-on-black-slim-tuxedo-tone-trim-tuxedo/mens_tuxedos_suit_2003_0.webp"
+          },
+          {
+            "image_name": "mens_tuxedos_suit_2003_1.webp",
+            "local_path": "Fall 2025/tuxedos/black-on-black-slim-tuxedo-tone-trim-tuxedo/mens_tuxedos_suit_2003_1.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/black-on-black-slim-tuxedo-tone-trim-tuxedo/mens_tuxedos_suit_2003_1.webp"
+          },
+          {
+            "image_name": "mens_tuxedos_suit_model_2003_0.webp",
+            "local_path": "Fall 2025/tuxedos/black-on-black-slim-tuxedo-tone-trim-tuxedo/mens_tuxedos_suit_model_2003_0.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/black-on-black-slim-tuxedo-tone-trim-tuxedo/mens_tuxedos_suit_model_2003_0.webp"
+          }
+        ]
+      },
+      "black-paisley-tuxedo": {
+        "product_folder": "black-paisley-tuxedo",
+        "images": [
+          {
+            "image_name": "front.webp",
+            "local_path": "Fall 2025/tuxedos/black-paisley-tuxedo/front.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/black-paisley-tuxedo/front.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/tuxedos/black-paisley-tuxedo/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/black-paisley-tuxedo/main.webp"
+          }
+        ]
+      },
+      "black-tone-trim-tuxedo-shawl-lapel": {
+        "product_folder": "black-tone-trim-tuxedo-shawl-lapel",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/tuxedos/black-tone-trim-tuxedo-shawl-lapel/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/black-tone-trim-tuxedo-shawl-lapel/main.webp"
+          }
+        ]
+      },
+      "blush-pink-paisley-tuxedo": {
+        "product_folder": "blush-pink-paisley-tuxedo",
+        "images": [
+          {
+            "image_name": "front.webp",
+            "local_path": "Fall 2025/tuxedos/blush-pink-paisley-tuxedo/front.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/blush-pink-paisley-tuxedo/front.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/tuxedos/blush-pink-paisley-tuxedo/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/blush-pink-paisley-tuxedo/main.webp"
+          }
+        ]
+      },
+      "blush-tuxedo": {
+        "product_folder": "blush-tuxedo",
+        "images": [
+          {
+            "image_name": "lifestyle.webp",
+            "local_path": "Fall 2025/tuxedos/blush-tuxedo/lifestyle.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/blush-tuxedo/lifestyle.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/tuxedos/blush-tuxedo/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/blush-tuxedo/main.webp"
+          }
+        ]
+      },
+      "burnt-orange-tuxedo": {
+        "product_folder": "burnt-orange-tuxedo",
+        "images": [
+          {
+            "image_name": "mens_tuxedos_suit_2008_0.webp",
+            "local_path": "Fall 2025/tuxedos/burnt-orange-tuxedo/mens_tuxedos_suit_2008_0.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/burnt-orange-tuxedo/mens_tuxedos_suit_2008_0.webp"
+          },
+          {
+            "image_name": "mens_tuxedos_suit_2008_1.webp",
+            "local_path": "Fall 2025/tuxedos/burnt-orange-tuxedo/mens_tuxedos_suit_2008_1.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/burnt-orange-tuxedo/mens_tuxedos_suit_2008_1.webp"
+          },
+          {
+            "image_name": "mens_tuxedos_suit_model_2008_0.webp",
+            "local_path": "Fall 2025/tuxedos/burnt-orange-tuxedo/mens_tuxedos_suit_model_2008_0.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/burnt-orange-tuxedo/mens_tuxedos_suit_model_2008_0.webp"
+          }
+        ]
+      },
+      "gold-paisley-tuxedo": {
+        "product_folder": "gold-paisley-tuxedo",
+        "images": [
+          {
+            "image_name": "front.webp",
+            "local_path": "Fall 2025/tuxedos/gold-paisley-tuxedo/front.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/gold-paisley-tuxedo/front.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/tuxedos/gold-paisley-tuxedo/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/gold-paisley-tuxedo/main.webp"
+          }
+        ]
+      },
+      "hunter-green-tuxedo": {
+        "product_folder": "hunter-green-tuxedo",
+        "images": [
+          {
+            "image_name": "mens_tuxedos_suit_2009_0.webp",
+            "local_path": "Fall 2025/tuxedos/hunter-green-tuxedo/mens_tuxedos_suit_2009_0.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/hunter-green-tuxedo/mens_tuxedos_suit_2009_0.webp"
+          },
+          {
+            "image_name": "mens_tuxedos_suit_model_2009_0.webp",
+            "local_path": "Fall 2025/tuxedos/hunter-green-tuxedo/mens_tuxedos_suit_model_2009_0.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/hunter-green-tuxedo/mens_tuxedos_suit_model_2009_0.webp"
+          }
+        ]
+      },
+      "ivory-black-tone-trim-tuxedo": {
+        "product_folder": "ivory-black-tone-trim-tuxedo",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/tuxedos/ivory-black-tone-trim-tuxedo/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/ivory-black-tone-trim-tuxedo/main.webp"
+          }
+        ]
+      },
+      "ivory-gold-paisley-tuxedo": {
+        "product_folder": "ivory-gold-paisley-tuxedo",
+        "images": [
+          {
+            "image_name": "front.webp",
+            "local_path": "Fall 2025/tuxedos/ivory-gold-paisley-tuxedo/front.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/ivory-gold-paisley-tuxedo/front.webp"
+          },
+          {
+            "image_name": "lifestyle.webp",
+            "local_path": "Fall 2025/tuxedos/ivory-gold-paisley-tuxedo/lifestyle.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/ivory-gold-paisley-tuxedo/lifestyle.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/tuxedos/ivory-gold-paisley-tuxedo/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/ivory-gold-paisley-tuxedo/main.webp"
+          }
+        ]
+      },
+      "ivory-paisley-tuxedo": {
+        "product_folder": "ivory-paisley-tuxedo",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/tuxedos/ivory-paisley-tuxedo/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/ivory-paisley-tuxedo/main.webp"
+          }
+        ]
+      },
+      "light-grey--on-light-grey-slim-tuxedo-tone-trim-tuxedo": {
+        "product_folder": "light-grey--on-light-grey-slim-tuxedo-tone-trim-tuxedo",
+        "images": [
+          {
+            "image_name": "lifestyle.webp",
+            "local_path": "Fall 2025/tuxedos/light-grey--on-light-grey-slim-tuxedo-tone-trim-tuxedo/lifestyle.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/light-grey--on-light-grey-slim-tuxedo-tone-trim-tuxedo/lifestyle.webp"
+          },
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/tuxedos/light-grey--on-light-grey-slim-tuxedo-tone-trim-tuxedo/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/light-grey--on-light-grey-slim-tuxedo-tone-trim-tuxedo/main.webp"
+          }
+        ]
+      },
+      "navy-tone-trim-tuxedo": {
+        "product_folder": "navy-tone-trim-tuxedo",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/tuxedos/navy-tone-trim-tuxedo/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/navy-tone-trim-tuxedo/main.webp"
+          }
+        ]
+      },
+      "pink-gold-design-tuxedo": {
+        "product_folder": "pink-gold-design-tuxedo",
+        "images": [
+          {
+            "image_name": "mens_tuxedos_suit_2012_0.webp",
+            "local_path": "Fall 2025/tuxedos/pink-gold-design-tuxedo/mens_tuxedos_suit_2012_0.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/pink-gold-design-tuxedo/mens_tuxedos_suit_2012_0.webp"
+          },
+          {
+            "image_name": "mens_tuxedos_suit_2012_1.webp",
+            "local_path": "Fall 2025/tuxedos/pink-gold-design-tuxedo/mens_tuxedos_suit_2012_1.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/pink-gold-design-tuxedo/mens_tuxedos_suit_2012_1.webp"
+          }
+        ]
+      },
+      "sand-tuxedo": {
+        "product_folder": "sand-tuxedo",
+        "images": [
+          {
+            "image_name": "mens_tuxedos_suit_2011_0.webp",
+            "local_path": "Fall 2025/tuxedos/sand-tuxedo/mens_tuxedos_suit_2011_0.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/sand-tuxedo/mens_tuxedos_suit_2011_0.webp"
+          },
+          {
+            "image_name": "mens_tuxedos_suit_model_2011_0.webp",
+            "local_path": "Fall 2025/tuxedos/sand-tuxedo/mens_tuxedos_suit_model_2011_0.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/sand-tuxedo/mens_tuxedos_suit_model_2011_0.webp"
+          }
+        ]
+      },
+      "vivid-purple- tuxedo-tone-trim-tuxedo": {
+        "product_folder": "vivid-purple- tuxedo-tone-trim-tuxedo",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/tuxedos/vivid-purple- tuxedo-tone-trim-tuxedo/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/vivid-purple- tuxedo-tone-trim-tuxedo/main.webp"
+          }
+        ]
+      },
+      "white-black-tuxedo": {
+        "product_folder": "white-black-tuxedo",
+        "images": [
+          {
+            "image_name": "main.webp",
+            "local_path": "Fall 2025/tuxedos/white-black-tuxedo/main.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/white-black-tuxedo/main.webp"
+          }
+        ]
+      },
+      "wine-on-wine-slim-tuxedotone-trim-tuxedo": {
+        "product_folder": "wine-on-wine-slim-tuxedotone-trim-tuxedo",
+        "images": [
+          {
+            "image_name": "mens_tuxedos_suit_2015_0.webp",
+            "local_path": "Fall 2025/tuxedos/wine-on-wine-slim-tuxedotone-trim-tuxedo/mens_tuxedos_suit_2015_0.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/wine-on-wine-slim-tuxedotone-trim-tuxedo/mens_tuxedos_suit_2015_0.webp"
+          },
+          {
+            "image_name": "mens_tuxedos_suit_model_2015_0.webp",
+            "local_path": "Fall 2025/tuxedos/wine-on-wine-slim-tuxedotone-trim-tuxedo/mens_tuxedos_suit_model_2015_0.webp",
+            "cdn_url": "https://cdn.kctmenswear.com/tuxedos/wine-on-wine-slim-tuxedotone-trim-tuxedo/mens_tuxedos_suit_model_2015_0.webp"
+          }
+        ]
+      }
+    }
+  }
+}
