@@ -63,6 +63,7 @@ interface SortableImageProps {
   index: number;
   onRemove: (index: number) => void;
   onAltTextChange: (index: number, altText: string) => void;
+  onSetPrimary: (index: number) => void;
   isDragging?: boolean;
 }
 
@@ -166,6 +167,7 @@ const SortableImage: React.FC<SortableImageProps> = ({
   index,
   onRemove,
   onAltTextChange,
+  onSetPrimary,
   isDragging = false,
 }) => {
   const {
@@ -228,13 +230,27 @@ const SortableImage: React.FC<SortableImageProps> = ({
         <X className="h-3 w-3" />
       </Button>
 
-      {/* Primary Badge */}
-      <Badge 
-        variant={image.is_primary ? "default" : "secondary"}
-        className="absolute bottom-2 left-2 z-10 text-xs"
-      >
-        {image.is_primary ? "Primary" : `Position ${image.position}`}
-      </Badge>
+      {/* Primary Badge and Set Primary Button */}
+      <div className="absolute bottom-2 left-2 z-10 flex items-center gap-2">
+        <Badge 
+          variant={image.is_primary ? "default" : "secondary"}
+          className="text-xs"
+        >
+          {image.is_primary ? "Primary" : `Position ${image.position}`}
+        </Badge>
+        {!image.is_primary && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-6 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={() => onSetPrimary(index)}
+            title="Set as primary image"
+          >
+            <Eye className="h-3 w-3 mr-1" />
+            Set Primary
+          </Button>
+        )}
+      </div>
 
       {/* Image */}
       <div className="aspect-square">
@@ -639,6 +655,64 @@ export const DraggableImageGallery = React.memo<DraggableImageGalleryProps>(({
     }
   }, [images, onImagesChange]);
 
+  // Handle set primary image
+  const handleSetPrimary = useCallback(async (index: number) => {
+    // Update all images - set selected as primary, others as gallery
+    const updatedImages = images.map((img, i) => ({
+      ...img,
+      is_primary: i === index,
+      image_type: i === index ? 'primary' : 'gallery' as const
+    }));
+
+    // Optimistic UI update
+    onImagesChange(updatedImages);
+
+    // Update in database if productId exists
+    if (productId) {
+      try {
+        // Update all images in batch
+        const updatePromises = updatedImages
+          .filter(img => img.id)
+          .map(img => 
+            supabase
+              .from('product_images')
+              .update({ 
+                image_type: img.image_type,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', img.id)
+          );
+
+        const results = await Promise.all(updatePromises);
+        
+        // Check for errors
+        const errors = results.filter(result => result.error);
+        if (errors.length > 0) {
+          throw new Error('Failed to update image types');
+        }
+
+        toast({
+          title: "Primary image updated",
+          description: `Image ${index + 1} is now the primary image.`,
+        });
+      } catch (error) {
+        console.error('Failed to set primary image:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update primary image. Please try again.",
+          variant: "destructive",
+        });
+        // Revert on error
+        onImagesChange(images);
+      }
+    } else {
+      toast({
+        title: "Primary image updated",
+        description: `Image ${index + 1} is now the primary image.`,
+      });
+    }
+  }, [images, productId, onImagesChange]);
+
   return (
     <div className="space-y-4">
       {/* Upload Area */}
@@ -648,7 +722,7 @@ export const DraggableImageGallery = React.memo<DraggableImageGalleryProps>(({
             <div>
               <h3 className="text-lg font-medium">Product Images</h3>
               <p className="text-sm text-muted-foreground">
-                Drag to reorder • First image becomes primary • {images.length}/{maxImages} images
+                Drag to reorder • Click "Set Primary" to change featured image • {images.length}/{maxImages} images
               </p>
             </div>
             <Button 
@@ -724,6 +798,7 @@ export const DraggableImageGallery = React.memo<DraggableImageGalleryProps>(({
                   index={index}
                   onRemove={handleRemoveImage}
                   onAltTextChange={handleAltTextChange}
+                  onSetPrimary={handleSetPrimary}
                 />
               ))}
             </div>
