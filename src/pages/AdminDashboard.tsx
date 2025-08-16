@@ -19,7 +19,9 @@ import {
   Star,
   Download,
   Bell,
-  CreditCard
+  CreditCard,
+  Database,
+  Settings
 } from 'lucide-react';
 // API imports handled by individual components
 import { useToast } from '@/hooks/use-toast';
@@ -44,6 +46,7 @@ import { BundleManagement } from '@/components/admin/BundleManagement';
 import { LoyaltyManagement } from '@/components/admin/LoyaltyManagement';
 import { ReviewManagement } from '@/components/admin/ReviewManagement';
 import { InventoryManagement } from '@/components/admin/InventoryManagement';
+import { ProductInventoryView } from '@/components/admin/ProductInventoryView';
 import { StripeOrderManagement } from '@/components/admin/StripeOrderManagement';
 import { DataImportExport } from '@/components/admin/DataImportExport';
 import AIChatBot from '@/components/chat/AIChatBot';
@@ -205,7 +208,7 @@ const AdminDashboard = () => {
       case '/admin/reviews':
         return <ReviewManagement />;
       case '/admin/inventory':
-        return <InventoryManagement />;
+        return <ProductInventoryView />;
       case '/admin/search':
       case '/admin/search-analytics':
         return <SearchAnalytics />;
