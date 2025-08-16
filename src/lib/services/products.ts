@@ -146,7 +146,7 @@ export async function fetchProductsWithImages(options?: {
       .from('products_enhanced')
       .select(`
         *,
-        images:product_images(product_id, image_url, image_type, position, alt_text),
+        images:product_images(id, product_id, image_url, image_type, position, alt_text),
         variants:product_variants(*)
       `, { count: 'exact' })
       .order('created_at', { ascending: false });
@@ -248,7 +248,7 @@ export async function getProduct(slugOrId: string) {
       .from('products_enhanced')
       .select(`
         *,
-        images:product_images(product_id, image_url, image_type, position, alt_text),
+        images:product_images(id, product_id, image_url, image_type, position, alt_text),
         variants:product_variants(*)
       `)
       .eq('slug', slugOrId)
@@ -260,7 +260,7 @@ export async function getProduct(slugOrId: string) {
         .from('products_enhanced')
         .select(`
           *,
-          images:product_images(product_id, image_url, image_type, position, alt_text),
+          images:product_images(id, product_id, image_url, image_type, position, alt_text),
           variants:product_variants(*)
         `)
         .eq('id', slugOrId)
@@ -301,7 +301,7 @@ export async function getProductById(id: string) {
       .from('products_enhanced')
       .select(`
         *,
-        images:product_images(product_id, image_url, image_type, position, alt_text),
+        images:product_images(id, product_id, image_url, image_type, position, alt_text),
         variants:product_variants(*)
       `)
       .eq('id', id)
@@ -966,7 +966,7 @@ export async function duplicateProduct(productId: string) {
       .from('products_enhanced')
       .select(`
         *,
-        images:product_images(product_id, image_url, image_type, position, alt_text),
+        images:product_images(id, product_id, image_url, image_type, position, alt_text),
         variants:product_variants(*)
       `)
       .eq('id', productId)

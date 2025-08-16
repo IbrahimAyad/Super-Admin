@@ -173,36 +173,41 @@ export const ProductForm = React.memo(function ProductForm({ product, isOpen, on
   React.useEffect(() => {
     if (product) {
       // Convert product images to form format
-      const productImages: ProductImage[] = product.images?.map((img: any, index: number) => ({
+      // Sort images by position to maintain order
+      const sortedImages = product.images ? [...product.images].sort((a: any, b: any) => 
+        (a.position || 0) - (b.position || 0)
+      ) : [];
+      
+      const productImages: ProductImage[] = sortedImages.map((img: any, index: number) => ({
         id: img.id,
         url: img.image_url || img.url || '',
         alt_text: img.alt_text || '',
-        position: img.position || index,
+        position: img.position !== undefined ? img.position : index,
         is_primary: img.image_type === 'primary' || index === 0,
         image_type: img.image_type || (index === 0 ? 'primary' : 'gallery')
-      })) || [];
+      }));
 
       setFormData({
         sku: product.sku || '',
         name: product.name,
         description: product.description || '',
         category: product.category,
-        product_type: product.product_type,
+        product_type: product.product_type || product.subcategory || 'catalog',
         base_price: product.base_price,
         stripe_product_id: product.stripe_product_id || '',
         status: product.status,
         is_bundleable: product.is_bundleable,
         images: productImages,
-        available_colors: [],
-        variants: [],
-        materials: '',
-        care_instructions: '',
-        fit_type: '',
-        occasion: '',
-        features: [],
-        meta_title: '',
-        meta_description: '',
-        url_slug: ''
+        available_colors: product.available_colors || [],
+        variants: product.variants || [],
+        materials: product.materials || '',
+        care_instructions: product.care_instructions || '',
+        fit_type: product.fit_type || '',
+        occasion: product.occasion || '',
+        features: product.features || [],
+        meta_title: product.meta_title || '',
+        meta_description: product.meta_description || '',
+        url_slug: product.url_slug || product.handle || ''
       });
 
       // Load existing size options if product has them
