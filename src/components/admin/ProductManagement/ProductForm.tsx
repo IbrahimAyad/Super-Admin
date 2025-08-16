@@ -156,6 +156,13 @@ export const ProductForm = React.memo(function ProductForm({ product, isOpen, on
     url_slug: ''
   });
 
+  // Size options for suit-type products (blazers, suits, tuxedos)
+  const [sizeOptions, setSizeOptions] = React.useState({
+    regular: true,
+    short: false,
+    long: false
+  });
+
   // AI Analysis state
   const [aiAnalyzing, setAiAnalyzing] = React.useState(false);
   const [analysisResults, setAnalysisResults] = React.useState<ImageAnalysisResult | null>(null);
@@ -197,6 +204,11 @@ export const ProductForm = React.memo(function ProductForm({ product, isOpen, on
         meta_description: '',
         url_slug: ''
       });
+
+      // Load existing size options if product has them
+      if (product.size_options) {
+        setSizeOptions(product.size_options);
+      }
     } else {
       // Reset for new product
       setFormData({
@@ -230,6 +242,22 @@ export const ProductForm = React.memo(function ProductForm({ product, isOpen, on
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
+  };
+
+  // Check if product category uses jacket sizing (R/S/L system)
+  const usesJacketSizing = (category: string): boolean => {
+    const jacketCategories = [
+      'Blazers',
+      'Suits', 
+      'Double-Breasted Suits',
+      'Stretch Suits',
+      'Tuxedos',
+      'Sport Coats',
+      'Dinner Jackets'
+    ];
+    return jacketCategories.some(cat => 
+      category?.toLowerCase().includes(cat.toLowerCase())
+    );
   };
 
   // Handle color selection
@@ -273,15 +301,24 @@ export const ProductForm = React.memo(function ProductForm({ product, isOpen, on
   };
 
   const generateSuitSizes = (isThreePiece: boolean): ProductVariant[] => {
-    const jacketSizes = [34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54];
-    const lengths = ['S', 'R', 'L'];
+    const jacketSizes = [36, 38, 40, 42, 44, 46, 48, 50, 52, 54]; // Start at 36 for suits
+    const lengths = [];
+    
+    // Only include enabled size options
+    if (sizeOptions.short) lengths.push('S');
+    if (sizeOptions.regular) lengths.push('R');
+    if (sizeOptions.long) lengths.push('L');
+    
+    // Default to Regular if nothing selected
+    if (lengths.length === 0) lengths.push('R');
+    
     const variants: ProductVariant[] = [];
 
     jacketSizes.forEach(size => {
       lengths.forEach(length => {
         // Check availability based on length restrictions
         if (length === 'S' && size > 50) return;
-        if (length === 'L' && size < 38) return;
+        if (length === 'L' && size < 36) return;
 
         const jacketSize = `${size}${length}`;
         const pantSize = `${size - 6}W`; // 6 drop for pants
@@ -321,15 +358,24 @@ export const ProductForm = React.memo(function ProductForm({ product, isOpen, on
   };
 
   const generateBlazerSizes = (): ProductVariant[] => {
-    const jacketSizes = [34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54];
-    const lengths = ['S', 'R', 'L'];
+    const jacketSizes = [36, 38, 40, 42, 44, 46, 48, 50, 52, 54]; // No 34 for blazers
+    const lengths = [];
+    
+    // Only include enabled size options
+    if (sizeOptions.short) lengths.push('S');
+    if (sizeOptions.regular) lengths.push('R');
+    if (sizeOptions.long) lengths.push('L');
+    
+    // Default to Regular if nothing selected
+    if (lengths.length === 0) lengths.push('R');
+    
     const variants: ProductVariant[] = [];
 
     jacketSizes.forEach(size => {
       lengths.forEach(length => {
         // Check availability based on length restrictions
         if (length === 'S' && size > 50) return;
-        if (length === 'L' && size < 38) return;
+        if (length === 'L' && size < 36) return;
 
         const blazerSize = `${size}${length}`;
         
@@ -626,7 +672,7 @@ export const ProductForm = React.memo(function ProductForm({ product, isOpen, on
 
     try {
       // Prepare product data with proper field mapping and null checks
-      const productData = {
+      const productData: any = {
         sku: formData.sku || (product?.sku || `SKU-${Date.now()}`),
         name: formData.name && typeof formData.name === 'string' ? formData.name.trim() : '',
         description: formData.description && typeof formData.description === 'string' ? formData.description.trim() : null,
@@ -655,6 +701,11 @@ export const ProductForm = React.memo(function ProductForm({ product, isOpen, on
         url_slug: formData.url_slug,
         available_colors: formData.available_colors
       };
+
+      // Add size_options for jacket-type products
+      if (usesJacketSizing(formData.category)) {
+        productData.size_options = sizeOptions;
+      }
 
       // Add created_at only for new products
       if (!product) {
@@ -944,6 +995,59 @@ export const ProductForm = React.memo(function ProductForm({ product, isOpen, on
               ))}
             </div>
           </div>
+
+          {/* Size Options for Jacket-type Products */}
+          {usesJacketSizing(formData.category) && (
+            <Card className="p-4">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-medium">Size Options</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Select which size variants are available for this product
+                  </p>
+                </div>
+                <div className="flex gap-6">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="size-regular"
+                      checked={sizeOptions.regular}
+                      onCheckedChange={(checked) => 
+                        setSizeOptions(prev => ({ ...prev, regular: checked as boolean }))}
+                    />
+                    <Label htmlFor="size-regular">Regular (36R-54R)</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="size-short"
+                      checked={sizeOptions.short}
+                      onCheckedChange={(checked) => 
+                        setSizeOptions(prev => ({ ...prev, short: checked as boolean }))}
+                    />
+                    <Label htmlFor="size-short">Short (36S-54S)</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="size-long"
+                      checked={sizeOptions.long}
+                      onCheckedChange={(checked) => 
+                        setSizeOptions(prev => ({ ...prev, long: checked as boolean }))}
+                    />
+                    <Label htmlFor="size-long">Long (36L-54L)</Label>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleApplySizeTemplate}
+                  disabled={!sizeOptions.regular && !sizeOptions.short && !sizeOptions.long}
+                >
+                  <Package className="h-4 w-4 mr-2" />
+                  Regenerate Variants with Selected Sizes
+                </Button>
+              </div>
+            </Card>
+          )}
 
           {/* Size Templates and Bulk Operations */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
