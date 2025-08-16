@@ -9,20 +9,24 @@ interface ProductSystemToggleProps {
 }
 
 export function ProductSystemToggle({ onSystemChange }: ProductSystemToggleProps) {
-  const [currentSystem, setCurrentSystem] = useState<'old' | 'new'>('old');
+  const [currentSystem, setCurrentSystem] = useState<'old' | 'new'>('new'); // Default to 'new' enhanced system
   const [showWarning, setShowWarning] = useState(false);
   
   useEffect(() => {
     // Check localStorage for preference
     const saved = localStorage.getItem('product_system');
-    if (saved === 'new') {
+    if (saved === 'old') {
+      setCurrentSystem('old');
+      onSystemChange('old');
+    } else {
+      // Default to new if not set
       setCurrentSystem('new');
       onSystemChange('new');
     }
   }, [onSystemChange]);
   
   const switchSystem = (system: 'old' | 'new') => {
-    if (system === 'new' && currentSystem === 'old') {
+    if (system === 'old' && currentSystem === 'new') {
       setShowWarning(true);
       return;
     }
@@ -34,9 +38,9 @@ export function ProductSystemToggle({ onSystemChange }: ProductSystemToggleProps
   };
   
   const confirmSwitch = () => {
-    setCurrentSystem('new');
-    localStorage.setItem('product_system', 'new');
-    onSystemChange('new');
+    setCurrentSystem('old');
+    localStorage.setItem('product_system', 'old');
+    onSystemChange('old');
     setShowWarning(false);
   };
   
@@ -111,29 +115,32 @@ export function ProductSystemToggle({ onSystemChange }: ProductSystemToggleProps
       {showWarning && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md">
-            <h3 className="text-lg font-semibold mb-2">Switch to Enhanced Products?</h3>
+            <h3 className="text-lg font-semibold mb-2">Switch to Legacy System?</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              The enhanced system uses the <code>products_enhanced</code> table with:
+              Are you sure you want to switch back to the old system?
             </p>
-            <ul className="text-sm space-y-1 mb-4">
-              <li>✅ 20-tier pricing</li>
-              <li>✅ Stripe integration</li>
-              <li>✅ Better data structure</li>
-              <li>✅ Clean slate (no bad data)</li>
-            </ul>
-            <Alert className="mb-4">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                You'll need to re-add products in the new system. The old inaccurate data won't be migrated.
+            <Alert className="mb-4 border-amber-200 bg-amber-50">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-800">
+                <strong>Warning:</strong> The legacy system has limitations:
+                <ul className="mt-2 space-y-1 text-sm">
+                  <li>• Limited pricing options</li>
+                  <li>• No Stripe integration</li>
+                  <li>• Outdated data structure</li>
+                  <li>• May contain inaccurate data</li>
+                </ul>
               </AlertDescription>
             </Alert>
+            <p className="text-sm text-muted-foreground mb-4">
+              We recommend staying with the Enhanced system for better features and data accuracy.
+            </p>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setShowWarning(false)}>
-                Cancel
+                Stay on Enhanced
               </Button>
-              <Button onClick={confirmSwitch}>
-                <ArrowRight className="h-4 w-4 mr-1" />
-                Switch to Enhanced
+              <Button variant="destructive" onClick={confirmSwitch}>
+                <AlertTriangle className="h-4 w-4 mr-1" />
+                Switch to Legacy
               </Button>
             </div>
           </div>

@@ -83,7 +83,7 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
-  const [productSystem, setProductSystem] = useState<'old' | 'new'>('old');
+  const [productSystem, setProductSystem] = useState<'old' | 'new'>('new'); // Default to enhanced system
   
   // Use the new dashboard data hook
   const { 
@@ -160,10 +160,12 @@ const AdminDashboard = () => {
               <ProductSystemToggle 
                 onSystemChange={(system) => setProductSystem(system)}
               />
-              {productSystem === 'old' ? (
-                <ProductManagementEnhanced />
-              ) : (
+              {productSystem === 'new' ? (
+                // Enhanced system - uses products_enhanced table
                 <EnhancedProductManagement />
+              ) : (
+                // Legacy system - keeping for backwards compatibility  
+                <ProductManagementEnhanced />
               )}
             </TabsContent>
             <TabsContent value="quick-add">
