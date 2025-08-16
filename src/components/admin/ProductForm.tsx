@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Save, X } from 'lucide-react';
+import { DraggableImageGallery } from './DraggableImageGallery';
 
 interface EnhancedProduct {
   id: string;
@@ -77,6 +78,9 @@ export function ProductForm({
   onSave, 
   onCancel 
 }: ProductFormProps) {
+  // State for gallery images
+  const [galleryImages, setGalleryImages] = useState<any[]>([]);
+  
   const [formData, setFormData] = useState<Partial<EnhancedProduct>>({
     name: product?.name || '',
     sku: product?.sku || '',
@@ -113,6 +117,68 @@ export function ProductForm({
     sitemap_change_freq: product?.sitemap_change_freq || 'weekly',
     is_indexable: product?.is_indexable !== false
   });
+
+  // Convert images when product loads
+  useEffect(() => {
+    if (product?.images) {
+      const images = [];
+      let position = 0;
+      
+      // Add hero image if exists
+      if (product.images.hero?.url) {
+        images.push({
+          url: product.images.hero.url,
+          position: position++,
+          is_primary: true,
+          image_type: 'primary',
+          alt_text: product.images.hero.alt || ''
+        });
+      }
+      
+      // Add flat image if exists
+      if (product.images.flat?.url) {
+        images.push({
+          url: product.images.flat.url,
+          position: position++,
+          is_primary: images.length === 0,
+          image_type: images.length === 0 ? 'primary' : 'gallery',
+          alt_text: product.images.flat.alt || ''
+        });
+      }
+      
+      // Add lifestyle images
+      if (product.images.lifestyle?.length > 0) {
+        product.images.lifestyle.forEach((img: any) => {
+          if (img.url) {
+            images.push({
+              url: img.url,
+              position: position++,
+              is_primary: images.length === 0,
+              image_type: images.length === 0 ? 'primary' : 'gallery',
+              alt_text: img.alt || ''
+            });
+          }
+        });
+      }
+      
+      // Add detail images
+      if (product.images.details?.length > 0) {
+        product.images.details.forEach((img: any) => {
+          if (img.url) {
+            images.push({
+              url: img.url,
+              position: position++,
+              is_primary: images.length === 0,
+              image_type: images.length === 0 ? 'primary' : 'gallery',
+              alt_text: img.alt || ''
+            });
+          }
+        });
+      }
+      
+      setGalleryImages(images);
+    }
+  }, [product]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -296,55 +362,30 @@ export function ProductForm({
         </TabsContent>
         
         <TabsContent value="images" className="space-y-4">
-          <div>
-            <Label htmlFor="hero_image">Hero Image URL</Label>
-            <Input
-              id="hero_image"
-              value={formData.images?.hero?.url || ''}
-              onChange={(e) => updateImages('hero', e.target.value ? { url: e.target.value } : null)}
-              placeholder="https://cdn.kctmenswear.com/..."
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="flat_image">Flat Image URL</Label>
-            <Input
-              id="flat_image"
-              value={formData.images?.flat?.url || ''}
-              onChange={(e) => updateImages('flat', e.target.value ? { url: e.target.value } : null)}
-              placeholder="https://cdn.kctmenswear.com/..."
-            />
-          </div>
-
-          <div>
-            <Label>Lifestyle Images (comma-separated URLs)</Label>
-            <Textarea
-              value={formData.images?.lifestyle?.map((img: any) => img.url).join(', ') || ''}
-              onChange={(e) => {
-                const urls = e.target.value.split(',').map(url => url.trim()).filter(url => url);
-                updateImages('lifestyle', urls.map(url => ({ url })));
-              }}
-              placeholder="URL 1, URL 2, URL 3..."
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <Label>Detail Images (comma-separated URLs)</Label>
-            <Textarea
-              value={formData.images?.details?.map((img: any) => img.url).join(', ') || ''}
-              onChange={(e) => {
-                const urls = e.target.value.split(',').map(url => url.trim()).filter(url => url);
-                updateImages('details', urls.map(url => ({ url })));
-              }}
-              placeholder="URL 1, URL 2, URL 3..."
-              rows={3}
-            />
-          </div>
-
-          <div className="text-sm text-muted-foreground">
-            Total Images: {formData.images?.total_images || 0}
-          </div>
+          <DraggableImageGallery
+            images={galleryImages}
+            onImagesChange={(newImages) => {
+              setGalleryImages(newImages);
+              
+              // Convert back to the structured format for saving
+              const hero = newImages.find(img => img.is_primary);
+              const gallery = newImages.filter(img => !img.is_primary);
+              
+              setFormData(prev => ({
+                ...prev,
+                images: {
+                  hero: hero ? { url: hero.url, alt: hero.alt_text } : null,
+                  flat: gallery[0] ? { url: gallery[0].url, alt: gallery[0].alt_text } : null,
+                  lifestyle: gallery.slice(1, 3).map(img => ({ url: img.url, alt: img.alt_text })),
+                  details: gallery.slice(3).map(img => ({ url: img.url, alt: img.alt_text })),
+                  total_images: newImages.length
+                }
+              }));
+            }}
+            productId={product?.id}
+            maxImages={10}
+            allowUpload={false} // Set to true if you want to enable upload
+          />
         </TabsContent>
         
         <TabsContent value="details" className="space-y-4">
