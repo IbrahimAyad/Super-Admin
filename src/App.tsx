@@ -7,16 +7,11 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
-import { AdminAuthTest } from "./pages/AdminAuthTest";
 import VerifyEmail from "./pages/VerifyEmail";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Login from "./pages/Login";
 import TestLogin from "./pages/TestLogin";
-import ProductTest from "./pages/ProductTest";
-import StorageTest from "./pages/StorageTest";
-import SupabaseConnectionTest from "./pages/SupabaseConnectionTest";
-import TestProductImages from "./pages/TestProductImages";
 import SmartSizingManager from "./components/admin/SmartSizingManager";
 import { OrderProcessingDashboard } from "./components/admin/OrderProcessingDashboard";
 import { AdminRoute } from "./components/auth/AdminRoute";
@@ -101,11 +96,6 @@ const App = () => (
               <Route path="/test-chat-checkout" element={<TestChatCheckout />} />
               <Route path="/checkout/success" element={<CheckoutSuccess />} />
               <Route path="/checkout/cancel" element={<CheckoutCancel />} />
-              <Route path="/admin/test-auth" element={<ProtectedRoute><AdminRoute><AdminAuthTest /></AdminRoute></ProtectedRoute>} />
-              <Route path="/product-test" element={<ProtectedRoute><ProductTest /></ProtectedRoute>} />
-              <Route path="/storage-test" element={<ProtectedRoute><StorageTest /></ProtectedRoute>} />
-              <Route path="/supabase-test" element={<ProtectedRoute><SupabaseConnectionTest /></ProtectedRoute>} />
-              <Route path="/test-images" element={<ProtectedRoute><TestProductImages /></ProtectedRoute>} />
               <Route path="/admin/sizing" element={<AdminRoute><SmartSizingManager /></AdminRoute>} />
               <Route path="/admin/order-processing" element={<AdminRoute><OrderProcessingDashboard /></AdminRoute>} />
               <Route path="/verify-email" element={<VerifyEmail />} />
