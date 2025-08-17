@@ -167,6 +167,21 @@ class SettingsEncryption {
 
 // Settings service class
 export class SettingsService {
+  private static instance: SettingsService;
+  private static activeSubscriptions = new Map<string, any>();
+
+  private constructor() {}
+
+  /**
+   * Get singleton instance
+   */
+  public static getInstance(): SettingsService {
+    if (!SettingsService.instance) {
+      SettingsService.instance = new SettingsService();
+      console.log('⚙️ SettingsService: Singleton instance created');
+    }
+    return SettingsService.instance;
+  }
   /**
    * Get settings by category or all settings
    */
@@ -502,8 +517,19 @@ export class SettingsService {
    */
   static subscribeToSettings(
     callback: (payload: any) => void,
-    settingKeys?: string[]
+    settingKeys?: string[],
+    subscriptionId?: string
   ) {
+    const subId = subscriptionId || `settings_${Date.now()}`;
+    
+    // Check if already subscribed
+    if (this.activeSubscriptions.has(subId)) {
+      console.log(`⚙️ SettingsService: Already subscribed with ID ${subId}`);
+      return this.activeSubscriptions.get(subId);
+    }
+
+    console.log(`⚙️ SettingsService: Creating subscription with ID ${subId}`);
+    
     const channel = supabase
       .channel('settings-changes')
       .on(
@@ -515,7 +541,7 @@ export class SettingsService {
           filter: settingKeys ? `key=in.(${settingKeys.join(',')})` : undefined
         },
         (payload) => {
-          console.log('Settings change detected:', payload);
+          console.log('⚙️ SettingsService: Settings change detected:', payload);
           
           // Invalidate relevant cache entries
           if (payload.new?.key) {
@@ -530,8 +556,12 @@ export class SettingsService {
           callback(payload);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`⚙️ SettingsService: Subscription ${subId} status:`, status);
+      });
 
+    // Store subscription for cleanup
+    this.activeSubscriptions.set(subId, channel);
     return channel;
   }
 
@@ -540,6 +570,63 @@ export class SettingsService {
    */
   static clearCache(): void {
     settingsCache.invalidate();
+  }
+
+  /**
+   * Unsubscribe from settings changes
+   */
+  static unsubscribeFromSettings(subscriptionId?: string): void {
+    if (subscriptionId) {
+      const subscription = this.activeSubscriptions.get(subscriptionId);
+      if (subscription) {
+        console.log(`⚙️ SettingsService: Unsubscribing from ${subscriptionId}`);
+        if (typeof subscription.unsubscribe === 'function') {
+          subscription.unsubscribe();
+        }
+        supabase.removeChannel(subscription);
+        this.activeSubscriptions.delete(subscriptionId);
+      }
+    } else {
+      // Unsubscribe from all
+      console.log(`⚙️ SettingsService: Unsubscribing from all ${this.activeSubscriptions.size} subscriptions`);
+      for (const [id, subscription] of this.activeSubscriptions) {
+        if (typeof subscription.unsubscribe === 'function') {
+          subscription.unsubscribe();
+        }
+        supabase.removeChannel(subscription);
+      }
+      this.activeSubscriptions.clear();
+    }
+  }
+
+  /**
+   * Cleanup all subscriptions and cache
+   */
+  static cleanup(): void {
+    console.log('⚙️ SettingsService: Cleaning up subscriptions and cache');
+    this.unsubscribeFromSettings();
+    settingsCache.invalidate();
+    console.log('⚙️ SettingsService: Cleanup completed');
+  }
+
+  /**
+   * Reset singleton instance
+   */
+  static resetInstance(): void {
+    if (SettingsService.instance) {
+      SettingsService.cleanup();
+      SettingsService.instance = null as any;
+    }
+  }
+
+  /**
+   * Get subscription status
+   */
+  static getSubscriptionStatus(): { activeSubscriptions: number; subscriptionIds: string[] } {
+    return {
+      activeSubscriptions: this.activeSubscriptions.size,
+      subscriptionIds: Array.from(this.activeSubscriptions.keys())
+    };
   }
 
   /**
@@ -553,8 +640,8 @@ export class SettingsService {
   }
 }
 
-// Export default instance
-export const settingsService = SettingsService;
+// Export singleton instance
+export const settingsService = SettingsService.getInstance();
 
 // Export for backward compatibility
 export default settingsService;

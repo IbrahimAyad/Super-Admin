@@ -138,12 +138,25 @@ export interface IncidentMetrics {
 }
 
 export class IncidentResponseSystem {
+  private static instance: IncidentResponseSystem;
   private supabase = getSupabaseClient();
   private notificationChannels: Map<string, NotificationChannel> = new Map();
   private activeRules: Map<string, IncidentRule> = new Map();
+  private realtimeSubscriptions: any[] = [];
+  private isMonitoringActive: boolean = false;
   
-  constructor() {
+  private constructor() {
     this.initializeSystem();
+  }
+
+  /**
+   * Get singleton instance
+   */
+  public static getInstance(): IncidentResponseSystem {
+    if (!IncidentResponseSystem.instance) {
+      IncidentResponseSystem.instance = new IncidentResponseSystem();
+    }
+    return IncidentResponseSystem.instance;
   }
 
   /**
@@ -216,8 +229,16 @@ export class IncidentResponseSystem {
    * Set up real-time monitoring for automatic incident detection
    */
   private setupRealTimeMonitoring(): void {
+    // Prevent duplicate subscriptions
+    if (this.isMonitoringActive || this.realtimeSubscriptions.length > 0) {
+      console.log('🚀 IncidentResponseSystem: Already monitoring realtime events');
+      return;
+    }
+
+    console.log('🚀 IncidentResponseSystem: Setting up realtime monitoring');
+    
     // Monitor performance logs for errors
-    this.supabase
+    const performanceChannel = this.supabase
       .channel('incident_monitoring_performance')
       .on('postgres_changes', 
         { 
@@ -227,13 +248,16 @@ export class IncidentResponseSystem {
           filter: 'status_code=gte.400'
         }, 
         async (payload: any) => {
+          console.log('🚀 IncidentResponseSystem: Performance error detected:', payload.new);
           await this.processErrorLog(payload.new);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('🚀 IncidentResponseSystem: Performance monitoring status:', status);
+      });
 
     // Monitor monitoring alerts for escalation
-    this.supabase
+    const alertsChannel = this.supabase
       .channel('incident_monitoring_alerts')
       .on('postgres_changes',
         {
@@ -243,13 +267,16 @@ export class IncidentResponseSystem {
           filter: 'severity=eq.critical'
         },
         async (payload: any) => {
+          console.log('🚀 IncidentResponseSystem: Critical alert detected:', payload.new);
           await this.processCriticalAlert(payload.new);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('🚀 IncidentResponseSystem: Alerts monitoring status:', status);
+      });
 
     // Monitor payment failures
-    this.supabase
+    const paymentsChannel = this.supabase
       .channel('incident_monitoring_payments')
       .on('postgres_changes',
         {
@@ -259,12 +286,19 @@ export class IncidentResponseSystem {
           filter: 'status=eq.failed'
         },
         async (payload: any) => {
+          console.log('🚀 IncidentResponseSystem: Payment failure detected:', payload.new);
           await this.processPaymentFailure(payload.new);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('🚀 IncidentResponseSystem: Payments monitoring status:', status);
+      });
 
-    logger.info('Real-time incident monitoring channels established');
+    // Store subscription references
+    this.realtimeSubscriptions.push(performanceChannel, alertsChannel, paymentsChannel);
+    this.isMonitoringActive = true;
+
+    logger.info('🚀 IncidentResponseSystem: Real-time incident monitoring channels established');
   }
 
   /**
@@ -862,7 +896,52 @@ export class IncidentResponseSystem {
 
     return mapping[alertType] || IncidentCategory.API_ERROR;
   }
+
+  /**
+   * Cleanup all subscriptions and resources
+   */
+  public cleanup(): void {
+    console.log('🚀 IncidentResponseSystem: Cleaning up subscriptions and resources');
+    
+    // Unsubscribe from all realtime channels
+    if (this.realtimeSubscriptions.length > 0) {
+      console.log(`🚀 IncidentResponseSystem: Unsubscribing from ${this.realtimeSubscriptions.length} channels`);
+      this.realtimeSubscriptions.forEach(subscription => {
+        if (subscription && typeof subscription.unsubscribe === 'function') {
+          subscription.unsubscribe();
+        }
+      });
+      this.realtimeSubscriptions = [];
+      this.isMonitoringActive = false;
+    }
+
+    // Clear maps
+    this.notificationChannels.clear();
+    this.activeRules.clear();
+
+    console.log('🚀 IncidentResponseSystem: Cleanup completed');
+  }
+
+  /**
+   * Reset the singleton instance (for testing purposes)
+   */
+  public static resetInstance(): void {
+    if (IncidentResponseSystem.instance) {
+      IncidentResponseSystem.instance.cleanup();
+      IncidentResponseSystem.instance = null as any;
+    }
+  }
+
+  /**
+   * Get monitoring status
+   */
+  public getMonitoringStatus(): { isActive: boolean; subscriptionCount: number } {
+    return {
+      isActive: this.isMonitoringActive,
+      subscriptionCount: this.realtimeSubscriptions.length
+    };
+  }
 }
 
 // Export singleton instance
-export const incidentResponseSystem = new IncidentResponseSystem();
+export const incidentResponseSystem = IncidentResponseSystem.getInstance();

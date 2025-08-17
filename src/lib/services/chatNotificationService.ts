@@ -26,17 +26,31 @@ export interface NotificationPreferences {
 }
 
 class ChatNotificationService {
+  private static instance: ChatNotificationService;
   private notifications: ChatNotification[] = [];
   private preferences: NotificationPreferences;
   private permissionGranted: boolean = false;
   private audioContext: AudioContext | null = null;
   private notificationSound: HTMLAudioElement | null = null;
   private subscribers: Map<string, (notification: ChatNotification) => void> = new Map();
+  private realtimeSubscription: any = null;
+  private isSubscribed: boolean = false;
 
-  constructor() {
+  private constructor() {
+    console.log('🔔 ChatNotificationService: Initializing singleton instance');
     this.preferences = this.loadPreferences();
     this.initializeNotifications();
     this.setupRealtimeSubscription();
+  }
+
+  /**
+   * Get singleton instance
+   */
+  public static getInstance(): ChatNotificationService {
+    if (!ChatNotificationService.instance) {
+      ChatNotificationService.instance = new ChatNotificationService();
+    }
+    return ChatNotificationService.instance;
   }
 
   private loadPreferences(): NotificationPreferences {
@@ -82,17 +96,31 @@ class ChatNotificationService {
   }
 
   private setupRealtimeSubscription() {
+    // Prevent duplicate subscriptions
+    if (this.isSubscribed || this.realtimeSubscription) {
+      console.log('🔔 ChatNotificationService: Already subscribed to realtime notifications');
+      return;
+    }
+
+    console.log('🔔 ChatNotificationService: Setting up realtime subscription');
+    
     // Subscribe to realtime notifications from Supabase
-    const channel = supabase
+    this.realtimeSubscription = supabase
       .channel('chat_notifications')
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'chat_notifications'
       }, (payload) => {
+        console.log('🔔 ChatNotificationService: Received realtime notification', payload);
         this.handleIncomingNotification(payload.new as any);
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('🔔 ChatNotificationService: Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          this.isSubscribed = true;
+        }
+      });
   }
 
   private handleIncomingNotification(data: any) {
@@ -368,6 +396,56 @@ class ChatNotificationService {
     return cart ? JSON.parse(cart) : null;
   }
 
+  /**
+   * Cleanup all subscriptions and resources
+   */
+  public cleanup() {
+    console.log('🔔 ChatNotificationService: Cleaning up subscriptions and resources');
+    
+    // Unsubscribe from realtime channel
+    if (this.realtimeSubscription) {
+      console.log('🔔 ChatNotificationService: Unsubscribing from realtime channel');
+      this.realtimeSubscription.unsubscribe();
+      this.realtimeSubscription = null;
+      this.isSubscribed = false;
+    }
+
+    // Clear all subscribers
+    this.subscribers.clear();
+
+    // Clear audio resources
+    if (this.notificationSound) {
+      this.notificationSound = null;
+    }
+
+    if (this.audioContext) {
+      this.audioContext.close();
+      this.audioContext = null;
+    }
+
+    console.log('🔔 ChatNotificationService: Cleanup completed');
+  }
+
+  /**
+   * Reset the singleton instance (for testing purposes)
+   */
+  public static resetInstance() {
+    if (ChatNotificationService.instance) {
+      ChatNotificationService.instance.cleanup();
+      ChatNotificationService.instance = null as any;
+    }
+  }
+
+  /**
+   * Check subscription status
+   */
+  public getSubscriptionStatus(): { isSubscribed: boolean; hasSubscription: boolean } {
+    return {
+      isSubscribed: this.isSubscribed,
+      hasSubscription: !!this.realtimeSubscription
+    };
+  }
+
   // Send notifications for different chat events
   public async notifyNewMessage(message: string, fromUser: boolean = false) {
     if (!fromUser) {
@@ -425,4 +503,4 @@ class ChatNotificationService {
 }
 
 // Export singleton instance
-export const chatNotificationService = new ChatNotificationService();
+export const chatNotificationService = ChatNotificationService.getInstance();

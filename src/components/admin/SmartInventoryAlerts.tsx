@@ -104,6 +104,7 @@ export function SmartInventoryAlerts() {
   const [reorderSuggestions, setReorderSuggestions] = useState<ReorderSuggestion[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedAlerts, setSelectedAlerts] = useState<Set<string>>(new Set());
+  const [subscriptionRef, setSubscriptionRef] = useState<any>(null);
   
   // Alert settings
   const [alertSettings, setAlertSettings] = useState({
@@ -130,24 +131,35 @@ export function SmartInventoryAlerts() {
     calculateMetrics();
     generateReorderSuggestions();
     
-    // Set up real-time subscription
-    const subscription = supabase
-      .channel('inventory_changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'product_variants'
-      }, handleInventoryChange)
-      .subscribe();
+    // Set up real-time subscription only if not already subscribed
+    if (!subscriptionRef) {
+      console.log('📦 SmartInventoryAlerts: Setting up realtime subscription');
+      const subscription = supabase
+        .channel('inventory_changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'product_variants'
+        }, handleInventoryChange)
+        .subscribe((status) => {
+          console.log('📦 SmartInventoryAlerts: Subscription status:', status);
+        });
+
+      setSubscriptionRef(subscription);
+    }
 
     return () => {
-      subscription.unsubscribe();
+      if (subscriptionRef) {
+        console.log('📦 SmartInventoryAlerts: Cleaning up subscription');
+        subscriptionRef.unsubscribe();
+        setSubscriptionRef(null);
+      }
     };
   }, []);
 
   const handleInventoryChange = (payload: any) => {
     // Real-time inventory update
-    console.log('Inventory changed:', payload);
+    console.log('📦 SmartInventoryAlerts: Inventory changed:', payload);
     checkInventoryLevels();
   };
 

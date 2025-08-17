@@ -37,6 +37,22 @@ interface MainOrder {
 }
 
 export class ChatOrderIntegrationService {
+  private static instance: ChatOrderIntegrationService;
+  private realtimeSubscription: any = null;
+  private isSubscribed: boolean = false;
+
+  private constructor() {}
+
+  /**
+   * Get singleton instance
+   */
+  public static getInstance(): ChatOrderIntegrationService {
+    if (!ChatOrderIntegrationService.instance) {
+      ChatOrderIntegrationService.instance = new ChatOrderIntegrationService();
+    }
+    return ChatOrderIntegrationService.instance;
+  }
+
   /**
    * Syncs a chat order to the main orders table
    */
@@ -199,7 +215,15 @@ export class ChatOrderIntegrationService {
    * Sets up real-time sync for new chat orders
    */
   setupRealtimeSync(): void {
-    const channel = supabase
+    // Prevent duplicate subscriptions
+    if (this.isSubscribed || this.realtimeSubscription) {
+      console.log('💼 ChatOrderIntegrationService: Already subscribed to realtime sync');
+      return;
+    }
+
+    console.log('💼 ChatOrderIntegrationService: Setting up realtime sync');
+    
+    this.realtimeSubscription = supabase
       .channel('chat_orders_sync')
       .on(
         'postgres_changes',
@@ -210,7 +234,7 @@ export class ChatOrderIntegrationService {
           filter: 'payment_status=eq.paid'
         },
         async (payload) => {
-          console.log('New chat order detected:', payload.new);
+          console.log('💼 ChatOrderIntegrationService: New chat order detected:', payload.new);
           try {
             await this.syncChatOrderToMain(payload.new.id);
           } catch (error) {
@@ -218,9 +242,14 @@ export class ChatOrderIntegrationService {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('💼 ChatOrderIntegrationService: Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          this.isSubscribed = true;
+        }
+      });
 
-    console.log('Real-time chat order sync enabled');
+    console.log('💼 ChatOrderIntegrationService: Real-time chat order sync enabled');
   }
 
   /**
@@ -283,7 +312,43 @@ export class ChatOrderIntegrationService {
       throw error;
     }
   }
+
+  /**
+   * Cleanup subscriptions and resources
+   */
+  public cleanup(): void {
+    console.log('💼 ChatOrderIntegrationService: Cleaning up subscriptions');
+    
+    if (this.realtimeSubscription) {
+      console.log('💼 ChatOrderIntegrationService: Unsubscribing from realtime channel');
+      this.realtimeSubscription.unsubscribe();
+      this.realtimeSubscription = null;
+      this.isSubscribed = false;
+    }
+
+    console.log('💼 ChatOrderIntegrationService: Cleanup completed');
+  }
+
+  /**
+   * Reset the singleton instance (for testing purposes)
+   */
+  public static resetInstance(): void {
+    if (ChatOrderIntegrationService.instance) {
+      ChatOrderIntegrationService.instance.cleanup();
+      ChatOrderIntegrationService.instance = null as any;
+    }
+  }
+
+  /**
+   * Get subscription status
+   */
+  public getSubscriptionStatus(): { isSubscribed: boolean; hasSubscription: boolean } {
+    return {
+      isSubscribed: this.isSubscribed,
+      hasSubscription: !!this.realtimeSubscription
+    };
+  }
 }
 
 // Export singleton instance
-export const chatOrderIntegration = new ChatOrderIntegrationService();
+export const chatOrderIntegration = ChatOrderIntegrationService.getInstance();

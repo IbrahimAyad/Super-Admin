@@ -74,9 +74,25 @@ const BROADCAST_CONFIGS: Record<string, BroadcastConfig> = {
 };
 
 export class SettingsSyncService {
+  private static instance: SettingsSyncService;
   private static activeChannels = new Map<string, any>();
   private static syncQueue: Array<{ payload: SyncPayload; config: BroadcastConfig; attempt: number }> = [];
   private static isProcessingQueue = false;
+  private static isInitialized = false;
+
+  private constructor() {}
+
+  /**
+   * Get singleton instance
+   */
+  public static getInstance(): SettingsSyncService {
+    if (!SettingsSyncService.instance) {
+      SettingsSyncService.instance = new SettingsSyncService();
+      SettingsSyncService.isInitialized = true;
+      console.log('⚙️ SettingsSyncService: Singleton instance created');
+    }
+    return SettingsSyncService.instance;
+  }
 
   /**
    * Broadcast settings update to specified audience
@@ -229,22 +245,29 @@ export class SettingsSyncService {
     errorCallback?: (error: any) => void
   ): any {
     try {
+      // Check if already subscribed to prevent duplicates
+      if (this.activeChannels.has(channelName)) {
+        console.log(`⚙️ SettingsSyncService: Already subscribed to channel ${channelName}`);
+        return this.activeChannels.get(channelName);
+      }
+
+      console.log(`⚙️ SettingsSyncService: Subscribing to channel ${channelName}`);
       const channel = supabase.channel(channelName);
       
       channel
         .on('broadcast', { event: '*' }, ({ payload }) => {
-          console.log(`Received sync event on ${channelName}:`, payload);
+          console.log(`⚙️ SettingsSyncService: Received sync event on ${channelName}:`, payload);
           callback(payload as SyncPayload);
         })
         .subscribe((status) => {
-          console.log(`Channel ${channelName} subscription status:`, status);
+          console.log(`⚙️ SettingsSyncService: Channel ${channelName} subscription status:`, status);
         });
 
       // Store active channel for cleanup
       this.activeChannels.set(channelName, channel);
       return channel;
     } catch (error) {
-      console.error(`Failed to subscribe to channel ${channelName}:`, error);
+      console.error(`⚙️ SettingsSyncService: Failed to subscribe to channel ${channelName}:`, error);
       errorCallback?.(error);
       return null;
     }
@@ -256,9 +279,13 @@ export class SettingsSyncService {
   static unsubscribeFromChannel(channelName: string): void {
     const channel = this.activeChannels.get(channelName);
     if (channel) {
+      console.log(`⚙️ SettingsSyncService: Unsubscribing from channel: ${channelName}`);
+      if (typeof channel.unsubscribe === 'function') {
+        channel.unsubscribe();
+      }
       supabase.removeChannel(channel);
       this.activeChannels.delete(channelName);
-      console.log(`Unsubscribed from channel: ${channelName}`);
+      console.log(`⚙️ SettingsSyncService: Successfully unsubscribed from channel: ${channelName}`);
     }
   }
 
@@ -435,8 +462,13 @@ export class SettingsSyncService {
    * Cleanup all channels and queues
    */
   static cleanup(): void {
+    console.log('⚙️ SettingsSyncService: Cleaning up subscriptions and resources');
+    
     // Unsubscribe from all channels
-    for (const [channelName] of this.activeChannels) {
+    const channelNames = Array.from(this.activeChannels.keys());
+    console.log(`⚙️ SettingsSyncService: Unsubscribing from ${channelNames.length} channels`);
+    
+    for (const channelName of channelNames) {
       this.unsubscribeFromChannel(channelName);
     }
     
@@ -444,9 +476,20 @@ export class SettingsSyncService {
     this.syncQueue.length = 0;
     this.isProcessingQueue = false;
     
-    console.log('Settings sync service cleaned up');
+    console.log('⚙️ SettingsSyncService: Cleanup completed');
+  }
+
+  /**
+   * Reset the singleton instance (for testing purposes)
+   */
+  static resetInstance(): void {
+    if (SettingsSyncService.isInitialized) {
+      SettingsSyncService.cleanup();
+      SettingsSyncService.instance = null as any;
+      SettingsSyncService.isInitialized = false;
+    }
   }
 }
 
-// Export for convenience
-export const settingsSyncService = SettingsSyncService;
+// Export singleton instance for convenience
+export const settingsSyncService = SettingsSyncService.getInstance();
