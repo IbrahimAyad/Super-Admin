@@ -203,12 +203,33 @@ export default function EnhancedProductsAdmin() {
 
   async function handleSaveProduct(product: Partial<EnhancedProduct>) {
     try {
+      // Ensure prices are in the correct format for database
+      // If database expects dollars, convert from cents
+      const priceInDatabase = product.base_price && product.base_price > 1000 
+        ? product.base_price / 100  // Convert cents to dollars
+        : product.base_price;  // Already in dollars
+      
+      const compareAtPriceInDatabase = product.compare_at_price && product.compare_at_price > 1000
+        ? product.compare_at_price / 100
+        : product.compare_at_price;
+        
+      const costPerUnitInDatabase = product.cost_per_unit && product.cost_per_unit > 1000
+        ? product.cost_per_unit / 100
+        : product.cost_per_unit;
+
+      const productData = {
+        ...product,
+        base_price: priceInDatabase,
+        compare_at_price: compareAtPriceInDatabase,
+        cost_per_unit: costPerUnitInDatabase
+      };
+
       if (editingProduct?.id) {
         // Update existing product
         const { error } = await supabase
           .from('products_enhanced')
           .update({
-            ...product,
+            ...productData,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingProduct.id);
@@ -225,7 +246,7 @@ export default function EnhancedProductsAdmin() {
         const { error } = await supabase
           .from('products_enhanced')
           .insert({
-            ...product,
+            ...productData,
             handle,
             slug: handle,
             created_at: new Date().toISOString(),
@@ -520,8 +541,18 @@ export default function EnhancedProductsAdmin() {
                             size="sm"
                             variant="ghost"
                             onClick={() => {
-                              setEditingProduct(product);
-                              setIsEditDialogOpen(true);
+                              try {
+                                console.log('📝 Editing product:', product.name, product);
+                                setEditingProduct(product);
+                                setIsEditDialogOpen(true);
+                              } catch (error) {
+                                console.error('❌ Error opening edit dialog:', error);
+                                toast({
+                                  title: 'Error opening editor',
+                                  description: 'Failed to load product data for editing',
+                                  variant: 'destructive'
+                                });
+                              }
                             }}
                           >
                             <Pencil className="h-4 w-4" />
@@ -592,6 +623,19 @@ function ProductForm({
   onSave: (product: Partial<EnhancedProduct>) => void;
   onCancel: () => void;
 }) {
+  // Helper function to ensure price is in cents
+  const ensurePriceInCents = (price: number | undefined): number => {
+    if (!price) return 0;
+    // If price is less than 1000, it's likely in dollars, convert to cents
+    if (price < 1000) {
+      return Math.round(price * 100);
+    }
+    return Math.round(price);
+  };
+
+  const basePriceInCents = ensurePriceInCents(product?.base_price) || 27999;
+  const compareAtPriceInCents = ensurePriceInCents(product?.compare_at_price) || 0;
+
   const [formData, setFormData] = useState<Partial<EnhancedProduct>>({
     name: product?.name || '',
     sku: product?.sku || '',
@@ -600,9 +644,9 @@ function ProductForm({
     product_type: product?.category || '',  // Use category as product_type fallback
     occasion: product?.tags || [],  // Use tags as occasions
     price_tier: product?.price_tier || 'TIER_7',
-    base_price: product?.base_price || 27999,
-    compare_at_price: product?.compare_at_price || 0,
-    cost_per_unit: Math.round((product?.base_price || 27999) * 0.4),  // Estimate 40% cost
+    base_price: basePriceInCents,
+    compare_at_price: compareAtPriceInCents,
+    cost_per_unit: Math.round(basePriceInCents * 0.4),  // Estimate 40% cost
     description: product?.description || '',
     status: product?.status || 'active',
     is_available: product?.status === 'active',  // Derive from status
@@ -616,13 +660,13 @@ function ProductForm({
     fit_type: product?.fit_type || 'Slim Fit',
     size_range: product?.available_sizes ? { available: product.available_sizes } : {},
     measurements: {},  // Empty initially
-    materials: product?.materials || {},
-    care_instructions: [],  // Empty initially
+    materials: (typeof product?.materials === 'object' && product?.materials) || {},
+    care_instructions: Array.isArray(product?.care_instructions) ? product.care_instructions : [],
     view_count: product?.view_count || 0,
     add_to_cart_count: product?.add_to_cart_count || 0,
     purchase_count: product?.purchase_count || 0,
     return_rate: product?.return_rate || 0,
-    images: product?.images || {
+    images: (typeof product?.images === 'object' && product?.images) || {
       hero: null,
       flat: null,
       lifestyle: [],
