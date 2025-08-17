@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Product Image Test - All Categories</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .test-card {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-card h3 {
+            margin: 0 0 8px 0;
+            font-size: 13px;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .image-container {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        .test-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            text-align: center;
+            margin: 5px 0;
+        }
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .test-section h2 {
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .summary {
+            background: #333;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 18px;
+        }
+        .category-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #007bff;
+            color: white;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 KCT Menswear - Final CDN Image Test</h1>
+    <p>Testing all 150 products with corrected CDN URLs</p>
+    
+    <button onclick="runAllTests()">Run All Tests</button>
+    <button onclick="clearTests()">Clear Results</button>
+    
+    <div class="summary" id="summary">
+        <strong>Results:</strong> <span id="results">Click "Run All Tests" to begin</span>
+    </div>
+    
+    <div class="test-section">
+        <h2>👔 Blazers - Prom Collection (18 products)</h2>
+        <div class="test-grid" id="blazers-prom"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>☀️ Blazers - Summer Collection (6 products)</h2>
+        <div class="test-grid" id="blazers-summer"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>✨ Blazers - Sparkle Collection (16 products)</h2>
+        <div class="test-grid" id="blazers-sparkle"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🎩 Blazers - Velvet Collection (28 products)</h2>
+        <div class="test-grid" id="blazers-velvet"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🦺 Vest Tie Sets (26 products)</h2>
+        <div class="test-grid" id="vests"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>👔 Suspender Bowtie Sets (10 products)</h2>
+        <div class="test-grid" id="suspenders"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🤵 Tuxedos (8 products)</h2>
+        <div class="test-grid" id="tuxedos"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>👔 Suits (10 products)</h2>
+        <div class="test-grid" id="suits"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>👕 Shirts (14 products)</h2>
+        <div class="test-grid" id="shirts"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🎭 Double-Breasted Suits (10 products)</h2>
+        <div class="test-grid" id="double-breasted"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>💪 Stretch Suits (9 products)</h2>
+        <div class="test-grid" id="stretch"></div>
+    </div>
+
+    <script>
+        let totalTests = 0;
+        let successCount = 0;
+        let failCount = 0;
+        
+        // All product URLs from DEFINITIVE_CDN_URLS_MANUAL_CLEAN.txt
+        const products = {
+            'blazers-prom': [
+                { name: "Black Floral Pattern", url: "https://cdn.kctmenswear.com/blazers/prom/mens-black-floral-pattern-prom-blazer/main-2.webp" },
+                { name: "Black Geometric Pattern", url: "https://cdn.kctmenswear.com/blazers/prom/mens-black-geometric-pattern-prom-blazer/main.webp" },
+                { name: "Black Glitter Finish Shawl", url: "https://cdn.kctmenswear.com/blazers/prom/mens-black-glitter-finish-prom-blazer-shawl-lapel/main.webp" },
+                { name: "Black with Bowtie", url: "https://cdn.kctmenswear.com/blazers/prom/mens-black-prom-blazer-with-bowtie/main-2.webp" },
+                { name: "Burgundy Floral Pattern", url: "https://cdn.kctmenswear.com/blazers/prom/mens-burgundy-floral-pattern-prom-blazer/main.webp" },
+                { name: "Burgundy Paisley with Bowtie", url: "https://cdn.kctmenswear.com/blazers/prom/mens-burgundy-paisley-pattern-prom-blazer-with-bowtie/main.webp" },
+                { name: "Gold Paisley with Bowtie", url: "https://cdn.kctmenswear.com/blazers/prom/mens-gold-paisley-pattern-prom-blazer-with-bowtie/main.webp" },
+                { name: "Gold Prom", url: "https://cdn.kctmenswear.com/blazers/prom/mens-gold-prom-blazer/main.webp" },
+                { name: "Off White with Bowtie", url: "https://cdn.kctmenswear.com/blazers/prom/mens-off-white-prom-blazer-with-bowtie/main.webp" },
+                { name: "Purple Floral Pattern", url: "https://cdn.kctmenswear.com/blazers/prom/mens-purple-floral-pattern-prom-blazer/main.webp" },
+                { name: "Red Floral Pattern", url: "https://cdn.kctmenswear.com/blazers/prom/mens-red-floral-pattern-prom-blazer/main.webp" },
+                { name: "Red Floral with Bowtie", url: "https://cdn.kctmenswear.com/blazers/prom/mens-red-floral-pattern-prom-blazer-with-bowtie/main.webp" },
+                { name: "Red with Bowtie", url: "https://cdn.kctmenswear.com/blazers/prom/mens-red-prom-blazer-with-bowtie/main-2.webp" },
+                { name: "Royal Blue Embellished", url: "https://cdn.kctmenswear.com/blazers/prom/mens-royal-blue-embellished-design-prom-blazer/main.webp" },
+                { name: "Royal Blue with Bowtie", url: "https://cdn.kctmenswear.com/blazers/prom/mens-royal-blue-prom-blazer-with-bowtie/main-2.webp" },
+                { name: "Teal Floral Pattern", url: "https://cdn.kctmenswear.com/blazers/prom/mens-teal-floral-pattern-prom-blazer/main.webp" },
+                { name: "White with Bowtie", url: "https://cdn.kctmenswear.com/blazers/prom/mens-white-prom-blazer-with-bowtie/main.webp" },
+                { name: "White Rhinestone Shawl", url: "https://cdn.kctmenswear.com/blazers/prom/mens-white-rhinestone-embellished-prom-blazer-shawl-lapel/main.webp" }
+            ],
+            'blazers-summer': [
+                { name: "Blue Casual Summer", url: "https://cdn.kctmenswear.com/blazers/summer/mens-blue-casual-summer-blazer/main.webp" },
+                { name: "Brown Casual Summer", url: "https://cdn.kctmenswear.com/blazers/summer/mens-brown-casual-summer-blazer/main.webp" },
+                { name: "Mint Casual Summer", url: "https://cdn.kctmenswear.com/blazers/summer/mens-mint-casual-summer-blazer/main.webp" },
+                { name: "Pink Casual Summer", url: "https://cdn.kctmenswear.com/blazers/summer/mens-pink-casual-summer-blazer/main.webp" },
+                { name: "Salmon Casual Summer", url: "https://cdn.kctmenswear.com/blazers/summer/mens-salmon-casual-summer-blazer-2025/main.webp" },
+                { name: "Yellow Casual Summer", url: "https://cdn.kctmenswear.com/blazers/summer/mens-yellow-casual-summer-blazer/main.webp" }
+            ],
+            'blazers-sparkle': [
+                { name: "Black Glitter Sparkle", url: "https://cdn.kctmenswear.com/blazers/sparkle/mens-black-glitter-finish-sparkle-blazer/main.webp" },
+                { name: "Black Sparkle Texture", url: "https://cdn.kctmenswear.com/blazers/sparkle/mens-black-sparkle-texture-sparkle-blazer/main.webp" },
+                { name: "Blue Sparkle", url: "https://cdn.kctmenswear.com/blazers/sparkle/mens-blue-sparkle-blazer/main.webp" },
+                { name: "Blue Sparkle Shawl", url: "https://cdn.kctmenswear.com/blazers/sparkle/mens-blue-sparkle-blazer-shawl-lapel/main.webp" },
+                { name: "Burgundy Glitter Sparkle", url: "https://cdn.kctmenswear.com/blazers/sparkle/mens-burgundy-glitter-finish-sparkle-blazer/main.webp" },
+                { name: "Burgundy Sparkle Texture", url: "https://cdn.kctmenswear.com/blazers/sparkle/mens-burgundy-sparkle-texture-sparkle-blazer/main.webp" },
+                { name: "Gold Baroque Pattern", url: "https://cdn.kctmenswear.com/blazers/sparkle/mens-gold-baroque-pattern-sparkle-blazer/main.webp" },
+                { name: "Gold Glitter Sparkle", url: "https://cdn.kctmenswear.com/blazers/sparkle/mens-gold-glitter-finish-sparkle-blazer/main.webp" },
+                { name: "Gold Sparkle Texture", url: "https://cdn.kctmenswear.com/blazers/sparkle/mens-gold-sparkle-texture-sparkle-blazer/main.webp" },
+                { name: "Green Glitter Sparkle", url: "https://cdn.kctmenswear.com/blazers/sparkle/mens-green-glitter-finish-sparkle-blazer/main.webp" },
+                { name: "Green Sparkle Texture", url: "https://cdn.kctmenswear.com/blazers/sparkle/mens-green-sparkle-texture-sparkle-blazer/main.webp" },
+                { name: "Navy Glitter Sparkle", url: "https://cdn.kctmenswear.com/blazers/sparkle/mens-navy-glitter-finish-sparkle-blazer/main.webp" },
+                { name: "Navy Sparkle Texture", url: "https://cdn.kctmenswear.com/blazers/sparkle/mens-navy-sparkle-texture-sparkle-blazer/main.webp" },
+                { name: "Red Glitter Sparkle", url: "https://cdn.kctmenswear.com/blazers/sparkle/mens-red-glitter-finish-sparkle-blazer/main.webp" },
+                { name: "Royal Blue Sparkle Texture", url: "https://cdn.kctmenswear.com/blazers/sparkle/mens-royal-blue-sparkle-texture-sparkle-blazer/main.webp" },
+                { name: "White Sparkle Texture", url: "https://cdn.kctmenswear.com/blazers/sparkle/mens-white-sparkle-texture-sparkle-blazer/main.webp" }
+            ],
+            'blazers-velvet': [
+                { name: "All Navy Velvet Blazer", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-all-navy-velvet-blazer/main.webp" },
+                { name: "All Navy Velvet Jacket", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-all-navy-velvet-jacker/main.webp" },
+                { name: "All Red Velvet Jacket", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-all-red-velvet-jacker/main.webp" },
+                { name: "Black Paisley Velvet", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-black-paisley-pattern-velvet-blazer/main.webp" },
+                { name: "Black Velvet Shawl", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-black-velvet-blazer-shawl-lapel/main.webp" },
+                { name: "Black Velvet Jacket", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-black-velvet-jacket/main.webp" },
+                { name: "Brown Velvet with Bowtie", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-brown-velvet-blazer-with-bowtie/main.webp" },
+                { name: "Cherry Red Velvet", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-cherry-red-velvet-blazer/main.webp" },
+                { name: "Dark Burgundy Velvet", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-dark-burgundy-velvet-blazer/main.webp" },
+                { name: "Euro Burgundy Velvet", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-euro-burgundy-velvet-blazer/main.webp" },
+                { name: "Green Paisley Velvet", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-green-paisley-pattern-velvet-blazer/main.webp" },
+                { name: "Green Velvet", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-green-velvet-blazer/main.webp" },
+                { name: "Green Velvet with Bowtie", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-green-velvet-blazer-with-bowtie/main.webp" },
+                { name: "Hunter Green Velvet", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-hunter-green-velvet-blazer/main.webp" },
+                { name: "Navy Velvet", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-navy-velvet-blazer/main.webp" },
+                { name: "Navy Velvet 2025", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-navy-velvet-blazer-2025-/main.webp" },
+                { name: "Notch Burgundy Velvet", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-notch-lapel-burgundy-velvet-blazer/main.webp" },
+                { name: "Pink Velvet", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-pink-velvet-blazer/main.webp" },
+                { name: "Purple Velvet", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-purple-velvet-blazer/main.webp" },
+                { name: "Purple Velvet with Bowtie", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-purple-velvet-blazer-with-bowtie/main.webp" },
+                { name: "Red Paisley Velvet", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-red-paisley-pattern-velvet-blazer/main.webp" },
+                { name: "Red Velvet with Bowtie", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-red-velvet-blazer-with-bowtie/main.webp" },
+                { name: "Royal Blue Paisley Velvet", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-royal-blue-paisley-pattern-velvet-blazer/main.webp" },
+                { name: "Royal Blue Velvet", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-royal-blue-velvet-blazer/main.webp" },
+                { name: "Royal Blue Velvet Bowtie", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-royal-blue-velvet-blazer-with-bowtie/main.webp" },
+                { name: "White Velvet", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-white-velvet-blazer/main.webp" },
+                { name: "Wine Velvet", url: "https://cdn.kctmenswear.com/blazers/velvet/mens-wine-velvet-blazer/main.webp" },
+                { name: "Notch Black Velvet Tux", url: "https://cdn.kctmenswear.com/blazers/velvet/notch-lapel-black-velvet-tuxedo/main.webp" }
+            ],
+            'vests': [
+                { name: "Blush Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/blush-vest/model.webp" },
+                { name: "Burnt Orange Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/burnt-orange-vest/model.webp" },
+                { name: "Canary Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/canary-vest/model.webp" },
+                { name: "Carolina Blue Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/carolina-blue-vest/model.webp" },
+                { name: "Chocolate Brown Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/chocolate-brown-vest/model.webp" },
+                { name: "Coral Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/coral-vest/model.webp" },
+                { name: "Dark Burgundy Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/dark-burgundy-vest/model.webp" },
+                { name: "Dark Teal", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/dark-teal/main.webp" },
+                { name: "Dusty Rose Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/dusty-rose-vest/model.webp" },
+                { name: "Dusty Sage Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/dusty-sage-vest/model.webp" },
+                { name: "Emerald Green", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/emerald-green-vest/main.webp" },
+                { name: "Fuchsia Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/fuchsia-vest/model.webp" },
+                { name: "Gold Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/gold-vest/model.webp" },
+                { name: "Grey Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/grey-vest/model.webp" },
+                { name: "Hunter Green Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/hunter-green-vest/model.webp" },
+                { name: "Lilac Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/lilac-vest/model.webp" },
+                { name: "Mint Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/mint-vest/model.webp" },
+                { name: "Peach Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/peach-vest/model.webp" },
+                { name: "Pink Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/pink-vest/model.webp" },
+                { name: "Plum Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/plum-vest/model.webp" },
+                { name: "Powder Blue Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/powder-blue-vest/model.webp" },
+                { name: "Red Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/red-vest/model.webp" },
+                { name: "Rose Gold Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/rose-gold-vest/rose-gold-vest.jpg" },
+                { name: "Royal Blue Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/royal-blue-vest/model.webp" },
+                { name: "Turquoise Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/turquoise-vest/model.webp" },
+                { name: "Wine Vest", url: "https://cdn.kctmenswear.com/menswear-accessories/vest-tie-set/wine-vest/model.webp" }
+            ],
+            'suspenders': [
+                { name: "Black Suspender Set", url: "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/black-suspender-bowtie-set/main.webp" },
+                { name: "Brown Suspender Set", url: "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/brown-suspender-bowtie-set/model.webp" },
+                { name: "Burnt Orange Suspender", url: "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/burnt-orange-suspender-bowtie-set/model.webp" },
+                { name: "Dusty Rose Suspender", url: "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/dusty-rose-suspender-bowtie-set/model.webp" },
+                { name: "Fuchsia Suspender", url: "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/fuchsia-suspender-bowtie-set/model.webp" },
+                { name: "Gold Suspender", url: "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/gold-suspender-bowtie-set/model.webp" },
+                { name: "Hunter Green Suspender", url: "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/hunter-green-suspender-bowtie-set/model.webp" },
+                { name: "Medium Red Suspender", url: "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/medium-red-suspender-bowtie-set/model.webp" },
+                { name: "Orange Suspender", url: "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/orange-suspender-bowtie-set/model.webp" },
+                { name: "Powder Blue Suspender", url: "https://cdn.kctmenswear.com/menswear-accessories/suspender-bowtie-set/powder-blue-suspender-bowtie-set/model.webp" }
+            ],
+            'tuxedos': [
+                { name: "Black Gold Design", url: "https://cdn.kctmenswear.com/tuxedos/black-gold-design-tuxedo/mens_tuxedos_suit_2005_0.webp" },
+                { name: "Black on Black Slim", url: "https://cdn.kctmenswear.com/tuxedos/black-on-black-slim-tuxedo-tone-trim-tuxedo/mens_tuxedos_suit_2003_0.webp" },
+                { name: "Burnt Orange", url: "https://cdn.kctmenswear.com/tuxedos/burnt-orange-tuxedo/mens_tuxedos_suit_2008_0.webp" },
+                { name: "Hunter Green", url: "https://cdn.kctmenswear.com/tuxedos/hunter-green-tuxedo/mens_tuxedos_suit_2009_0.webp" },
+                { name: "Pink Gold Design", url: "https://cdn.kctmenswear.com/tuxedos/pink-gold-design-tuxedo/mens_tuxedos_suit_2012_0.webp" },
+                { name: "Sand", url: "https://cdn.kctmenswear.com/tuxedos/sand-tuxedo/mens_tuxedos_suit_2011_0.webp" },
+                { name: "Wine on Wine Slim", url: "https://cdn.kctmenswear.com/tuxedos/wine-on-wine-slim-tuxedotone-trim-tuxedo/mens_tuxedos_suit_2015_0.webp" },
+                { name: "White (DB)", url: "https://cdn.kctmenswear.com/double-breasted-suits/white-tuxedo-double-breasted/main.webp" }
+            ],
+            'suits': [
+                { name: "Brick Fall", url: "https://cdn.kctmenswear.com/suits/brick-fall-suit/main.webp" },
+                { name: "Brown Gold Buttons", url: "https://cdn.kctmenswear.com/suits/brown-gold-buttons/mens_suits_suit_2035_0.webp" },
+                { name: "Burnt Orange", url: "https://cdn.kctmenswear.com/suits/burnt-orange/mens_suits_suit_2036_0.webp" },
+                { name: "Estate Blue", url: "https://cdn.kctmenswear.com/suits/estate-blue/main.webp" },
+                { name: "Fall Rust", url: "https://cdn.kctmenswear.com/suits/fall-rust/20250806_1806_Trendy Orange Suit_remix_01k20pkyb6es9bnyz5c7ycrv7c.webp" },
+                { name: "Mint", url: "https://cdn.kctmenswear.com/suits/mint/main.webp" },
+                { name: "Pin Stripe Black", url: "https://cdn.kctmenswear.com/suits/pin-stripe-black/main.webp" },
+                { name: "Pin Stripe Brown", url: "https://cdn.kctmenswear.com/suits/pin-stripe-brown/main.webp" },
+                { name: "Pin Stripe Grey", url: "https://cdn.kctmenswear.com/suits/pin-stripe-grey/main.webp" },
+                { name: "Pin Stripe Navy", url: "https://cdn.kctmenswear.com/suits/pin-stripe-navy/main.webp" }
+            ],
+            'shirts': [
+                { name: "Black Turtleneck", url: "https://cdn.kctmenswear.com/mens-shirts/black-turtleneck/main.webp" },
+                { name: "Black Ultra Stretch", url: "https://cdn.kctmenswear.com/mens-shirts/black-ultra-stretch-dress-shirt/main.webp" },
+                { name: "Light Blue Turtleneck", url: "https://cdn.kctmenswear.com/mens-shirts/light-blue-turtleneck/main.webp" },
+                { name: "Tan Turtleneck", url: "https://cdn.kctmenswear.com/mens-shirts/tan-turtleneck/main.webp" },
+                { name: "White Turtleneck", url: "https://cdn.kctmenswear.com/mens-shirts/white-turtleneck/main.webp" },
+                { name: "Black Collarless", url: "https://cdn.kctmenswear.com/mens-shirts/black-collarless-dress-shirt/main.webp" },
+                { name: "Black Moc Neck", url: "https://cdn.kctmenswear.com/mens-shirts/black-short-sleeve-moc-neck/main.webp" },
+                { name: "Light Grey Turtleneck", url: "https://cdn.kctmenswear.com/mens-shirts/light-grey-turtleneck/main.webp" },
+                { name: "Navy Moc Neck", url: "https://cdn.kctmenswear.com/mens-shirts/navy-short-sleeve-moc-neck/main.webp" },
+                { name: "Tan Moc Neck", url: "https://cdn.kctmenswear.com/mens-shirts/tan-short-sleeve-moc-neck/main.webp" },
+                { name: "White Moc Neck", url: "https://cdn.kctmenswear.com/mens-shirts/white-short-sleeve-moc-neck/main.webp" },
+                { name: "Light Blue Collarless", url: "https://cdn.kctmenswear.com/mens-shirts/light-blue-collarless-dress-shirt/main.webp" },
+                { name: "White Collarless", url: "https://cdn.kctmenswear.com/mens-shirts/white-collarless-dress-shirt/main.webp" },
+                { name: "Black Short Sleeve", url: "https://cdn.kctmenswear.com/mens-shirts/black-short-sleeve-moc-neck/main.webp" }
+            ],
+            'double-breasted': [
+                { name: "Black Strip Shawl", url: "https://cdn.kctmenswear.com/double-breasted-suits/black-strip-shawl-lapel/main.webp" },
+                { name: "Forest Green Mocha", url: "https://cdn.kctmenswear.com/double-breasted-suits/fall-forest-green-mocha-double-breasted-suit/main.webp" },
+                { name: "Fall Mocha", url: "https://cdn.kctmenswear.com/double-breasted-suits/fall-mocha-double-breasted-suit/20250806_1901_Stylish Suit Display_remix_01k20srfr9ez1ag6z2kba3s8x3.webp" },
+                { name: "Smoked Blue", url: "https://cdn.kctmenswear.com/double-breasted-suits/fall-smoked-blue-double-breasted-suit/main.webp" },
+                { name: "Light Grey", url: "https://cdn.kctmenswear.com/double-breasted-suits/light-grey/main.webp" },
+                { name: "Pin Stripe Canyon", url: "https://cdn.kctmenswear.com/double-breasted-suits/pin-stripe-canyon-clay-double-breasted-suit/main.webp" },
+                { name: "Pink", url: "https://cdn.kctmenswear.com/double-breasted-suits/pink/main.webp" },
+                { name: "Red Tuxedo", url: "https://cdn.kctmenswear.com/double-breasted-suits/red-tuxedo-double-breasted/main.webp" },
+                { name: "Tan Tuxedo", url: "https://cdn.kctmenswear.com/double-breasted-suits/tan-tuxedo-double-breasted/main.webp" },
+                { name: "White Tuxedo", url: "https://cdn.kctmenswear.com/double-breasted-suits/white-tuxedo-double-breasted/main.webp" }
+            ],
+            'stretch': [
+                { name: "Beige Slim", url: "https://cdn.kctmenswear.com/stretch-suits/beige-slim-stretch/main.webp" },
+                { name: "Black Slim", url: "https://cdn.kctmenswear.com/stretch-suits/black-slim-stretch/main.webp" },
+                { name: "Burgundy Slim", url: "https://cdn.kctmenswear.com/stretch-suits/burgundy--slim-stretch/main.webp" },
+                { name: "Light Grey Slim", url: "https://cdn.kctmenswear.com/stretch-suits/light-grey-slim-stretch/main.webp" },
+                { name: "Mauve Slim", url: "https://cdn.kctmenswear.com/stretch-suits/mauve-slim-stretch/main.webp" },
+                { name: "Mint Slim", url: "https://cdn.kctmenswear.com/stretch-suits/mint-slim-stretch/main.webp" },
+                { name: "Pink Slim", url: "https://cdn.kctmenswear.com/stretch-suits/pink-slim-stretch/main.webp" },
+                { name: "Salmon Slim", url: "https://cdn.kctmenswear.com/stretch-suits/salmon-slim-stretch/main.webp" },
+                { name: "Tan Slim", url: "https://cdn.kctmenswear.com/stretch-suits/tan-slim-stretch/main.webp" }
+            ]
+        };
+
+        function createTestCard(test, container) {
+            const card = document.createElement('div');
+            card.className = 'test-card';
+            card.innerHTML = `
+                <h3 title="${test.name}">${test.name}</h3>
+                <div class="status loading">Testing...</div>
+                <div class="image-container">
+                    <img class="test-image" alt="${test.name}">
+                </div>
+            `;
+            
+            container.appendChild(card);
+            
+            const img = card.querySelector('.test-image');
+            const status = card.querySelector('.status');
+            
+            totalTests++;
+            
+            // Test image loading
+            img.onload = () => {
+                status.className = 'status success';
+                status.textContent = '✅ Success';
+                successCount++;
+                updateSummary();
+            };
+            
+            img.onerror = () => {
+                status.className = 'status error';
+                status.textContent = '❌ Failed';
+                failCount++;
+                updateSummary();
+            };
+            
+            // Set source to trigger loading
+            img.src = test.url;
+        }
+        
+        function updateSummary() {
+            const results = document.getElementById('results');
+            const successRate = totalTests > 0 ? Math.round((successCount/totalTests)*100) : 0;
+            results.innerHTML = `
+                Total: ${totalTests} | 
+                ✅ Success: ${successCount} | 
+                ❌ Failed: ${failCount} | 
+                Success Rate: ${successRate}%
+            `;
+            
+            // Change background color based on success rate
+            const summaryDiv = document.getElementById('summary');
+            if (successRate === 100) {
+                summaryDiv.style.background = '#28a745';
+            } else if (successRate >= 90) {
+                summaryDiv.style.background = '#17a2b8';
+            } else if (successRate >= 70) {
+                summaryDiv.style.background = '#ffc107';
+                summaryDiv.style.color = '#333';
+            } else {
+                summaryDiv.style.background = '#dc3545';
+            }
+        }
+
+        function clearTests() {
+            Object.keys(products).forEach(category => {
+                document.getElementById(category).innerHTML = '';
+            });
+            totalTests = 0;
+            successCount = 0;
+            failCount = 0;
+            updateSummary();
+        }
+
+        function runAllTests() {
+            clearTests();
+            
+            // Test all categories
+            Object.keys(products).forEach(category => {
+                products[category].forEach(test => {
+                    createTestCard(test, document.getElementById(category));
+                });
+            });
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            document.getElementById('results').textContent = 'Ready - click "Run All Tests"';
+        });
+    </script>
+</body>
+</html>
